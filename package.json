@@ -9,12 +9,17 @@
   },
   "dependencies": {
     "core-js": "^3.8.3",
-    "vue": "^3.2.13",
     "pinia": "^2.0.22",
     "pinia-plugin-persistedstate": "^2.2.0",
-    "pinia-shared-state": "^0.2.8"
+    "pinia-shared-state": "^0.2.8",
+    "vue": "^3.2.13",
+    "vue-chartjs": "^5.2.0",
+    "vue-router": "^4.1.6",
+    "chart.js": "^4.2.1"
   },
   "devDependencies": {
+    "@prettier/plugin-pug": "^1.20.1",
+    "@types/chrome": "^0.0.226",
     "@typescript-eslint/eslint-plugin": "^5.4.0",
     "@typescript-eslint/parser": "^5.4.0",
     "@vue/cli-plugin-babel": "~5.0.0",
@@ -26,19 +31,22 @@
     "eslint-config-prettier": "^8.3.0",
     "eslint-plugin-prettier": "^4.0.0",
     "eslint-plugin-vue": "^8.0.3",
+    "eslint-plugin-vue-pug": "^0.5.4",
     "prettier": "^2.4.1",
+    "pug": "^3.0.2",
+    "pug-plain-loader": "^1.1.0",
     "sass": "^1.32.7",
     "sass-loader": "^12.0.0",
-    "typescript": "~4.5.5",
-    "@prettier/plugin-pug": "^1.20.1",
-    "eslint-plugin-vue-pug": "^0.5.4",
-    "pug": "^3.0.2",
-    "pug-plain-loader": "^1.1.0"
+    "typescript": "~4.5.5"
   },
   "eslintConfig": {
     "root": true,
     "env": {
-      "node": true
+      "node": true,
+      "browser": true
+    },
+    "globals": {
+      "chrome": "readonly"
     },
     "extends": [
       "plugin:vue/vue3-essential",
