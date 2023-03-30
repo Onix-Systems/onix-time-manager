@@ -4,11 +4,19 @@
   "version": "1.0.0",
   "description": "An extension preset",
   "manifest_version": 3,
+  "permissions": [
+    "storage",
+    "tabs",
+    "history"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
   "action": {
     "default_title": "Extension Preset",
-    "default_popup": "index.html"
+    "default_popup": "popup.html"
   },
   "options_ui": {
-    "page": "popup.html"
+    "page": "index.html"
   }
 }
