@@ -5,7 +5,7 @@
   </div>
 </template>
 
-<style>
+<style scoped lang="scss">
 .footer {
   /* position: fixed; */
   bottom: 0;

@@ -3,26 +3,12 @@
   Doughnut(:data="data", :options="options")
 </template>
 
-<script lang="ts">
+<script setup lang="ts">
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from "chart.js";
 import { Doughnut } from "vue-chartjs";
-import * as chartConfig from "../../src/chartConfig";
+import { data, options } from "@/composables/chartConfig";
 
 ChartJS.register(ArcElement, Tooltip, Legend);
-
-export default {
-  name: "App",
-  components: {
-    Doughnut,
-  },
-  data() {
-    return chartConfig;
-  },
-};
 </script>
 
-<style lang="scss">
-.dought {
-  width: 400px;
-}
-</style>
+<style scoped lang="scss"></style>

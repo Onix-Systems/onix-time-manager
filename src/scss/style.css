@@ -1,1 +1,6 @@
 @import "reset.css";
+@import "_fonts.css";
+
+body {
+    font-family: Inter, sans-serif;
+}

@@ -31,7 +31,7 @@ export default {
   },
 };
 </script>
-<style lang="scss">
+<style scoped lang="scss">
 .header {
   // width: 350px;
   background-color: #3395bd;
