@@ -1,10 +1,9 @@
 <template lang="pug">
 HeaderComponent
 UrlsComponents
-DoughtChart(:chart-data="chartData")
+DoughtChart
+history-list
 FooterComponent
-//- div Current URL: {{ currentUrl }}
-//- HelloWorld(msg="Welcome to Your Vue.js + TypeScript App")
 </template>
 
 <script lang="ts">
@@ -14,9 +13,11 @@ import HeaderComponent from "./components/HeaderComponent.vue";
 import DoughtChart from "./components/DoughtChart.vue";
 import FooterComponent from "./components/FooterComponent.vue";
 import UrlsComponents from "./components/UrlsComponents.vue";
+import HistoryList from "@/components/HistoryList.vue";
 export default defineComponent({
   name: "App",
   components: {
+    HistoryList,
     HelloWorld,
     HeaderComponent,
     FooterComponent,
@@ -60,7 +61,7 @@ export default defineComponent({
 });
 </script>
 
-<style lang="scss">
+<style scoped lang="scss">
 #app {
   margin: 0 !important;
 }
