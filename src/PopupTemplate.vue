@@ -8,12 +8,12 @@ FooterComponent
 
 <script lang="ts">
 import { defineComponent, ref } from "vue";
-import HelloWorld from "./components/HelloWorld.vue";
-import HeaderComponent from "./components/HeaderComponent.vue";
-import DoughtChart from "./components/DoughtChart.vue";
-import FooterComponent from "./components/FooterComponent.vue";
-import UrlsComponents from "./components/UrlsComponents.vue";
-import HistoryList from "@/components/HistoryList.vue";
+import HelloWorld from "./components/popup/HelloWorld.vue";
+import HeaderComponent from "./components/popup/HeaderComponent.vue";
+import DoughtChart from "./components/common/DoughtChart.vue";
+import FooterComponent from "./components/popup/FooterComponent.vue";
+import UrlsComponents from "./components/popup/UrlsComponents.vue";
+import HistoryList from "@/components/common/HistoryList.vue";
 export default defineComponent({
   name: "App",
   components: {

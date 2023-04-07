@@ -6,9 +6,9 @@ section.option-page
       template(v-if="0 === activeTabIndex")
         home-page
       template(v-if="1 === activeTabIndex")
-        h1 content {{ 1 }}
+        limits-page
       template(v-if="2 === activeTabIndex")
-        h1 content {{ 2 }}
+        blocker-page
       template(v-if="3 === activeTabIndex")
         h1 content {{ 3 }}
       template(v-if="4 === activeTabIndex")
@@ -16,9 +16,11 @@ section.option-page
 </template>
 
 <script setup lang="ts">
-import OptionHeader from "@/components/OptionHeader.vue";
 import { activeTabIndex } from "@/composables/OptionsActions";
-import HomePage from "@/components/HomePage.vue";
+import OptionHeader from "@/components/optionspage/OptionHeader.vue";
+import HomePage from "@/components/optionspage/pages/HomePage.vue";
+import LimitsPage from "@/components/optionspage/pages/LimitsPage.vue";
+import BlockerPage from "@/components/optionspage/pages/BlockerPage.vue";
 </script>
 
 <style scoped lang="scss">

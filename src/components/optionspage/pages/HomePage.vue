@@ -16,8 +16,8 @@
 </template>
 
 <script setup lang="ts">
-import DoughtChart from "./DoughtChart.vue";
-import HistoryList from "./HistoryList.vue";
+import DoughtChart from "../../common/DoughtChart.vue";
+import HistoryList from "../../common/HistoryList.vue";
 import { computed } from "vue";
 import {
   isWeek,

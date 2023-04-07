@@ -1,7 +1,7 @@
 <template lang="pug">
 .header
   .header__block
-    img(src="../assets/logo-time-manager.jpeg")
+    img(src="../../assets/logo-time-manager.jpeg")
     h1 Time manager
     button(@click="openOptions")
 </template>
@@ -50,7 +50,7 @@ export default {
     font-size: 30px;
   }
   button {
-    background-image: url("../assets/settings1.webp");
+    background-image: url("../../assets/settings1.webp");
     width: 50px;
     height: 45px;
     border-radius: 62px;
