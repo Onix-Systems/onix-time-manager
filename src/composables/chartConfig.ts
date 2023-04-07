@@ -1,5 +1,4 @@
 import { computed, ref } from "vue";
-import { a } from "pinia-plugin-persistedstate/dist/types-47036483";
 export const storage = ref([]);
 
 export const isWeek = ref(0);
@@ -55,12 +54,15 @@ export const options = {
     legend: {
       display: false,
     },
+    tooltip: {
+      enabled: false, // <-- this option disables tooltips
+    },
   },
 };
 
 export const labels = computed(() => {
   const array = [...topTasks.value.map((task: any) => task.url)];
-  if (topTasks.value && topTasks.value.length >= 8) {
+  if (sortedData.value && sortedData.value.length > 8) {
     array.push("others");
   }
   return array;

@@ -61,10 +61,10 @@ const homeSections = ["Home", "Limits", "Blocker", "History", "Settings"];
       line-height: 30px;
       text-align: center;
 
-      &.active {
-        font-weight: 700;
+      &.active,
+      &:hover {
         color: #4196db;
-        border-bottom: 3px solid #4196db;
+        border-bottom: 2px solid #4196db;
       }
     }
   }
