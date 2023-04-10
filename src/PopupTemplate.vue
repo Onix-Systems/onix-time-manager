@@ -1,7 +1,8 @@
 <template lang="pug">
-header-component
-action-bar
-footer-component
+.popup
+  header-component
+  action-bar
+  footer-component
 </template>
 
 <script lang="ts" setup>
@@ -11,8 +12,10 @@ import FooterComponent from "@/components/popup/FooterComponent.vue";
 </script>
 
 <style lang="scss">
-#popup {
+.popup {
   width: 425px;
+  height: 600px;
+  overflow: hidden;
 }
 #app {
   margin: 0;
