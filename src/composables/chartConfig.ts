@@ -16,15 +16,16 @@ chrome.storage.local.get(["pages"], (result) => {
 });
 
 export const data = computed(() => {
+  const timeSpentArray = topTasks.value.map((task: any) => task.timeSpent);
+  const labelsArray = topTasks.value.map(
+    (task: any) => `${task.url} ${task.visited} visits`
+  );
   return {
-    labels: labels,
+    labels: labelsArray,
     datasets: [
       {
         label: "Time Spent",
-        data: [
-          ...topTasks.value.map((task: any) => task.timeSpent),
-          otherValue.value,
-        ],
+        data: timeSpentArray,
         backgroundColor: colors,
         borderRadius: 10,
         borderWidth: 0.5,
@@ -45,6 +46,81 @@ export const colors = [
   "#69E256",
 ];
 
+const getOrCreateTooltip = (chart: {
+  canvas: {
+    parentNode: {
+      querySelector: (arg0: string) => any;
+      appendChild: (arg0: any) => void;
+    };
+  };
+}) => {
+  let tooltipEl = chart.canvas.parentNode.querySelector("div");
+
+  if (!tooltipEl) {
+    tooltipEl = document.createElement("div");
+    tooltipEl.style.background = "rgba(0, 0, 0, 0)";
+    tooltipEl.style.color = "#000000";
+    tooltipEl.style.opacity = 1;
+    tooltipEl.style.pointerEvents = "none";
+    tooltipEl.style.position = "absolute";
+    tooltipEl.style.transform = "translate(-44%, 106px)";
+    tooltipEl.style.transition = "all .1s ease";
+
+    const table = document.createElement("div");
+    table.style.margin = "0px";
+
+    tooltipEl.appendChild(table);
+    chart.canvas.parentNode.appendChild(tooltipEl);
+  }
+
+  return tooltipEl;
+};
+const externalTooltipHandler = (context: { chart: any; tooltip: any }) => {
+  // Tooltip Element
+  const { chart, tooltip } = context;
+  const tooltipEl = getOrCreateTooltip(chart);
+
+  // Hide if no tooltip
+  if (tooltip.opacity === 0) {
+    tooltipEl.style.opacity = 0;
+    return;
+  }
+
+  // Set Text
+  if (tooltip.body) {
+    const titleLines = tooltip.title || [];
+    const bodyLines = tooltip.body.map((b: { lines: any }) => b.lines);
+
+    const tableHead = document.createElement("text");
+
+    titleLines.forEach((title: string) => {
+      const tr = document.createElement("tspan");
+      // tr.style.borderWidth = 0;
+
+      const th = document.createElement("tspan");
+      // th.style.borderWidth = 0;
+      const text = document.createTextNode(title);
+
+      th.appendChild(text);
+      tr.appendChild(th);
+      tableHead.appendChild(tr);
+    });
+
+    const tableRoot = tooltipEl.querySelector("div");
+
+    // Remove old children
+    while (tableRoot.firstChild) {
+      tableRoot.firstChild.remove();
+    }
+    tableRoot.appendChild(tableHead);
+  }
+  tooltipEl.style.opacity = 1;
+  tooltipEl.style.left = "200px";
+  tooltipEl.style.top = "200px";
+  tooltipEl.style.font = tooltip.options.bodyFont.string;
+  tooltipEl.style.padding =
+    tooltip.options.padding + "px " + tooltip.options.padding + "px";
+};
 export const options = {
   responsive: true,
   maintainAspectRatio: false,
@@ -55,7 +131,13 @@ export const options = {
       display: false,
     },
     tooltip: {
-      enabled: false, // <-- this option disables tooltips
+      enabled: false,
+      position: "nearest",
+      external: externalTooltipHandler,
+    } as {
+      enabled: boolean;
+      position?: string;
+      external?: any;
     },
   },
 };

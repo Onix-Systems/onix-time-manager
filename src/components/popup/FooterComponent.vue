@@ -1,21 +1,34 @@
-<template>
-  <div class="footer">
-    <h2>&copy; 2023 Time Manager</h2>
-    <h3>Version 1.0.0</h3>
-  </div>
+<template lang="pug">
+.container 
+  .footer
+    h2 Enjoying the extension?
+    a Rate Us
 </template>
 
 <style scoped lang="scss">
 .footer {
-  /* position: fixed; */
+  margin: 20px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  position: sticky;
   bottom: 0;
-  left: 0;
-  right: 0;
-  background-color: #3395bd;
-  color: #fff;
-  margin-top: 15px;
-  padding: 10px;
-  text-align: center;
-  font-size: 12px;
+  background: #ffff;
+  h2 {
+    font-family: Inter, sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 14px;
+    line-height: 17px;
+    color: #585858;
+  }
+  a {
+    font-family: Inter, sans-serif;
+    font-style: normal;
+    font-weight: 800;
+    font-size: 14px;
+    line-height: 17px;
+    color: #4196db;
+  }
 }
 </style>

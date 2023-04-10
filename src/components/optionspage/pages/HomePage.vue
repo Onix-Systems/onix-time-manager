@@ -7,7 +7,7 @@
     span {{ `${isWeek ? "Today" : "Prev week"} (${sortedData.length} sites)` }}
     span {{ formatTime(totalValue, false) }}
   .home-page--chart
-    dought-chart
+    dought-chart(:disableHover="true")
     history-list
   .home-page--table
     .item(v-for="item in currentItems")
@@ -16,8 +16,8 @@
 </template>
 
 <script setup lang="ts">
-import DoughtChart from "../../common/DoughtChart.vue";
-import HistoryList from "../../common/HistoryList.vue";
+import DoughtChart from "@/components/common/DoughtChart.vue";
+import HistoryList from "@/components/common/HistoryList.vue";
 import { computed } from "vue";
 import {
   isWeek,
