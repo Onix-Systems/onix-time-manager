@@ -1,7 +1,7 @@
 <template lang="pug">
 .activity
   h2 Todays Activity
-  DoughtChart(:chart-data="chartData")
+  dought-chart(:chart-data="chartData")
   .activity__block
     .activity__block_box(v-for="item in currentItems")
       p {{ item }}
@@ -70,7 +70,7 @@ const currentItems = computed(() => {
   }
   &__block {
     width: 385px;
-    height: 89px;
+    height: 85px;
     margin: 26px 0 16px;
     background: #ffffff;
     box-shadow: 0px 2px 4px rgba(0, 0, 0, 0.15);

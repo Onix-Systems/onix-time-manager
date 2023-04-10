@@ -18,7 +18,10 @@ chrome.storage.local.get(["pages"], (result) => {
 export const data = computed(() => {
   const timeSpentArray = topTasks.value.map((task: any) => task.timeSpent);
   const labelsArray = topTasks.value.map(
-    (task: any) => `${task.url} ${task.visited} visits`
+    (task: any) =>
+      `${((task.timeSpent / totalValue.value) * 100).toFixed(0)}%\n ${
+        task.url
+      }\n${task.visited} visits`
   );
   return {
     labels: labelsArray,
@@ -63,7 +66,7 @@ const getOrCreateTooltip = (chart: {
     tooltipEl.style.opacity = 1;
     tooltipEl.style.pointerEvents = "none";
     tooltipEl.style.position = "absolute";
-    tooltipEl.style.transform = "translate(-44%, 106px)";
+    tooltipEl.style.transform = "translate(-44%, 54px)";
     tooltipEl.style.transition = "all .1s ease";
 
     const table = document.createElement("div");
@@ -91,18 +94,20 @@ const externalTooltipHandler = (context: { chart: any; tooltip: any }) => {
     const titleLines = tooltip.title || [];
     const bodyLines = tooltip.body.map((b: { lines: any }) => b.lines);
 
-    const tableHead = document.createElement("text");
+    const tableHead = document.createElement("div");
 
     titleLines.forEach((title: string) => {
-      const tr = document.createElement("tspan");
+      const tr = document.createElement("p");
+      tr.classList.add("my-class");
       // tr.style.borderWidth = 0;
 
-      const th = document.createElement("tspan");
+      // const th = document.createElement("p");
+      // tr.classList.add("my-clas");
       // th.style.borderWidth = 0;
       const text = document.createTextNode(title);
 
-      th.appendChild(text);
-      tr.appendChild(th);
+      tr.appendChild(text);
+      // tr.appendChild(th);
       tableHead.appendChild(tr);
     });
 
@@ -115,7 +120,7 @@ const externalTooltipHandler = (context: { chart: any; tooltip: any }) => {
     tableRoot.appendChild(tableHead);
   }
   tooltipEl.style.opacity = 1;
-  tooltipEl.style.left = "200px";
+  tooltipEl.style.left = "206px";
   tooltipEl.style.top = "200px";
   tooltipEl.style.font = tooltip.options.bodyFont.string;
   tooltipEl.style.padding =

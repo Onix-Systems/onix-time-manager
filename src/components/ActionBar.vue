@@ -54,7 +54,7 @@ updateCurrentUrl();
 .action-bar {
   margin: 0 0 16px 0;
   border-left: 6px solid #e6e6e6;
-  height: 66px;
+  height: 55px;
   padding: 0 0 0 20px;
   display: flex;
   align-items: center;
