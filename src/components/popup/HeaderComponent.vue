@@ -1,9 +1,12 @@
 <template lang="pug">
-.header
-  .header__block
-    img(src="../../assets/logo-time-manager.jpeg")
-    h1 Time manager
-    button(@click="openOptions")
+.container
+  .header
+    .header__block
+      .header__block
+        img(:src="require('@/assets/logo-time-manager.jpg')")
+        h1 Time
+          span Management
+      button(@click="openOptions")
 </template>
 <script>
 import { ref } from "vue";
@@ -33,28 +36,38 @@ export default {
 </script>
 <style scoped lang="scss">
 .header {
-  // width: 350px;
-  background-color: #3395bd;
-  color: #fff;
+  padding: 16px 0;
   &__block {
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: space-between;
+    height: 44px;
   }
   img {
-    margin: 0 15px;
-    width: 45px;
-    border-radius: 62px;
+    width: 44px;
   }
   h1 {
-    font-size: 30px;
+    margin: 0 0 0 19px;
+    font-family: Inter, sans-serif;
+    font-style: normal;
+    font-weight: 900;
+    font-size: 20px;
+    line-height: 24px;
+    color: #000000;
+  }
+  span {
+    font-family: Inter, sans-serif;
+    font-style: normal;
+    font-weight: 500;
+    font-size: 20px;
+    line-height: 24px;
+    margin-left: 6px;
+    color: #000000;
   }
   button {
-    background-image: url("../../assets/settings1.webp");
-    width: 50px;
-    height: 45px;
-    border-radius: 62px;
-    margin-left: 15px;
+    background-image: url("~@/assets/settings.jpg");
+    width: 44px;
+    height: 44px;
     background-size: cover;
     border: none;
     cursor: pointer;

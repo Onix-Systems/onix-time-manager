@@ -1,5 +1,5 @@
 {
-  "name": "Extension Preset",
+  "name": "Time Management",
   "short_name": "time-management",
   "version": "1.0.0",
   "description": "An extension preset",
@@ -12,10 +12,12 @@
     "notifications",
     "nativeMessaging"
   ],
+  
   "background": {
     "service_worker": "background.js"
   },
   "action": {
+    "default_icon": "assets/icon.png",
     "default_title": "Extension Preset",
     "default_popup": "popup.html"
   },
