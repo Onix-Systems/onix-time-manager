@@ -1,9 +1,9 @@
 import { reactive, ref } from "vue";
 
-export const activeTabIndex = ref(0);
+export const activeTabIndex = ref("");
 export const isActive = ref(false);
 
-export const editTabIndex = (index: number) => {
+export const editTabIndex = (index: string) => {
   activeTabIndex.value = index;
 };
 
@@ -31,6 +31,5 @@ export const timeToSeconds = (timeStr: any) => {
   const minute = parseInt(minutes ? minutes : 0);
   const second = parseInt(seconds ? seconds : 0);
 
-  const totalSeconds = hour * 3600 + minute * 60 + second;
-  return totalSeconds;
+  return hour * 3600 + minute * 60 + second;
 };

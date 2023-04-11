@@ -2,6 +2,8 @@
 @import "@/scss/_fonts.scss";
 @import "@/scss/_global.scss";
 
-body {
+html, body, #app, #popup {
+    overflow-x: hidden;
+    overflow-y: auto;
     font-family: Inter, sans-serif;
 }

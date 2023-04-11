@@ -1,26 +1,49 @@
 <template lang="pug">
-section.option-page
+section.option-page(
+  v-if="(settingsData && !settingsData.password) || showContent"
+)
   .option-page--position
     option-header
     .option-page--content
-      template(v-if="0 === activeTabIndex")
+      template(v-if="MenuItemsEnum.Home === activeTabIndex")
         home-page
-      template(v-if="1 === activeTabIndex")
+      template(
+        v-if="MenuItemsEnum.Limits === activeTabIndex && settingsData.limits && settingsData.password"
+      )
         limits-page
-      template(v-if="2 === activeTabIndex")
+      template(v-if="MenuItemsEnum.Blocker === activeTabIndex")
         blocker-page
-      template(v-if="3 === activeTabIndex")
+      template(v-if="MenuItemsEnum.History === activeTabIndex")
         h1 content {{ 3 }}
-      template(v-if="4 === activeTabIndex")
-        h1 content {{ 4 }}
+      template(v-if="MenuItemsEnum.Settings === activeTabIndex")
+        settings-page
+section.password(v-if="settingsData && settingsData.password && !showContent")
+  unlock-content-modal
 </template>
 
 <script setup lang="ts">
-import { activeTabIndex } from "@/composables/OptionsActions";
+import { activeTabIndex, editTabIndex } from "@/composables/OptionsActions";
 import OptionHeader from "@/components/optionspage/OptionHeader.vue";
 import HomePage from "@/components/optionspage/pages/HomePage.vue";
 import LimitsPage from "@/components/optionspage/pages/LimitsPage.vue";
 import BlockerPage from "@/components/optionspage/pages/BlockerPage.vue";
+import SettingsPage from "@/components/optionspage/pages/SettingsPage.vue";
+import { onMounted } from "vue";
+import {
+  settingsData,
+  getBytes,
+  updateSettingsData,
+  showContent,
+} from "@/composables/settingsComp";
+import { MenuItemsEnum } from "@/constants/menuItemsEnum";
+import UnlockContentModal from "@/modals/UnlockContentModal.vue";
+
+onMounted(() => {
+  showContent.value = false;
+  updateSettingsData();
+  getBytes();
+  editTabIndex(MenuItemsEnum.Home);
+});
 </script>
 
 <style scoped lang="scss">

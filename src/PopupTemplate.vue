@@ -9,6 +9,11 @@
 import HeaderComponent from "@/components/popup/HeaderComponent.vue";
 import ActionBar from "@/components/ActionBar.vue";
 import FooterComponent from "@/components/popup/FooterComponent.vue";
+import { onMounted } from "vue";
+import { updateStorage } from "@/composables/chartConfig";
+onMounted(() => {
+  updateStorage();
+});
 </script>
 
 <style lang="scss">

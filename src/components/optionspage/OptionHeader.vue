@@ -1,21 +1,32 @@
 <template lang="pug">
 header.header
-  img.header--logo(src="@/assets/logo.svg")
-  h2.header--text
-    span {{ "Time" }}
-    | {{ "Management" }}
+  .header--logo-section(@click="editTabIndex(MenuItemsEnum.Home)")
+    img.header--logo(src="@/assets/logo.svg")
+    h2.header--text
+      span {{ "Time" }}
+      | {{ "Management" }}
   ul.navigation
     li.navigation-tab(
-      v-for="(item, index) in homeSections",
-      :class="{ active: activeTabIndex === index }",
-      @click="editTabIndex(index)"
+      v-for="item in data",
+      :class="{ active: activeTabIndex === item }",
+      @click="editTabIndex(item)"
     )
       span.navigation-tab--text {{ item }}
 </template>
 
 <script setup lang="ts">
 import { activeTabIndex, editTabIndex } from "@/composables/OptionsActions";
-const homeSections = ["Home", "Limits", "Blocker", "History", "Settings"];
+import { computed } from "vue";
+import { settingsData } from "@/composables/settingsComp";
+import { MenuItemsEnum } from "@/constants/menuItemsEnum";
+const data = computed(() => {
+  const itemsKeys = Object.keys(MenuItemsEnum);
+  if (!settingsData.value.limits || !settingsData.value.password) {
+    return itemsKeys.slice(0, 1).concat(itemsKeys.slice(2));
+  } else {
+    return itemsKeys;
+  }
+});
 </script>
 
 <style scoped lang="scss">
@@ -30,6 +41,11 @@ const homeSections = ["Home", "Limits", "Blocker", "History", "Settings"];
     height: 100%;
     width: 46px;
     margin-right: 13px;
+    &-section {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+    }
   }
   &--text {
     display: flex;
