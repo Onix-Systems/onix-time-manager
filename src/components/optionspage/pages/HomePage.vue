@@ -18,7 +18,7 @@
 <script setup lang="ts">
 import DoughtChart from "@/components/common/DoughtChart.vue";
 import HistoryList from "@/components/common/HistoryList.vue";
-import { computed } from "vue";
+import { computed, onMounted } from "vue";
 import {
   isWeek,
   editWeek,
@@ -27,6 +27,7 @@ import {
   sortedData,
   totalValue,
   formatTime,
+  updateStorage,
 } from "@/composables/chartConfig";
 
 const itemsDay = [
@@ -36,6 +37,11 @@ const itemsDay = [
   "Last visit",
   "First visit",
 ];
+
+onMounted(() => {
+  updateStorage();
+});
+
 const activeItem = computed(() => topTasks.value[activeSite.value]);
 const activeItemOneDay = computed(() => {
   if (activeItem.value) {

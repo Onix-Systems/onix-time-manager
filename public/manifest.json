@@ -6,16 +6,23 @@
   "manifest_version": 3,
   "permissions": [
     "storage",
+    "idle",
     "tabs",
     "history",
     "alarms",
     "notifications",
     "nativeMessaging"
   ],
-  
+
   "background": {
     "service_worker": "background.js"
   },
+  "content_scripts": [
+    {
+      "matches": ["<all_urls>"],
+      "js": ["content.js"]
+    }
+  ],
   "action": {
     "default_icon": "assets/icon.png",
     "default_title": "Extension Preset",

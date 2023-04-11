@@ -56,7 +56,7 @@ import {
   modalTime,
   resetModalTime,
 } from "@/composables/OptionsActions";
-import TimeModal from "@/components/optionspage/TimeModal.vue";
+import TimeModal from "@/modals/TimeModal.vue";
 import { formatTime, topTasks } from "@/composables/chartConfig";
 import { useClickOutside } from "@/composables/clickOutside";
 
@@ -95,6 +95,7 @@ const updateHistory = () => {
 };
 const updateTime = (index: number, newTime: number) => {
   history.value[index].blockTimeSeconds = newTime;
+  history.value[index].blockTime = Math.floor(Date.now() / 1000) + newTime;
   chrome.storage.local.set(
     {
       limitsSites: [...history.value],

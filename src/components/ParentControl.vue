@@ -1,54 +1,58 @@
 <template lang="pug">
 .parent-control
   .container
-    .parent-control__block(v-if="!showSuccess")
-      h2 Parent control
+    .parent-control__block(v-if="!showSuccess || isEnterPassword")
+      h2(v-if="!isSettings && !isEnterPassword") Parent control
+      h2(v-if="isSettings") Set password
+      h2(v-if="isEnterPassword") Enter password
       .block-inputs
         input(
           v-model="input1",
           maxlength="1",
           ref="input1Ref",
           @input="handleInput",
-          :class="{ invalid: showErrorMessage && isInvalid(input1) }"
+          :class="{ invalid: (showErrorMessage && isInvalid(input1)) || errorPassword }"
         )
         input(
           v-model="input2",
           maxlength="1",
           ref="input2Ref",
           @input="handleInput",
-          :class="{ invalid: showErrorMessage && isInvalid(input2) }"
+          :class="{ invalid: (showErrorMessage && isInvalid(input2)) || errorPassword }"
         )
         input#input3(
           v-model="input3",
           maxlength="1",
           ref="input3Ref",
           @input="handleInput",
-          :class="{ invalid: showErrorMessage && isInvalid(input3) }"
+          :class="{ invalid: (showErrorMessage && isInvalid(input3)) || errorPassword }"
         )
         input(
           v-model="input4",
           maxlength="1",
           ref="input4Ref",
           @input="handleInput",
-          :class="{ invalid: showErrorMessage && isInvalid(input4) }"
+          :class="{ invalid: (showErrorMessage && isInvalid(input4)) || errorPassword }"
         )
         input(
           v-model="input5",
           maxlength="1",
           ref="input5Ref",
           @input="handleInput",
-          :class="{ invalid: showErrorMessage && isInvalid(input5) }"
+          :class="{ invalid: (showErrorMessage && isInvalid(input5)) || errorPassword }"
         )
         input(
           v-model="input6",
           maxlength="1",
           ref="input6Ref",
           @input="handleInput",
-          :class="{ invalid: showErrorMessage && isInvalid(input6) }"
+          :class="{ invalid: (showErrorMessage && isInvalid(input6)) || errorPassword }"
         )
         .error-message(v-if="showErrorMessage") Invalid password
       button(type="button", @click="validateInputs") Submit
-    .parent-control__success(v-else)
+    .parent-control__success(
+      v-else-if="showSuccess && !isSettings && !isEnterPassword"
+    )
       .parent-control
         .parent-control__block
           h2 Refresh this page
@@ -57,7 +61,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, defineProps, defineEmits, computed } from "vue";
+import { settingsData } from "@/composables/settingsComp";
+
+const props = defineProps({
+  isSettings: { type: Boolean, default: false },
+  isEnterPassword: { type: Boolean, default: false },
+});
+const emit = defineEmits(["setPassword"]);
 
 const input1 = ref("");
 const input2 = ref("");
@@ -67,9 +78,23 @@ const input5 = ref("");
 const input6 = ref("");
 const showSuccess = ref(false);
 const showErrorMessage = ref(false);
-const isInvalid = (input) => {
+const isInvalid = (input: string) => {
   return input === "" || !/^\d+$/.test(input);
 };
+
+const inputs = computed(() => {
+  return [
+    input1.value,
+    input2.value,
+    input3.value,
+    input4.value,
+    input5.value,
+    input6.value,
+  ].join("");
+});
+
+const errorPassword = ref(false);
+
 function validateInputs() {
   showErrorMessage.value = true;
   const errorMessage = document.querySelector(".error-message");
@@ -86,10 +111,19 @@ function validateInputs() {
     }
     return false;
   }
+  if (props.isEnterPassword && settingsData.value.code !== inputs.value) {
+    if (errorMessage) {
+      errorMessage.textContent = "Invalid password";
+    }
+    errorPassword.value = true;
+    return false;
+  }
   if (errorMessage) {
     errorMessage.textContent = "";
   }
   showSuccess.value = true;
+  errorPassword.value = false;
+  emit("setPassword", inputs.value);
 }
 
 function handleInput(event: { target: any }) {

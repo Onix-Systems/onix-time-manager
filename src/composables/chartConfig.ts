@@ -1,4 +1,4 @@
-import { computed, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 export const storage = ref([]);
 
 export const isWeek = ref(0);
@@ -11,9 +11,11 @@ export const editWeek = (index: number) => {
   isWeek.value = index;
 };
 
-chrome.storage.local.get(["pages"], (result) => {
-  storage.value = result.pages;
-});
+export const updateStorage = () => {
+  chrome.storage.local.get(["pages"], (result) => {
+    storage.value = result.pages;
+  });
+};
 
 export const data = computed(() => {
   const timeSpentArray = topTasks.value.map((task: any) => task.timeSpent);
@@ -192,29 +194,33 @@ export const getPercent = (timeSpent: number) => {
 export const sevenDays: any = ref([]);
 // Sort the data by timeSpent
 export const sortedData = computed(() => {
-  const today = new Date().toLocaleDateString();
-  const todayPage = storage.value.filter(
-    (page: any) => page.history[0].day === today
-  );
-
-  for (let i = 0; i < 7; i++) {
-    sevenDays.value.push(
-      new Date(
-        new Date().getTime() - i * 24 * 60 * 60 * 1000
-      ).toLocaleDateString()
+  if (storage.value && storage.value.length) {
+    const today = new Date().toLocaleDateString();
+    const todayPage = storage.value.filter(
+      (page: any) => page.history[0].day === today
     );
-  }
-  const weekPage: any = storage.value.filter((page: any) => {
-    return page.history.filter((item: any, index: number) => {
-      if (!sevenDays.value.includes(item.day)) {
-        page.history.splice(index, 1);
-      }
-      return sevenDays.value.includes(item.day);
-    });
-  });
-  const data = isWeek.value ? todayPage : weekPage;
 
-  return data.sort((a: any, b: any) => b.timeSpent - a.timeSpent);
+    for (let i = 0; i < 7; i++) {
+      sevenDays.value.push(
+        new Date(
+          new Date().getTime() - i * 24 * 60 * 60 * 1000
+        ).toLocaleDateString()
+      );
+    }
+    const weekPage: any = storage.value.filter((page: any) => {
+      return page.history.filter((item: any, index: number) => {
+        if (!sevenDays.value.includes(item.day)) {
+          page.history.splice(index, 1);
+        }
+        return sevenDays.value.includes(item.day);
+      });
+    });
+    const data = isWeek.value ? todayPage : weekPage;
+
+    return data.sort((a: any, b: any) => b.timeSpent - a.timeSpent);
+  } else {
+    return [];
+  }
 });
 
 // Calculate the total value
