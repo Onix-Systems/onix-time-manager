@@ -240,8 +240,7 @@ function refreshPage() {
         width: 8px;
         height: 8px;
         margin-left: 9px;
-        background-repeat: no-repeat;
-        background: url("~@/assets/minus.svg");
+        background: url("@/assets/minus.svg") no-repeat;
       }
       input.invalid {
         border-color: #ea394b;

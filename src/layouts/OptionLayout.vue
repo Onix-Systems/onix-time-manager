@@ -14,7 +14,7 @@ section.option-page(
       template(v-if="MenuItemsEnum.Blocker === activeTabIndex")
         blocker-page
       template(v-if="MenuItemsEnum.History === activeTabIndex")
-        h1 content {{ 3 }}
+        history-component
       template(v-if="MenuItemsEnum.Settings === activeTabIndex")
         settings-page
 section.password(v-if="settingsData && settingsData.password && !showContent")
@@ -22,21 +22,26 @@ section.password(v-if="settingsData && settingsData.password && !showContent")
 </template>
 
 <script setup lang="ts">
-import { activeTabIndex, editTabIndex } from "@/composables/OptionsActions";
+import { onMounted } from "vue";
+
 import OptionHeader from "@/components/optionspage/OptionHeader.vue";
 import HomePage from "@/components/optionspage/pages/HomePage.vue";
 import LimitsPage from "@/components/optionspage/pages/LimitsPage.vue";
 import BlockerPage from "@/components/optionspage/pages/BlockerPage.vue";
 import SettingsPage from "@/components/optionspage/pages/SettingsPage.vue";
-import { onMounted } from "vue";
+import HistoryComponent from "@/components/optionspage/pages/HistoryComponent.vue";
+
+import UnlockContentModal from "@/modals/UnlockContentModal.vue";
+
+import { activeTabIndex, editTabIndex } from "@/composables/OptionsActions";
 import {
   settingsData,
   getBytes,
   updateSettingsData,
   showContent,
 } from "@/composables/settingsComp";
+
 import { MenuItemsEnum } from "@/constants/menuItemsEnum";
-import UnlockContentModal from "@/modals/UnlockContentModal.vue";
 
 onMounted(() => {
   showContent.value = false;

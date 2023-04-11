@@ -65,7 +65,7 @@ export default {
     color: #000000;
   }
   button {
-    background-image: url("~@/assets/settings.jpg");
+    background-image: url("@/assets/settings.jpg");
     width: 44px;
     height: 44px;
     background-size: cover;
