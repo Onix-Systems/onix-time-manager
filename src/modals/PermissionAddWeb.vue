@@ -2,39 +2,53 @@
 main-modal
   template(v-slot:content)
     .content
-      .content--header
-        .title {{ "Add a website" }}
-        button.close(@click="close")
-      .content--actions
-        input.content--actions-input(
-          v-model="sitePermissionData.domain",
-          :class="{ error: !errorUrl }"
-        )
-        .content--actions-input-error {{ !errorUrl ? "Please check validity of initial url" : "" }}
-        .content--actions-lists
-          button.content--actions-whitelist(
-            :class="isActive(PermissionList.whitelist)",
-            @click="updatePermissionDataList(PermissionList.whitelist)"
-          ) {{ PermissionList.whitelist }}
-          button.content--actions-blacklist(
-            :class="isActive(PermissionList.blacklist)",
-            @click="updatePermissionDataList(PermissionList.blacklist)"
-          ) {{ PermissionList.blacklist }}
+      template(v-if="!isDelete")
+        .content--header
+          .title {{ "Add a website" }}
+          button.close(@click="close")
+        .content--actions
+          input.content--actions-input(
+            v-model="sitePermissionData.domain",
+            :class="{ error: !errorUrl }"
+          )
+          .content--actions-input-error {{ !errorUrl ? "Please check validity of initial url" : "" }}
+          .content--actions-lists
+            button.content--actions-whitelist(
+              :class="isActive(PermissionList.whitelist)",
+              @click="updatePermissionDataList(PermissionList.whitelist)"
+            ) {{ PermissionList.whitelist }}
+            button.content--actions-blacklist(
+              :class="isActive(PermissionList.blacklist)",
+              @click="updatePermissionDataList(PermissionList.blacklist)"
+            ) {{ PermissionList.blacklist }}
+      template(v-else)
+        .content--header
+          .title
+          button.close(@click="close")
+        .content--actions.delete
+          h3.title Are you sure you want to delete this website?
+          p.subtitle After deleting you can’t block the site through the one of the list.
       .content--footer
         button.content--footer-btn.cancel(@click="close") {{ "Cancel" }}
         button.content--footer-btn.save(
           @click="save",
-          :class="{ disable: !sitePermissionData.domain }"
-        ) {{ "Add" }}
+          :class="{ disable: !isDelete && !sitePermissionData.domain }"
+        ) {{ !isDelete ? "Add" : "Delete" }}
 </template>
 
 <script setup lang="ts">
-import { defineEmits, onMounted, ref } from "vue";
+import { defineProps, defineEmits, onMounted, ref } from "vue";
 import MainModal from "@/modals/MainModal.vue";
 import { PermissionList } from "@/constants/PermissionList";
 import { editSitesInList, permissionData } from "@/composables/permissionComp";
 
-const emit = defineEmits(["close"]);
+const emit = defineEmits(["close", "delete"]);
+const props = defineProps({
+  isDelete: {
+    type: Boolean,
+    default: false,
+  },
+});
 
 const defaultData = {
   list: PermissionList[permissionData.value.permission],
@@ -70,17 +84,22 @@ const close = () => {
   emit("close");
 };
 const save = () => {
-  errorUrl.value = isValidUrl(sitePermissionData.value.domain);
-  if (sitePermissionData.value.domain && errorUrl.value) {
-    let settingsList = {
-      ...permissionData.value[sitePermissionData.value.list],
-    };
-    const copyWebInfo = { ...sitePermissionData.value };
-    copyWebInfo.domain = `https://${new URL(copyWebInfo.domain).hostname}/`;
-    settingsList.list = Object.assign(settingsList.list, {
-      [copyWebInfo.domain]: copyWebInfo.domain,
-    });
-    editSitesInList(sitePermissionData.value.list, settingsList.list);
+  if (!props.isDelete) {
+    errorUrl.value = isValidUrl(sitePermissionData.value.domain);
+    if (sitePermissionData.value.domain && errorUrl.value) {
+      let settingsList = {
+        ...permissionData.value[sitePermissionData.value.list],
+      };
+      const copyWebInfo = { ...sitePermissionData.value };
+      copyWebInfo.domain = `https://${new URL(copyWebInfo.domain).hostname}/`;
+      settingsList.list = Object.assign(settingsList.list, {
+        [copyWebInfo.domain]: copyWebInfo.domain,
+      });
+      editSitesInList(sitePermissionData.value.list, settingsList.list);
+      close();
+    }
+  } else {
+    emit("delete");
     close();
   }
 };
@@ -178,6 +197,35 @@ html {
       display: flex;
       gap: 10px;
       margin-bottom: 29px;
+    }
+    &.delete {
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      gap: 8px;
+
+      margin: 26px 0 48px 0;
+
+      .title {
+        font-style: normal;
+        font-weight: 500;
+        font-size: 22px;
+        line-height: 27px;
+        text-align: center;
+        color: var(--txt-main-darkblue);
+      }
+      .subtitle {
+        max-width: 401px;
+
+        white-space: break-spaces;
+        font-style: normal;
+        font-weight: 400;
+        font-size: 16px;
+        line-height: 19px;
+        text-align: center;
+        color: var(--txt-dark-grey);
+      }
     }
   }
   &--footer {

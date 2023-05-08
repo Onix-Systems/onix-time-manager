@@ -21,7 +21,7 @@
     .sites--item-activity(v-if="item.currentSession && isShowCurrentSession")
       .item-block
         .item-block--title {{ "Current Session" }}
-        .item-block--info {{ formatDuration(item.currentSession) }}
+        .item-block--info {{ formatDuration(currentSessionData.time || item.currentSession) }}
       .item-block
         .item-block--title {{ "Longest Session" }}
         .item-block--info(
@@ -33,19 +33,36 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps } from "vue";
+import { defineProps, onMounted, onUnmounted, ref } from "vue";
 import {
   filteringData,
   formatDuration,
   getPercent,
 } from "@/composables/popup/pages/trackerPageActions";
 import { selectSite } from "@/composables/common/chartBar";
+import { ObjectInterface } from "@/types/dataInterfaces";
 const props = defineProps({
   isShowCurrentSession: {
     type: Boolean,
     default: true,
   },
 });
+onMounted(() => {
+  chrome.runtime.onMessage.addListener(handleRuntimeMessage);
+});
+onUnmounted(() => {
+  chrome.runtime.onMessage.removeListener(handleRuntimeMessage);
+});
+
+const currentSessionData = ref({} as ObjectInterface);
+
+const handleRuntimeMessage = (request: any, sender: any) => {
+  const currentSession = "currentSession";
+  if (request.message === currentSession) {
+    currentSessionData.value.domain = request.siteUrl;
+    currentSessionData.value.time = request.time;
+  }
+};
 </script>
 
 <style scoped lang="scss">
