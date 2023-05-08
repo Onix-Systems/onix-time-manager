@@ -4,6 +4,5 @@ module.exports = defineConfig({
   pages: {
     index: "src/main.ts",
     popup: "src/main.ts",
-    blockPage: "src/main.ts",
   },
 });

@@ -48,7 +48,6 @@ export default {
   }
   h1 {
     margin: 0 0 0 19px;
-    font-family: Inter, sans-serif;
     font-style: normal;
     font-weight: 900;
     font-size: 20px;
@@ -56,7 +55,6 @@ export default {
     color: #000000;
   }
   span {
-    font-family: Inter, sans-serif;
     font-style: normal;
     font-weight: 500;
     font-size: 20px;

@@ -20,25 +20,33 @@ const toggleSwitch = () => {
 .switch {
   position: relative;
   display: inline-block;
-  width: 44px;
-  height: 28px;
+  width: 54px;
+  height: 24px;
 
-  input {
+  input[type="checkbox"] {
     opacity: 0;
     width: 0;
     height: 0;
+    margin: 0;
+    border: none;
+    &:checked {
+      &:before {
+        display: none;
+      }
+    }
   }
 
   .slider {
     position: absolute;
     cursor: pointer;
-    top: 11px;
+    top: 0;
     left: 0;
     right: 0;
     bottom: 0;
-    height: 9px;
-    background: #e6e6e6;
-    border-radius: 4px;
+    height: 24px;
+    width: 54px;
+    background: var(--bttn-active-lightblue);
+    border-radius: 15px;
     transition: 0.4s;
 
     &-before {
@@ -46,30 +54,19 @@ const toggleSwitch = () => {
       display: flex;
       align-items: center;
       justify-content: center;
-      height: 28px;
-      width: 28px;
-      left: 0;
-      bottom: -8px;
-      background-color: #585858;
+      height: 16px;
+      width: 16px;
+      left: 4px;
+      bottom: 4px;
+      background-color: var(--white);
       border-radius: 50%;
       transition: 0.4s;
-      &::before {
-        content: "";
-        display: block;
-        height: 14px;
-        width: 14px;
-        background-color: #4b4b4b;
-        border-radius: 50%;
-      }
     }
 
     &.checked {
       .slider-before {
-        transform: translateX(19px);
-        background-color: #4196db;
-        &::before {
-          background-color: #3a87c6;
-        }
+        transform: translateX(30px);
+        background-color: var(--txt-dark-blue);
       }
     }
   }

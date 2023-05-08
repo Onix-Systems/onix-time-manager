@@ -15,7 +15,7 @@ header.header
 </template>
 
 <script setup lang="ts">
-import { activeTabIndex, editTabIndex } from "@/composables/OptionsActions";
+import { activeTabIndex, editTabIndex } from "@/composables/optionsActions";
 import { computed } from "vue";
 import { settingsData } from "@/composables/settingsComp";
 import { MenuItemsEnum } from "@/constants/menuItemsEnum";
@@ -70,7 +70,6 @@ const data = computed(() => {
       display: flex;
       align-items: center;
 
-      font-family: Inter, sans-serif;
       font-style: normal;
       font-weight: 500;
       font-size: 20px;

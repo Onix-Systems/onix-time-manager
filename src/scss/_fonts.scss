@@ -1,15 +1,84 @@
+// Nunito font
+
 @font-face {
-    font-family: 'Inter';
-    src: local('Inter Regular'), local('InterRegular'), url('../fonts/Inter-Regular.ttf') format('truetype');
+    font-family: 'Nunito';
+    src: local('Nunito Regular'), local('NunitoRegular'), url('../fonts/Nunito-Regular.ttf') format('truetype');
     font-weight: 400;
     font-style: normal;
     font-display: swap;
 }
 
 @font-face {
-    font-family: 'Inter';
-    src: local('Inter Medium'), local('InterMedium'), url('../fonts/Inter-Medium.ttf') format('truetype');
+    font-family: 'Nunito';
+    src: local('Nunito Medium'), local('NunitoMedium'), url('../fonts/Nunito-Medium.ttf') format('truetype');
     font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Nunito';
+    src: local('Nunito SemiBold'), local('NunitoSemiBold'), url('../fonts/Nunito-SemiBold.ttf') format('truetype');
+    font-weight: 600;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Nunito';
+    src: local('Nunito Bold'), local('NunitoBold'), url('../fonts/Nunito-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Nunito';
+    src: local('Nunito ExtraBold'), local('NunitoExtraBold'), url('../fonts/Nunito-ExtraBold.ttf') format('truetype');
+    font-weight: 800;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Nunito';
+    src: local('Nunito Black'), local('NunitoBlack'), url('../fonts/Nunito-Black.ttf') format('truetype');
+    font-weight: 900;
+    font-style: normal;
+    font-display: swap;
+}
+
+
+// Roboto font
+
+@font-face {
+    font-family: 'Roboto';
+    src: local('Roboto Regular'), local('RobotoRegular'), url('../fonts/Roboto-Regular.ttf') format('truetype');
+    font-weight: 400;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Roboto';
+    src: local('Roboto Medium'), local('RobotoMedium'), url('../fonts/Roboto-Medium.ttf') format('truetype');
+    font-weight: 500;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Roboto';
+    src: local('Roboto Bold'), local('RobotoBold'), url('../fonts/Roboto-Bold.ttf') format('truetype');
+    font-weight: 700;
+    font-style: normal;
+    font-display: swap;
+}
+
+@font-face {
+    font-family: 'Roboto';
+    src: local('Roboto Black'), local('RobotoBlack'), url('../fonts/Roboto-Black.ttf') format('truetype');
+    font-weight: 900;
     font-style: normal;
     font-display: swap;
 }
@@ -24,25 +93,8 @@
 
 @font-face {
     font-family: 'Inter';
-    src: local('Inter Bold'), local('InterBold'), url('../fonts/Inter-Bold.ttf') format('truetype');
-    font-weight: 700;
+    src: local('Inter Medium'), local('InterMedium'), url('../fonts/Inter-Medium.ttf') format('truetype');
+    font-weight: 500;
     font-style: normal;
     font-display: swap;
 }
-
-@font-face {
-    font-family: 'Inter';
-    src: local('Inter ExtraBold'), local('InterExtraBold'), url('../fonts/Inter-ExtraBold.ttf') format('truetype');
-    font-weight: 800;
-    font-style: normal;
-    font-display: swap;
-}
-
-@font-face {
-    font-family: 'Inter';
-    src: local('Inter Black'), local('InterBlack'), url('../fonts/Inter-Black.ttf') format('truetype');
-    font-weight: 900;
-    font-style: normal;
-    font-display: swap;
-}
-

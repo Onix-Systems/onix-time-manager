@@ -1,7 +1,7 @@
 <template lang="pug">
 teleport(to="body")
   .background
-    .close(@click="editShowSetPassword()")
+    .close(@click="showSetPassword = false")
     parent-control(:isSettings="true", @setPassword="save($event)")
 </template>
 
@@ -12,6 +12,8 @@ import {
   setSettings,
   settingsData,
   updateSettings,
+  showSetPassword,
+  showContent,
 } from "@/composables/settingsComp";
 const save = (event: any) => {
   if (event) {
@@ -21,6 +23,7 @@ const save = (event: any) => {
       editShowSetPassword();
       updateSettings("password", true);
     }
+    showContent.value = true;
     updateSettings("code", event);
     setSettings();
   }

@@ -1,0 +1,10 @@
+<svg width="206" height="170" viewBox="0 0 206 170" fill="none" xmlns="http://www.w3.org/2000/svg">
+<rect x="60.474" y="11.7552" width="104.219" height="15.1042" rx="7.55208" stroke="#D7E1FC" stroke-width="1.51042"/>
+<rect x="60.474" y="57.0677" width="104.219" height="15.1042" rx="7.55208" stroke="#D7E1FC" stroke-width="1.51042"/>
+<rect x="60.474" y="102.38" width="104.219" height="15.1042" rx="7.55208" stroke="#D7E1FC" stroke-width="1.51042"/>
+<rect x="28.7552" y="102.38" width="15.1042" height="15.1042" rx="7.55208" fill="#EBEDF8" stroke="#EBF0FE" stroke-width="1.51042"/>
+<rect x="28.7552" y="57.0677" width="15.1042" height="15.1042" rx="7.55208" fill="#EBEDF8" stroke="#EBF0FE" stroke-width="1.51042"/>
+<rect x="28.7552" y="11.7552" width="15.1042" height="15.1042" rx="7.55208" fill="#EBEDF8" stroke="#EBF0FE" stroke-width="1.51042"/>
+<ellipse cx="103" cy="154.5" rx="100" ry="4.5" fill="#EBF0FE"/>
+<path d="M122.875 118.998H166.625C176.29 118.998 184.125 111.163 184.125 101.498V101.498C184.125 91.8331 176.29 83.998 166.625 83.998H122.875M122.875 118.998L140.375 132.123M122.875 118.998L140.375 105.873" stroke="#9BB4F8" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
