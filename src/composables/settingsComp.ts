@@ -6,6 +6,8 @@ const initialData: any = {
   password: false,
   code: "",
   getNotification: false,
+  notification:
+    "The limit time of using this site is ending. If you want to change the limit time, change it on the setting page",
   tracking: false,
   limitsMassageTime: { hour: 0, minute: 5, second: 0 },
   trackingActivityTime: { hour: 0, minute: 5, second: 0 },

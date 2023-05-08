@@ -15,7 +15,6 @@
   bottom: 0;
   background: #ffff;
   h2 {
-    font-family: Inter, sans-serif;
     font-style: normal;
     font-weight: 500;
     font-size: 14px;
@@ -23,7 +22,6 @@
     color: #585858;
   }
   a {
-    font-family: Inter, sans-serif;
     font-style: normal;
     font-weight: 800;
     font-size: 14px;

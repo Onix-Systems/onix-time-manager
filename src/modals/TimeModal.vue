@@ -38,13 +38,14 @@ import {
   editTime,
   modalTime,
   timeToSeconds,
-} from "@/composables/OptionsActions";
+} from "@/composables/optionsActions";
 import { computed, ref, watch, defineProps, defineEmits } from "vue";
 
 const props = defineProps({
   show: Boolean,
   itemModal: { type: Boolean, default: false },
   itemTime: Number,
+  itemTimeLimits: Number,
 });
 
 const emit = defineEmits(["cancel", "updateTime"]);

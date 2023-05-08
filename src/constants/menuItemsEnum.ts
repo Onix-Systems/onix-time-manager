@@ -1,7 +1,8 @@
 export enum MenuItemsEnum {
-  Home = "Home",
+  Tracking = "Tracking",
+  Permissions = "Permissions",
   Limits = "Limits",
-  Blocker = "Blocker",
+  Redirect = "Redirect",
   History = "History",
   Settings = "Settings",
 }

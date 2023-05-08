@@ -61,7 +61,6 @@ const currentItems = computed(() => {
   background: #f7f7f7;
   padding: 16px 20px;
   h2 {
-    font-family: Inter, sans-serif;
     font-style: normal;
     font-weight: 700;
     font-size: 18px;
@@ -87,7 +86,6 @@ const currentItems = computed(() => {
     }
     p {
       text-align: center;
-      font-family: Inter, sans-serif;
       font-style: normal;
       font-weight: 500;
       font-size: 12px;

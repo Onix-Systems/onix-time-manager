@@ -15,7 +15,6 @@ import { computed } from "@vue/reactivity";
 ChartJS.register(ArcElement, Tooltip, Legend);
 const props = defineProps(["disableHover"]);
 const labelsArray = computed(() => {
-  console.log(labelsArray);
   return topTasks.value.map((task: any) => task);
 });
 if (props.disableHover) {
@@ -30,7 +29,6 @@ if (props.disableHover) {
   height: 220px;
 }
 .my-class {
-  font-family: Inter, sans-serif;
   font-style: normal;
   font-weight: 600;
   font-size: 11px;

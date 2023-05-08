@@ -1,9 +1,17 @@
 @import "@/scss/reset.scss";
+@import "@/scss/_colors.scss";
 @import "@/scss/_fonts.scss";
 @import "@/scss/_global.scss";
+@import "@/scss/common.scss";
 
 html, body, #app, #popup {
     overflow-x: hidden;
     overflow-y: auto;
-    font-family: Inter, sans-serif;
+    color: var(--txt-main-darkblue);
+    &, button, textarea {
+            font-family: Nunito, sans-serif;
+    }
+}
+#app {
+  overflow: hidden;
 }

@@ -1,0 +1,69 @@
+.content {
+  box-sizing: border-box;
+  padding-top: 114px;
+  width: 100%;
+  height: 100vh;
+  background: white;
+  font-family: 'Inter', sans-serif;
+}
+
+.content--section {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.content--title {
+  font-style: normal;
+  font-weight: 500;
+  font-size: 80px;
+  line-height: 97px;
+  text-align: center;
+  color: #0A0C2C;
+}
+
+.content--image {
+  width: 186px;
+  height: 186px;
+  background: url("@/assets/ad-block.svg"), no-repeat;
+  background-size: cover;
+}
+
+.content--text {
+  margin-bottom: 24px;
+  max-width: 632px;
+  font-family: 'Inter', sans-serif;
+  font-style: normal;
+  font-weight: 400;
+  font-size: 24px;
+  line-height: 29px;
+  text-align: center;
+  color: #A9A9A9;
+}
+
+.content--redirect {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 199px;
+  height: 48px;
+  font-family: 'Inter', sans-serif;
+  font-style: normal;
+  font-weight: 500;
+  font-size: 16px;
+  line-height: 19px;
+  text-decoration: none;
+  color: #F2F2F2;
+  background: #386AF1;
+  border-radius: 6px;
+}
+
+a, a:active, a:visited, a:hover {
+  color: #F2F2F2;
+  text-decoration: none;
+}
+
+.content--text span {
+  color: #7E7E7E;
+}

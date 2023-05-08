@@ -1,50 +1,43 @@
 <template lang="pug">
-.date-picker(v-if="isOpen")
-  .date-picker--title {{ "Select date" }}
-  .date-picker--header
-    .date-picker--year
-      button.date-picker--arrow-prev(
-        v-if="(datePickerGroup && prevMonth) || !datePickerGroup",
-        @click="datePrev(currentDate, false)"
-      )
-      .current-date
-        .current-date--year {{ currentDate.year }}
-      button.date-picker--arrow-next(
-        v-if="(datePickerGroup && nextMonth) || !datePickerGroup",
-        @click="dateNext(currentDate, false)"
-      )
-    .date-picker--month
-      button.date-picker--arrow-prev(
-        v-if="(datePickerGroup && prevMonth) || !datePickerGroup",
-        @click="datePrev(currentDate, true)"
-      )
-      .current-date
-        .current-date--month {{ months[currentDate.month] }}
-      button.date-picker--arrow-next(
-        v-if="(datePickerGroup && nextMonth) || !datePickerGroup",
-        @click="dateNext(currentDate, true)"
-      )
-  .date-picker--content
-    .date-picker--week-days
-      .date-picker--week-day(v-for="weekDay in days") {{ weekDay[0] }}
-    .date-picker--days-content
-      .date-picker--day-number-prev(
-        v-for="day in countDaysPrev",
-        :class="{ disable: true }"
-      ) {{ day }}
-      .date-picker--day-number(
-        v-for="day in countDaysCurrent",
-        @click="useDataRange(day, currentDate)"
-      )
-        .date-picker--day-number-useble(:class="isUseRange(day)")
-          span {{ day }}
-      .date-picker--day-number-next(
-        v-for="day in countDaysNext",
-        :class="{ disable: true }"
-      ) {{ day }}
-  .date-picker--btns
-    button.cancel(@click="cancel") {{ "Cancel" }}
-    button.save(@click="save") {{ "Save" }}
+.date-picker
+  .date-picker-padding
+    .date-picker-dates
+      .date-picker--header
+        .date-picker--year
+          .current-date
+            .current-date--info {{ `${months[currentDate.month]} ${currentDate.year}` }}
+          .date-picker--actions
+            button.date-picker--arrow-prev(
+              v-if="(datePickerGroup && prevMonth) || !datePickerGroup",
+              @click="datePrev(currentDate)"
+            )
+            button.date-picker--arrow-next(
+              v-if="(datePickerGroup && nextMonth) || !datePickerGroup",
+              @click="dateNext(currentDate)"
+            )
+      .date-picker--content
+        .date-picker--week-days
+          .date-picker--week-day(v-for="weekDay in days") {{ weekDay[0] }}
+        .date-picker--days-content
+          template(v-if="false")
+            .date-picker--day-number-prev(
+              v-for="day in countDaysPrev",
+              :class="{ disable: true }"
+            ) {{ day }}
+          .date-picker--day-number(
+            v-for="day in countDaysCurrent",
+            @click="useDataRange(day, currentDate)"
+          )
+            .date-picker--day-number-useble(:class="isUseRange(day)")
+              span {{ day }}
+          template(v-if="false")
+            .date-picker--day-number-next(
+              v-for="day in countDaysNext",
+              :class="{ disable: true }"
+            ) {{ day }}
+    .date-picker--btns
+      button.cancel(@click="cancel") {{ "Cancel" }}
+      button.save(@click="save") {{ "OK" }}
 </template>
 
 <script lang="ts" setup>
@@ -58,15 +51,24 @@ import {
 } from "vue";
 import { DataPickerDate, DataPickerRange } from "@/types/dataPicker";
 import moment from "moment";
-const emit = defineEmits(["updatePrev", "updateNext", "formattedDateSelected"]);
-const isOpen = ref(true);
+import { DayOfWeek, Month } from "@/constants/DateEnum";
+import { useClickOutside } from "@/composables/clickOutside";
+const emit = defineEmits([
+  "updatePrev",
+  "updateNext",
+  "formattedDateSelected",
+  "update:isOpen",
+  "cancel",
+]);
 const cancel = () => {
-  isOpen.value = false;
+  emit("cancel");
 };
 const save = () => {
-  isOpen.value = false;
+  emit("update:isOpen");
+  emit("formattedDateSelected", formattedDate.value);
 };
 const props = defineProps({
+  isOpen: { type: Boolean, default: false },
   width: { type: Number, default: 312 },
   datePickerGroup: { type: Boolean, default: false },
   prevMonth: { type: Boolean, default: false },
@@ -80,6 +82,13 @@ onMounted(() => {
   currentDate.value.month = Number(new Date().getMonth());
   currentDate.value.day = Number(new Date().getDate());
   today.value = { ...currentDate.value };
+  if (props.currentData) {
+    const date = props.currentData;
+    date.month = date.month - 1;
+    useDataRange(date.day, date);
+  } else {
+    useDataRange(currentDate.value.day, currentDate.value);
+  }
 });
 
 const initialState: DataPickerDate = {
@@ -92,42 +101,23 @@ const today = ref({ ...initialState });
 
 const date = ref({ ...initialState });
 
-const days: string[] = [
-  "Monday",
-  "Tuesday",
-  "Wednesday",
-  "Thursday",
-  "Friday",
-  "Saturday",
-  "Sunday",
-];
-const months: string[] = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
+const formattedDate = ref("");
+
+const days: string[] = Object.keys(DayOfWeek);
+const months: string[] = Object.keys(Month);
 const useDataRange = (day: number, currentDate: DataPickerDate) => {
-  const formattedDate = moment({
+  const formatted = moment({
     day: day,
     month: currentDate.month,
     year: currentDate.year,
-  }).format("DD.MM.YYYY");
+  }).format("MM.DD.YYYY");
 
   // Обновляем данные выбранной даты
   date.value.year = currentDate.year;
   date.value.month = currentDate.month;
   date.value.day = day;
   currentData.day = day;
-  emit("formattedDateSelected", formattedDate);
+  formattedDate.value = formatted;
 };
 
 const isUseRange = (day: number) => {
@@ -149,33 +139,29 @@ const isUseRange = (day: number) => {
   return classes;
 };
 
-const datePrev = (currentDate: DataPickerDate, isMonth: boolean) => {
-  if (!currentDate.month && isMonth) {
+const datePrev = (currentDate: DataPickerDate) => {
+  if (!currentDate.month) {
     currentDate.month = 11;
-  } else if (isMonth) {
-    currentDate.month -= 1;
-  }
-  if (!isMonth) {
     currentDate.year -= 1;
+  } else {
+    currentDate.month -= 1;
   }
   emit("updatePrev");
 };
 
-const dateNext = (currentDate: DataPickerDate, isMonth: boolean) => {
-  if (currentDate.month >= 11 && isMonth) {
+const dateNext = (currentDate: DataPickerDate) => {
+  if (currentDate.month >= 11) {
     currentDate.month = 0;
-  } else if (isMonth) {
-    currentDate.month += 1;
-  }
-  if (!isMonth) {
     currentDate.year += 1;
+  } else {
+    currentDate.month += 1;
   }
   emit("updateNext");
 };
 
-const currentData = reactive({ ...initialState });
+let currentData = reactive({ ...initialState });
 const currentDate = computed(() => {
-  return props.currentData ? props.currentData : currentData;
+  return currentData;
 });
 
 const firstDayOfMonth = computed((): any => {
@@ -230,12 +216,18 @@ const countDaysNext = computed(() => {
 
 <style scoped lang="scss">
 .date-picker {
-  height: max-content;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  position: absolute;
+  top: 25px;
+  height: 404px;
   box-sizing: border-box;
-  width: 312px;
+  width: 360px;
   padding: 20px;
-  background: #ffffff;
-  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.45);
+  background: var(--white);
+  border: 1px solid var(--bttn-active-lightblue);
   border-radius: 6px;
 
   -webkit-touch-callout: none; /* iOS Safari */
@@ -245,51 +237,56 @@ const countDaysNext = computed(() => {
   -ms-user-select: none; /* Internet Explorer/Edge */
   user-select: none; /* Non-prefixed version, currently
                               not supported by any browser */
+
+  &-padding {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+  }
+  &-dates {
+    display: flex;
+    flex-direction: column;
+  }
   &--title {
     margin-bottom: 12px;
     font-style: normal;
     font-weight: 500;
     font-size: 20px;
     line-height: 24px;
-    color: #000000;
+    color: var(--txt-dark-blue);
   }
   &--header {
     display: flex;
     flex-direction: column;
     gap: 6px;
+    margin-bottom: 15px;
     .current-date {
       display: flex;
       justify-content: center;
       align-items: center;
-      width: 100%;
-      &--month {
-        margin-right: 5px;
+      width: max-content;
+      &--info {
+        font-family: Roboto, sans-serif;
+        font-style: normal;
+        font-weight: 500;
+        font-size: 14px;
+        line-height: 20px;
+        color: var(--txt-dark-blue);
       }
     }
-  }
-  .current-date--year {
-    font-style: normal;
-    font-weight: 500;
-    font-size: 12px;
-    line-height: 15px;
-    text-align: center;
-    color: #000000;
-  }
-  .current-date--month {
-    font-weight: 500;
-    font-size: 16px;
-    line-height: 19px;
-    text-align: center;
-    color: #000000;
   }
   &--year,
   &--month {
     display: flex;
+    justify-content: space-between;
+    padding: 0 13px;
   }
   &--btns {
     display: flex;
     justify-content: flex-end;
     gap: 26px;
+    padding: 0 13px;
   }
   .save,
   .cancel {
@@ -297,15 +294,23 @@ const countDaysNext = computed(() => {
     padding: 0;
     border: none;
     background: inherit;
-    font-family: Inter, sans-serif;
+    font-family: Roboto, sans-serif !important;
     font-style: normal;
-    font-weight: 600;
+    font-weight: 500;
     font-size: 14px;
-    line-height: 17px;
-    color: #4477d4;
+    line-height: 20px;
+
+    color: var(--txt-dark-grey);
+  }
+  .save {
+    color: var(--txt-dark-blue);
   }
   &--current-date {
     width: 100%;
+  }
+  &--actions {
+    display: flex;
+    gap: 20px;
   }
   &--arrow {
     &-prev,
@@ -314,14 +319,13 @@ const countDaysNext = computed(() => {
       width: 26px;
       height: 26px;
       border: none;
-      padding: 5px 0 0;
       background: inherit;
       &:before {
         content: "";
         border: solid black;
         border-width: 0 2px 2px 0;
         display: inline-block;
-        padding: 2px;
+        padding: 3px;
       }
     }
     &-prev {
@@ -340,34 +344,33 @@ const countDaysNext = computed(() => {
   &--content {
     display: flex;
     flex-direction: column;
-    margin: 12px 0 21px 0;
   }
   &--week-day {
+    display: flex;
+    align-items: center;
+    justify-content: center;
     cursor: default;
     -webkit-user-select: none;
     user-select: none;
     overflow: hidden;
 
-    width: 26px;
-    height: auto;
+    width: 48px;
+    height: 48px;
 
+    font-family: Roboto, sans-serif;
     font-style: normal;
-    font-weight: 500;
-    font-size: 12px;
-    line-height: 15px;
-    text-align: center;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 24px;
 
-    color: #76797d;
+    color: var(--txt-dark-grey);
   }
   &--week-days {
     display: flex;
-    justify-content: space-between;
-    margin-bottom: 15px;
   }
   &--days-content {
     display: flex;
     flex-wrap: wrap;
-    gap: 15px;
     min-width: 272px;
   }
   &--day-number,
@@ -377,13 +380,16 @@ const countDaysNext = computed(() => {
     display: flex;
     justify-content: center;
     align-items: center;
-    height: 17px;
-    width: 26px;
+    width: 48px;
+    height: 48px;
+
+    font-family: Roboto, sans-serif;
     font-style: normal;
-    font-weight: 500;
-    font-size: 12px;
-    line-height: 15px;
-    text-align: center;
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 24px;
+
+    color: var(--txt-dark-grey);
   }
   &--day-number {
     &-useble {
@@ -399,29 +405,14 @@ const countDaysNext = computed(() => {
           z-index: 1;
           content: "";
           position: absolute;
-          background: #4477d4;
+          background: var(--txt-dark-blue);
           border: none;
           border-radius: 50%;
-          width: 26px;
-          height: 26px;
+          width: 40px;
+          height: 40px;
         }
         span {
           color: white;
-          z-index: 2;
-        }
-      }
-      &.today {
-        position: relative;
-        &::before {
-          z-index: 1;
-          content: "";
-          position: absolute;
-          border: 1px solid #4477d4;
-          border-radius: 50%;
-          width: 26px;
-          height: 26px;
-        }
-        span {
           z-index: 2;
         }
       }

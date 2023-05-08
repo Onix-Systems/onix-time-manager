@@ -1,0 +1,62 @@
+@import "colors";
+.option--header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  &-left {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  &--title {
+    font-style: normal;
+    font-weight: 700;
+    font-size: 26px;
+    line-height: 35px;
+  }
+  &--subtitle {
+    font-style: normal;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 19px;
+    color: var(--txt-light-grey);
+  }
+  &-btn {
+    position: relative;
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+    height: 40px;
+    padding: 10px 28px 10px 40px;
+    font-style: normal;
+    font-weight: 700;
+    font-size: 15px;
+    line-height: 20px;
+    color: var(--white);
+    background: var(--txt-dark-blue);
+    border: 1px solid var(--txt-dark-blue);
+    border-radius: 6px;
+    &::before {
+      content: "";
+      position: absolute;
+      width: 13px;
+      height: 13px;
+      left: 15px;
+      mask-image: url("@/assets/icons/plus.svg");
+      background: white;
+      mask-position: center;
+      mask-repeat: no-repeat;
+      mask-size: contain;
+    }
+    &.disable {
+      cursor: not-allowed;
+      color: #F2F2F2;
+      background: #88A6F7;
+      border: 1px solid #88A6F7;
+      border-radius: 6px;
+      &:before {
+        background: #F2F2F2;
+      }
+    }
+  }
+}

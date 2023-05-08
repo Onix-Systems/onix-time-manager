@@ -11,9 +11,17 @@
     "history",
     "alarms",
     "notifications",
-    "nativeMessaging"
+    "nativeMessaging",
+    "activeTab"
+
   ],
 
+  "web_accessible_resources": [
+    {
+      "resources": ["block-page/blockPage.html", "block-page/blockPage.css", "assets/warning-error.svg", "limits-page/popupTime.html",  "limits-page/limitsPage.html" ],
+      "matches": ["<all_urls>"]
+    }
+  ],
   "background": {
     "service_worker": "background.js"
   },
