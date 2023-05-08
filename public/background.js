@@ -511,6 +511,11 @@ const updatePageTime = (tabId) => {
               site.timeSpent += 1;
               site.currentSession += 1;
               site.lastVisit = todayInString;
+              chrome.runtime.sendMessage({
+                siteUrl: site.domain,
+                time: site.currentSession,
+                message: "currentSession",
+              });
               const addCurrentTime = () => {
                 site["dayActivity"][timeIndex].timeSpent += 1;
                 if (isVisited) {

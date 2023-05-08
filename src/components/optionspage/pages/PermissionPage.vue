@@ -7,7 +7,7 @@
     .option--header-right
       button.option--header-btn(
         :class="{ disable: isOff }",
-        @click="!isOff ? openModal(EnumModalKeys.Permission) : ''"
+        @click="!isOff ? openPermissionModal('') : ''"
       ) {{ "Add a website" }}
   .permission-content
     .permission-content--subtitle {{ "Choose one of a list" }}
@@ -33,11 +33,13 @@
       list-items(
         :items="sitesList(permissionData.permission)",
         :deleteMode="true",
-        @delete-item="deleteItem($event)"
+        @deleteItem="openPermissionModal($event)"
       )
 permission-add-web(
   v-if="isOpen(EnumModalKeys.Permission)",
-  @close="closeModal(EnumModalKeys.Permission)"
+  :isDelete="!!itemForDelete",
+  @close="closePermissionModal()",
+  @delete="deleteItem(itemForDelete)"
 )
 </template>
 
@@ -47,7 +49,7 @@ import { PermissionList } from "@/constants/PermissionList";
 import { closeModal, isOpen, openModal } from "@/composables/modalActions";
 import { EnumModalKeys } from "@/constants/EnumModalKeys";
 import PermissionAddWeb from "@/modals/PermissionAddWeb.vue";
-import { computed, onMounted } from "vue";
+import { computed, onMounted, ref } from "vue";
 import ListItems from "@/components/common/ListItems.vue";
 import ScheduleComponent from "@/components/common/ScheduleComponent.vue";
 import {
@@ -69,6 +71,18 @@ onMounted(() => {
   getPermission();
   resetUserData();
 });
+
+const itemForDelete = ref("" as string | number);
+
+const openPermissionModal = (key: number | string) => {
+  itemForDelete.value = key;
+  openModal(EnumModalKeys.Permission);
+};
+
+const closePermissionModal = () => {
+  itemForDelete.value = "";
+  closeModal(EnumModalKeys.Permission);
+};
 </script>
 
 <style scoped lang="scss">

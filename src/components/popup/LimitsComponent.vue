@@ -1,8 +1,8 @@
 <template lang="pug">
 .limits-page--content
-  template(v-if="limitsObject.browserLimit && formatedTime")
+  template(v-if="limitsObject.browserLimit")
     h2.title The browser will be block after
-    p.subtitle {{ formatedTime }}
+    p.subtitle {{ getGlobalLimit }}
   template(v-if="isLengthList")
     list-items(:items="limitsObject.list", :limits="true")
   template(v-else)
@@ -20,6 +20,7 @@ import {
   resetUserData,
 } from "@/composables/limitsComp";
 import { UserData } from "@/composables/scheduleComp";
+import { ObjectInterface } from "@/types/dataInterfaces";
 
 onMounted(() => {
   chrome.runtime.onMessage.addListener(handleRuntimeMessage);
@@ -36,43 +37,46 @@ const limitsObject = computed(() => {
   return limitsData.value;
 });
 
-const convertedDate = ref({ hour: 0, minute: 0, seconds: 0 });
-const siteTime = ref("");
+const getGlobalLimit = computed(() => {
+  const timeObject: ObjectInterface = { ...UserData.value.timeLimits };
+  const timeSpent = limitsObject.value.browserTimeSpent.time;
+  const limitInSeconds = timeObject.hour * 3600 + timeObject.minute * 60;
+  const usageLimit = limitInSeconds - timeSpent;
+  if (
+    usageLimit > 0 &&
+    usageLimit !== -Math.abs(usageLimit) &&
+    !convertedDate.value.totalTime
+  ) {
+    editConvertedDate(usageLimit);
+  }
+  return globalLimit();
+});
 
-const formatedTime = ref("");
-const globalLimit = () => {
-  formatedTime.value = `${String(convertedDate.value.hour).padStart(
-    2,
-    "0"
-  )}h ${String(convertedDate.value.minute).padStart(2, "0")}m ${String(
-    convertedDate.value.seconds
-  ).padStart(2, "0")}s`;
+const editConvertedDate = (time: any) => {
+  convertedDate.value.hour = Math.floor(time / 3600);
+  convertedDate.value.minute = Math.floor((time % 3600) / 60);
+  convertedDate.value.seconds = time % 60;
 };
 
-const siteData = ref({ url: "", hour: 0, minute: 0, seconds: 0, timeSpent: 0 });
+const convertedDate = ref({ hour: 0, minute: 0, seconds: 0, totalTime: 0 });
+
+const globalLimit = () => {
+  return `${String(convertedDate.value.hour).padStart(2, "0")}h ${String(
+    convertedDate.value.minute
+  ).padStart(2, "0")}m ${String(convertedDate.value.seconds).padStart(
+    2,
+    "0"
+  )}s`;
+};
 
 const handleRuntimeMessage = (request: any, sender: any) => {
-  const siteTimeSpent = "siteTimeSpent";
   const browserTimeSpent = "browserTimeSpent";
   if (
     request.message === browserTimeSpent &&
     request.time !== -Math.abs(request.time)
   ) {
-    convertedDate.value.hour = Math.floor(request.time / 3600);
-    convertedDate.value.minute = Math.floor((request.time % 3600) / 60);
-    convertedDate.value.seconds = request.time % 60;
-    globalLimit();
-  }
-  if (
-    request.message === siteTimeSpent &&
-    request.time !== -Math.abs(request.time)
-  ) {
-    siteData.value.timeSpent = request.time;
-    siteData.value.hour = Math.floor(request.time / 3600);
-    siteData.value.minute = Math.floor((request.time % 3600) / 60);
-    siteData.value.seconds = request.time % 60;
-    siteData.value.url = `https://${request.siteUrl}/`;
-    siteTime.value = `Block after ${siteData.value.hour} hours ${siteData.value.minute} minutes ${siteData.value.seconds} seconds`;
+    convertedDate.value.totalTime = request.time;
+    editConvertedDate(request.time);
   }
 };
 </script>
