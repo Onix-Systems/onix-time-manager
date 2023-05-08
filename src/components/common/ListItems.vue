@@ -6,9 +6,12 @@
         :src="`https://s2.googleusercontent.com/s2/favicons?domain=${imgPath(value)}&sz=96`",
         alt="Domain icon"
       )
-    .item--info(:class="{ limits }")
-      p.bold {{ `Block after ${value.hours ? value.hours + " hours " : " "} ${value.minutes ? value.minutes + " minutes " : " "} ${value.seconds ? value.seconds + " seconds " : " "}` }}
-      p {{ limits ? value.domain : value }}
+    .item--info(:class="{ limits, redirect }")
+      p.bold
+        template(v-if="limits") {{ `Block after ${value.hours ? value.hours + " hours " : " "} ${value.minutes ? value.minutes + " minutes " : " "} ${value.seconds ? value.seconds + " seconds " : " "}` }}
+        template(v-if="redirect") {{ `Redirection to ${hostname(value.redirect)}` }}
+      p(v-if="redirect") {{ hostname(value.initial) }}
+      p(v-else) {{ limits ? value.domain : value }}
     .item--controls
       button(
         v-if="editMode",
@@ -19,10 +22,7 @@
 </template>
 
 <script setup lang="ts">
-import { limitsData } from "@/composables/limitsComp";
-import { closeModal, isOpen, openModal } from "@/composables/modalActions";
-import { EnumModalKeys } from "@/constants/EnumModalKeys";
-import { defineProps, defineEmits, ref, computed } from "vue";
+import { defineProps, defineEmits } from "vue";
 const props = defineProps({
   items: {
     type: Array,
@@ -44,38 +44,6 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
-  disableActions: {
-    type: Boolean,
-    default: false,
-  },
-  popupLimit: {
-    type: Boolean,
-    default: false,
-  },
-  sites: {
-    type: Boolean,
-    default: false,
-  },
-  sitesImg: {
-    type: Boolean,
-    default: false,
-  },
-  sitesButton: {
-    type: Boolean,
-    default: false,
-  },
-  redirectButton: {
-    type: Boolean,
-    default: false,
-  },
-  popupPermission: {
-    type: Boolean,
-    default: false,
-  },
-  sitesLimit: {
-    type: Boolean,
-    default: false,
-  },
 });
 const hostname = (link: string) => {
   const hostname = new URL(link).hostname;
@@ -94,7 +62,7 @@ const imgPath = (value: { domain?: string; initial?: string } & string) => {
     return value;
   }
 };
-const emit = defineEmits(["update:siteDomain", "edit-item", "delete-item"]);
+const emit = defineEmits(["edit-item", "delete-item"]);
 </script>
 
 <style scoped lang="scss">
@@ -146,7 +114,8 @@ const emit = defineEmits(["update:siteDomain", "edit-item", "delete-item"]);
       }
     }
 
-    &.limits {
+    &.limits,
+    &.redirect {
       p {
         &.bold {
           display: block;
