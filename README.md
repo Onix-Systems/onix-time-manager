@@ -1,13 +1,8 @@
-# time-management-2
+# Browser Time
 
 ## Project setup
 ```
 yarn install
-```
-
-### Compiles and hot-reloads for development
-```
-yarn serve
 ```
 
 ### Compiles and minifies for production
@@ -15,10 +10,8 @@ yarn serve
 yarn build
 ```
 
-### Lints and fixes files
-```
-yarn lint
-```
-
-### Customize configuration
-See [Configuration Reference](https://cli.vuejs.org/config/).
+### Install as an extension from source
+1. Download the latest available version and unarchive to your preferred location (whichever suits you).
+2. Using Google Chrome browser, navigate to chrome://extensions/ and enable "Developer mode" in the upper right corner.
+3. Click on the "Load unpacked extension..." button.
+4. Browse to the src directory of the unarchived folder and confirm.
