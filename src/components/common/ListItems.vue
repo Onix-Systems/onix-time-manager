@@ -9,16 +9,12 @@
     .item--info(:class="{ limits, redirect }")
       p.bold
         template(v-if="limits") {{ `Block after ${value.hours ? value.hours + " hours " : " "} ${value.minutes ? value.minutes + " minutes " : " "} ${value.seconds ? value.seconds + " seconds " : " "}` }}
-        template(v-if="redirect") {{ `Redirection to ${hostname(value.redirect)}` }}
-      p(v-if="redirect") {{ hostname(value.initial) }}
+        template(v-if="redirect") {{ `Redirection to ${value.redirect}` }}
+      p(v-if="redirect") From {{ value.initial }}
       p(v-else) {{ limits ? value.domain : value }}
     .item--controls
-      button(
-        v-if="editMode",
-        :class="{ redirect, limits }",
-        @click="$emit('edit-item', key)"
-      )
-      button.delete(v-if="deleteMode", @click="$emit('delete-item', key)")
+      button.settings(v-if="editMode", @click="$emit('onEdit', key)")
+      button.delete(v-if="deleteMode", @click="$emit('onDelete', key)")
 </template>
 
 <script setup lang="ts">
@@ -45,13 +41,6 @@ const props = defineProps({
     default: false,
   },
 });
-const hostname = (link: string) => {
-  const hostname = new URL(link).hostname;
-  const protocol = new URL(link).protocol;
-  const newUrl = `${protocol}//${hostname}/`;
-
-  return newUrl;
-};
 
 const imgPath = (value: { domain?: string; initial?: string } & string) => {
   if (props.limits) {
@@ -62,7 +51,7 @@ const imgPath = (value: { domain?: string; initial?: string } & string) => {
     return value;
   }
 };
-const emit = defineEmits(["edit-item", "delete-item"]);
+const emit = defineEmits(["onEdit", "onDelete"]);
 </script>
 
 <style scoped lang="scss">
@@ -153,11 +142,8 @@ const emit = defineEmits(["edit-item", "delete-item"]);
       &.delete {
         background-image: url("@/assets/trashF.svg");
       }
-      &.limits {
+      &.settings {
         background-image: url("@/assets/settingsF.svg");
-      }
-      &.redirect {
-        background-image: url("@/assets/redirectF.svg");
       }
     }
   }

@@ -598,21 +598,22 @@ function getTimeFromSeconds(durationInSeconds) {
 // Redirect
 const detectRedirect = () => {
   chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
-    let url = tabs[0].url;
-    chrome.storage.local.get("redirect").then((res) => {
-      if (res && res.redirect) {
-        const index = res.redirect.findIndex(
-          (value) => new URL(value.initial).hostname === new URL(url).hostname
-        );
-        if (index > -1) {
-          createMessage({
-            initial: res.redirect[index].initial,
-            url: res.redirect[index].redirect,
-            message: "redirect",
-          });
+    if (tabs.length) {
+      chrome.storage.local.get("redirect").then((res) => {
+        if (res && res.redirect) {
+          const index = res.redirect.findIndex(
+            (value) => value.initial === tabs[0].url
+          );
+          if (index > -1) {
+            createMessage({
+              initial: res.redirect[index].initial,
+              url: res.redirect[index].redirect,
+              message: "redirect",
+            });
+          }
         }
-      }
-    });
+      });
+    }
   });
 };
 chrome.runtime.onMessage.addListener((request, sender) => {

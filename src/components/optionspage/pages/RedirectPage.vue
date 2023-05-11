@@ -5,47 +5,57 @@
       .option--header--title {{ MenuItemsEnum.Redirect }}
       .option--header--subtitle {{ "Set up redirect for the blocked sites" }}
     .option--header-right
-      button.option--header-btn(@click="openModal(EnumModalKeys.Redirect)") Add redirect
+      button.option--header-btn(@click="openModal(EnumModalKeys.RedirectEdit)") Add redirect
   .limits-page--content(v-if="data.length")
     list-items(
       :items="data",
-      :editMode="true",
-      :deleteMode="true",
+      :edit-mode="true",
+      :delete-mode="true",
       :redirect="true",
-      @edit-item="editItem($event)",
-      @delete-item="deleteItem($event)"
+      @onEdit="editItem($event)",
+      @onDelete="deleteItem($event)"
     )
   placeholder-component(:img-name="'redirect-placeholder.svg'", v-else)
     template(v-slot="")
       | The list of redirects is empty. Please set up a redirect to see them here.
-redirect-modal(
-  v-if="isOpen(EnumModalKeys.Redirect)",
-  @close="modalClose",
-  :initial-data="editData",
+new-redirect-modal(
+  v-if="isOpen(EnumModalKeys.RedirectEdit)",
   :is-edit="isEdit",
+  :initial-data="editData",
   :edit-index="currentIndex",
-  :is-delete="isDelete"
+  @onClosed="modalClose"
+)
+delete-modal(
+  v-if="isOpen(EnumModalKeys.RedirectDelete)",
+  :delete-type="`this redirect`",
+  :delete-context="`After deleting you will not be able to use this redirect for block the site again`",
+  @onSubmit="deleteAction",
+  @onClosed="closeModal(EnumModalKeys.RedirectDelete)"
 )
 </template>
 
 <script setup lang="ts">
-import { MenuItemsEnum } from "@/constants/menuItemsEnum";
-import PlaceholderComponent from "@/components/optionspage/common/PlaceholderComponent.vue";
-import RedirectModal from "@/modals/RedirectModal.vue";
-import { isOpen, openModal, closeModal } from "@/composables/modalActions";
-import { EnumModalKeys } from "@/constants/EnumModalKeys";
 import { onMounted, ref } from "vue";
+
 import ListItems from "@/components/common/ListItems.vue";
+import PlaceholderComponent from "@/components/optionspage/common/PlaceholderComponent.vue";
+
+import DeleteModal from "@/modals/common/DeleteModal.vue";
+import NewRedirectModal from "@/modals/NewRedirectModal.vue";
+
+import { isOpen, openModal, closeModal } from "@/composables/modalActions";
+
+import { MenuItemsEnum } from "@/constants/menuItemsEnum";
+import { EnumModalKeys } from "@/constants/EnumModalKeys";
+
 const data = ref([] as { initial: string; redirect: string }[]);
 
 const isEdit = ref(false);
 const editData = ref({});
 const currentIndex = ref(-1);
 
-const isDelete = ref(false);
-
 const modalClose = () => {
-  closeModal(EnumModalKeys.Redirect);
+  closeModal(EnumModalKeys.RedirectEdit);
   loadData();
   resetEdit();
 };
@@ -54,19 +64,17 @@ const resetEdit = () => {
   currentIndex.value = -1;
   editData.value = {};
   isEdit.value = false;
-  isDelete.value = false;
 };
 
 const editItem = (index: number) => {
   isEdit.value = true;
   editData.value = { ...data.value[index] };
   currentIndex.value = index;
-  openModal(EnumModalKeys.Redirect);
+  openModal(EnumModalKeys.RedirectEdit);
 };
 const deleteItem = (index: number) => {
-  isDelete.value = true;
   currentIndex.value = index;
-  openModal(EnumModalKeys.Redirect);
+  openModal(EnumModalKeys.RedirectDelete);
 };
 
 const loadData = () => {
@@ -77,6 +85,16 @@ const loadData = () => {
       chrome.storage.local.set({ redirect: [] });
       data.value = [];
     }
+  });
+};
+
+const deleteAction = () => {
+  chrome.storage.local.get("redirect").then((res) => {
+    const array = res.redirect;
+    array.splice(currentIndex.value, 1);
+    chrome.storage.local.set({ redirect: [...array] }).then(() => {
+      close();
+    });
   });
 };
 onMounted(() => {

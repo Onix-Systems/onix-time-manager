@@ -60,3 +60,43 @@
     }
   }
 }
+
+.content--button {
+  display: flex;
+  cursor: pointer;
+  justify-content: center;
+  align-items: center;
+  box-sizing: border-box;
+
+  width: 100%;
+  height: 48px;
+  padding: 14px 20px;
+
+  border: none;
+  border-radius: 6px;
+
+  font-style: normal;
+  font-weight: 500;
+  font-size: 15px;
+  line-height: 18px;
+
+  outline: 1px solid var(--txt-dark-blue);
+
+  &.primary {
+    background-color: var(--white);
+    color: var(--txt-dark-blue);
+  }
+
+  &.raised {
+    background-color: var(--txt-dark-blue);
+    color: var(--white);
+  }
+
+  &.disabled {
+    cursor: not-allowed;
+
+    background: var(--bttn-submit-disabled);
+    color: var(--txt-anti-flashlight);
+    outline: 1px solid var(--bttn-submit-disabled);
+  }
+}

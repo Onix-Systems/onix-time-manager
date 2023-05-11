@@ -1,0 +1,46 @@
+html {
+  overflow: hidden;
+}
+
+.content {
+  &--header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    margin-bottom: 16px;
+    padding-right: 8px;
+
+    .title {
+      font-family: var(--font-nunito);
+      font-weight: 600;
+      font-size: 22px;
+      line-height: 30px;
+      color: var(--txt-main-darkblue);
+    }
+
+    .close {
+      display: block;
+
+      width: 12px;
+      height: 12px;
+      padding: 0;
+      margin: 0;
+
+      border: none;
+      background-image: url("@/assets/icons/cross.svg");
+      background-repeat: no-repeat;
+      background-position: center;
+      background-color: transparent;
+    }
+  }
+
+  &--buttons {
+    display: flex;
+    justify-content: space-between;
+
+    width: 100%;
+    margin-top: 24px;
+    gap: 26px;
+  }
+}

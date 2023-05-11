@@ -1,6 +1,6 @@
 <template lang="pug">
 teleport(to="body")
-  transition(name="fade")
+  transition
     .modal(v-if="isOpen(currentKey)", :class="currentKey")
       .modal--backdrop(@click="close")
       .modal--container
@@ -11,12 +11,7 @@ teleport(to="body")
 <script lang="ts" setup>
 import { onBeforeUnmount } from "vue";
 import useDisableScroll from "@/features/useDisableScroll";
-import {
-  isOpen,
-  currentKey,
-  openModal,
-  closeModal,
-} from "@/composables/modalActions";
+import { isOpen, currentKey, closeModal } from "@/composables/modalActions";
 
 function close() {
   if (isOpen(currentKey.value)) {
