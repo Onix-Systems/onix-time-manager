@@ -2,22 +2,21 @@ const validUrlRegex = /^(http|https):\/\//i; // Modified regular expression to p
 let isVisited = false;
 let intervalId = 0;
 let showNotification = false;
+let tabIdCopy = 0;
 
 let settings = [];
 
-const activeTabListener = () => {
+chrome.runtime.onInstalled.addListener(() => {
   chrome.tabs.onActivated.addListener((tab) => {
     isVisited = true;
-    const tabId = tab.tabId;
-    updatePageTime(tabId);
+    tabIdCopy = tab.tabId;
+    updatePageTime(tabIdCopy);
     detectRedirect();
   });
-};
-chrome.runtime.onInstalled.addListener(() => {
-  activeTabListener();
   chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     if (changeInfo.status === "complete" && validUrlRegex.test(tab.url)) {
-      updatePageTime(tabId);
+      tabIdCopy = tabId;
+      updatePageTime(tabIdCopy);
       detectRedirect();
     }
   });
@@ -36,18 +35,20 @@ const createNotification = (message = "") => {
   );
 };
 
-const popupTime = (timeMess) => {
-  return chrome.tabs.query(
-    { active: true, lastFocusedWindow: true },
-    (tabs) => {
-      if (tabs && tabs.length) {
-        chrome.tabs.sendMessage(tabs[0].id, {
-          time: timeMess,
-          message: "popupTime",
-        });
-      }
+const createMessage = (data) => {
+  chrome.tabs.sendMessage(tabIdCopy, data, function (response) {
+    if (chrome.runtime.lastError) {
+      return chrome.runtime.lastError.message;
     }
-  );
+    return response;
+  });
+};
+
+const popupTime = (timeMess) => {
+  createMessage({
+    time: timeMess,
+    message: "popupTime",
+  });
 };
 
 const updatePageTime = (tabId) => {
@@ -124,18 +125,11 @@ const updatePageTime = (tabId) => {
 
         const checkLimits = () => {
           const limitsPage = () => {
-            chrome.tabs.query(
-              { active: true, lastFocusedWindow: true },
-              (tabs) => {
-                if (tabs && tabs.length) {
-                  chrome.tabs.sendMessage(tabs[0].id, {
-                    message: "limitsPage",
-                  });
-                  clearInterval(intervalId);
-                  updateCurrentSession();
-                }
-              }
-            );
+            createMessage({
+              message: "limitsPage",
+            });
+            clearInterval(intervalId);
+            updateCurrentSession();
           };
 
           let blockAfter = 0;
@@ -169,7 +163,7 @@ const updatePageTime = (tabId) => {
               popupTime(blockAfter);
             }
 
-            chrome.runtime.sendMessage({
+            createMessage({
               time: blockAfter,
               message: "browserTimeSpent",
             });
@@ -222,7 +216,7 @@ const updatePageTime = (tabId) => {
               ) {
                 popupTime(siteTimeLimit);
               }
-              chrome.runtime.sendMessage({
+              createMessage({
                 siteUrl: currentUrl,
                 time: timeInSeconds,
                 message: "siteTimeSpent",
@@ -285,18 +279,11 @@ const updatePageTime = (tabId) => {
               : false;
 
             const blockPage = () => {
-              chrome.tabs.query(
-                { active: true, lastFocusedWindow: true },
-                (tabs) => {
-                  if (tabs && tabs.length) {
-                    chrome.tabs.sendMessage(tabs[0].id, {
-                      message: "blockPage",
-                    });
-                    clearInterval(intervalId);
-                    updateCurrentSession();
-                  }
-                }
-              );
+              createMessage({
+                message: "blockPage",
+              });
+              clearInterval(intervalId);
+              updateCurrentSession();
             };
             const timeAmTo24 = (item) => {
               const [hourString, period] = item.split(" ");
@@ -474,6 +461,7 @@ const updatePageTime = (tabId) => {
             if (!findDay) {
               pages[yearIndex][monthIndex][dayIndex] = {};
             }
+
             let findSite = pages[yearIndex][monthIndex][dayIndex][currentUrl];
             if (!findSite) {
               pages[yearIndex][monthIndex][dayIndex][currentUrl] = {
@@ -483,20 +471,20 @@ const updatePageTime = (tabId) => {
                 dayActivity: {},
                 timeSpent: 1,
                 sessions: [],
-                currentSession: 1,
+                currentSession: 0,
                 firstVisit: todayInString,
                 lastVisit: todayInString,
                 urls: {
                   [currentUrls]: {
                     firstVisit: todayInString,
-                    timeSpent: 1,
+                    timeSpent: 0,
                   },
                 },
               };
               pages[yearIndex][monthIndex][dayIndex][currentUrl]["dayActivity"][
                 timeIndex
               ] = {
-                timeSpent: 1,
+                timeSpent: 0,
                 visited: 1,
               };
               isVisited = false;
@@ -507,11 +495,12 @@ const updatePageTime = (tabId) => {
                   (item) => item
                 );
               }
+
               site.icon = tab.favIconUrl;
               site.timeSpent += 1;
               site.currentSession += 1;
               site.lastVisit = todayInString;
-              chrome.runtime.sendMessage({
+              createMessage({
                 siteUrl: site.domain,
                 time: site.currentSession,
                 message: "currentSession",
@@ -616,7 +605,7 @@ const detectRedirect = () => {
           (value) => new URL(value.initial).hostname === new URL(url).hostname
         );
         if (index > -1) {
-          chrome.tabs.sendMessage(tabs[0].id, {
+          createMessage({
             initial: res.redirect[index].initial,
             url: res.redirect[index].redirect,
             message: "redirect",
