@@ -1,6 +1,6 @@
 <template lang="pug">
 teleport(to="body")
-  transition(name="fade", appear)
+  transition(name="fade")
     .modal(v-if="isOpen(currentKey)", :class="currentKey")
       .modal--backdrop(@click="close")
       .modal--container

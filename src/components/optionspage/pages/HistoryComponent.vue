@@ -71,33 +71,37 @@
               .modal--content-cancel
                 button.cancel(@click="cancel()")
                 p Selected {{ Object.keys(selectedItems).length }}
-              button.delete(@click="openModal(EnumModalKeys.History)") {{ "Delete" }}
-              delete-modal(
-                v-if="isOpen(EnumModalKeys.History)",
-                @close="modalClose",
-                :sortedItems="sortedItems",
-                :selectedItems="selectedItems"
-              )
+              button.delete(@click="openModal(EnumModalKeys.History)") Delete
   .history--delete(v-if="sortedItems.length")
     .history--delete-button
       h3 Delete Website History
       p Reset and delete all of your website history
-    button(@click="clearStorage") {{ "Delete Data" }}
+    button(@click="clearStorage") Delete Data
   .history--no-data(v-else)
     p The history is empty. This list will be filled out after you first visit the website.
     .icon--data-empty
+  delete-modal(
+    v-if="isOpen(EnumModalKeys.History)",
+    :delete-type="`history page`",
+    :delete-context="`You won't be able to view this story again after deleting it.`",
+    @onSubmit="deleteItem",
+    @onClosed="closeModal(EnumModalKeys.History)"
+  )
 </template>
 
 <script setup lang="ts">
 import { ref, computed, onMounted, watch } from "vue";
 import {
+  checkDataInStorage,
   filteringData,
+  getHistory,
+  historyStorage,
   selectNavItem,
 } from "@/composables/popup/pages/trackerPageActions";
 import moment from "moment";
 import { closeModal, isOpen, openModal } from "@/composables/modalActions";
 import { EnumModalKeys } from "@/constants/EnumModalKeys";
-import DeleteModal from "@/modals/DeleteModal.vue";
+import DeleteModal from "@/modals/common/DeleteModal.vue";
 import { MenuItemsEnum } from "@/constants/menuItemsEnum";
 import DropdownComponent from "@/components/common/DropdownComponent.vue";
 import { PopupTrackerNavItemsEnum } from "@/constants/popup/popupNavItemsEnum";
@@ -116,10 +120,6 @@ const formatTime = (timeInSeconds: number) => {
   let minutesString = minutes.toString().padStart(2, "0");
   let secondsString = seconds.toString().padStart(2, "0");
   return `${hoursString}h ${minutesString}m ${secondsString}s`;
-};
-const modalClose = () => {
-  closeModal(EnumModalKeys.History);
-  selectedItems.value = [];
 };
 
 const select = (index: number) => {
@@ -224,6 +224,64 @@ const sortByTime = (props: any) => {
   sortOrder.value = Order.timeSpent;
   sortByText.value = "Sort by date";
   props.toggleVisibility();
+};
+
+const deleteItem = () => {
+  getHistory();
+  const history = { ...historyStorage.value };
+  if (selectedItems.value) {
+    const domainKeys = selectedItems.value.filter((item) => {
+      return typeof item === "number";
+    });
+    selectedItems.value.forEach((item: any) => {
+      if (domainKeys.includes(item)) {
+        const site: any = sortedItems.value[item];
+        if (site) {
+          Object.values(site.urls).forEach((elem: any) => {
+            elem.visited.forEach((data: any) => {
+              const [day, month, year] = data.split(".");
+              const selectData = {
+                year,
+                month,
+                day,
+              };
+              if (checkDataInStorage(selectData)) {
+                delete history[selectData.year][Number(selectData.month)][
+                  Number(selectData.day)
+                ][site.domain];
+              }
+            });
+          });
+        }
+      } else {
+        const [key, subKey] = item.split("-");
+        if (!domainKeys.includes(Number(key))) {
+          const site: any = sortedItems.value[key];
+          const siteKey = Object.keys(site.urls)[subKey];
+          const siteUrl: any = site.urls[siteKey];
+          if (siteUrl) {
+            siteUrl.visited.forEach((data: any) => {
+              const [day, month, year] = data.split(".");
+              const selectData = {
+                year,
+                month,
+                day,
+              };
+              if (checkDataInStorage(selectData)) {
+                delete history[selectData.year][Number(selectData.month)][
+                  Number(selectData.day)
+                ][site.domain]["urls"][siteKey];
+              }
+            });
+          }
+        }
+      }
+    });
+  }
+  chrome.storage.local.set({ pages: history }, () => {
+    getHistory();
+    selectedItems.value = [];
+  });
 };
 </script>
 
