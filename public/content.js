@@ -1,3 +1,11 @@
+function formatTime(time) {
+  const hours = Math.floor(time / 3600);
+  const minutes = Math.floor((time - hours * 3600) / 60);
+  const seconds = time % 60;
+  return `${minutes < 10 ? "0" + minutes : minutes}m ${
+    seconds < 10 ? "0" + seconds : seconds
+  }s`;
+}
 chrome.runtime.onMessage.addListener((request, sender) => {
   const redirect = "redirect";
   const blockPage = "blockPage";
@@ -130,97 +138,142 @@ chrome.runtime.onMessage.addListener((request, sender) => {
 
       break;
     }
-    case popupTime: {
-      const elementsWithClass = document.querySelectorAll(".onix-tracker");
-      if (!elementsWithClass.length) {
-        const parent = document.createElement("div");
-        parent.style.position = "relative";
-        document.body.insertAdjacentElement("afterbegin", parent);
+    case popupTime:
+      {
+        const elementsWithClass = document.querySelectorAll(".onix-tracker");
 
-        const modals = document.createElement("div");
-        modals.classList.add("onix-tracker");
-        parent.appendChild(modals);
-        const link = document.createElement("link");
-        link.rel = "stylesheet";
-        link.href = "./block-page/timeModal.css";
-        document.head.appendChild(link);
+        if (request.time < 300) {
+          if (!elementsWithClass.length) {
+            const parent = document.createElement("div");
+            parent.style.position = "relative";
+            document.body.insertAdjacentElement("afterbegin", parent);
+            parent.innerHTML = `
+            <style>
+              input[type="checkbox"] {
+                position: fixed;
+                right: 271px;
+                bottom: 60px;
+                -webkit-appearance: none;
+                appearance: none;
+                cursor: pointer;
+                z-index: 99999;
+    
+                width: 32px;
+                height: 32px;
+                
+                transition: right 0.8s;
+              }
+              input[type="checkbox"]:checked {
+                right: 292px;
+              }
+              
+              input[type="checkbox"]:not(:checked) {
+                right: 11px;
+              }
 
-        modals.innerHTML = `
-      <style>
-      .card .percent {
-        position: relative;
-      }
-      
-      .card svg {
-        position: relative;
-        width: 65px;
-        height: 65px;
-        transform: rotate(-90deg);
-        margin-left: 42px;
+              input[type="checkbox"]:checked + .onix-tracker {
+                right: 0;
+              }
+              
+              input[type="checkbox"]:checked + .onix-tracker .arrow svg {
+                transform: rotate(180deg);
+              }
+              
+              .arrow {
+                position: absolute;
+                top: 33px;
+                left: -16px;
+                display: flex;
+                justify-content: center;
+                align-items: center;
+                                
+                width: 32px;
+                height: 32px;
+                
+                background: #EBF0FE;
+                box-shadow: 0 1px 4px rgba(56, 106, 241, 0.25);
+                border-radius: 4px;
+              }
+              
+              .arrow svg {
+                width: 7px;
+                height: 15px;
+                
+                transition-duration: 0.8s;
+              }
+              
+              .onix-tracker {
+                position: fixed;
+                right: -281px;
+                bottom: 31px;
+                display: flex;
+                flex-direction: column;
+                box-sizing: border-box;
+                justify-content: center;
+                z-index: 99998;
+              
+                padding: 18px 30px;
+                
+                background: #FFFFFF;
+                border-width: 1px 0 1px 1px;
+                border-style: solid;
+                border-color: #EBF0FE;
+                box-shadow: 0 4px 4px rgba(56, 106, 241, 0.1);
+                border-radius: 8px 0 0 8px;
 
-      }
-      
-      .card svg circle {
-        width: 100%;
-        height: 100%;
-        fill: none;
-        stroke: #f0f0f0;
-        stroke-width: 5;
-        stroke-linecap: round;
-      }
-      
-      .card svg circle:last-of-type {
-        stroke-dasharray: 204.2px;
-        stroke-dashoffset: calc(204.2px - (204.2px * var(--percent)) / 100);
-        stroke: #3498db;
-      }
-      
-      .card .number {
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        transform: translate(-50%, -50%);
-        font-size: 20px;
-      }
-      
-      </style>
-  <h2 style="color: #0A0C2C; font-size: 10px; line-height: 12px; margin-top: 12px; text-align: center;">The site will be block after </h2>
-  <div class="card">
-    <div class="percent">
-      <svg width="65" height="65">
-        <circle cx="32.5" cy="32.5" r="30"></circle>
-        <circle cx="32.5" cy="32.5" r="30" style="--percent: 70"></circle>
-      </svg>
-      
-    </div>
-  </div>
-`;
-        modals.style.display = "block";
-        modals.style.position = "absolute";
-        modals.style.background = "#FFFFFF";
-        modals.style.border = "1px solid #EBF0FE";
-        modals.style.width = "150px";
-        modals.style.height = "118px";
-        modals.style.right = "0";
-        modals.style.top = "0";
-        modals.style.zIndex = "10000";
-        modals.style.borderRadius = "4px";
-
-        const p = document.createElement("p");
-        p.style.fontSize = "10px";
-        p.style.lineHeight = "12px";
-        p.style.color = "#386AF1";
-        p.innerHTML = request.time;
-        modals.appendChild(p);
-      } else {
-        elementsWithClass.forEach((element) => {
-          const pElement = element.querySelector("p");
-          if (pElement) {
-            pElement.textContent = request.time;
+                transition: right 0.8s ease 0s;
+              }
+              
+              h2 {
+                font-family: Inter, sans-serif;
+                font-size: 18px;
+                font-weight: 500; 
+                line-height: 22px;
+                text-align: center;
+                
+                color: #0A0C2C; 
+              }
+              p {
+                padding-top: 6px;
+                
+                font-family: Inter, sans-serif;
+                font-size: 24px;
+                font-weight: 600;
+                line-height: 29px;
+                text-align: center;
+    
+                color: #386AF1;
+              }
+            </style>
+            <input type="checkbox" name="checkbox-checked" checked />
+            <div class="onix-tracker">
+              <div class="arrow">
+                <svg width="6" height="12" viewBox="0 0 6 12" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M5 11L1 6L5 0.999999" stroke="#386AF1" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+              <h2>The site will be blocked after</h2>
+              <p>${formatTime(request.time)}</p>
+            </div>  
+            `;
+            const pElement = document.createElement("link");
+            pElement.href =
+              "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap";
+            pElement.rel = "stylesheet";
+          } else {
+            elementsWithClass.forEach((element) => {
+              const pElement = element.querySelector("p");
+              if (pElement) {
+                pElement.textContent = formatTime(request.time);
+              }
+            });
           }
-        });
+        } else {
+          elementsWithClass.forEach((element) => {
+            element.style.display = "none";
+          });
+        }
       }
       break;
-    }
   }
 });
