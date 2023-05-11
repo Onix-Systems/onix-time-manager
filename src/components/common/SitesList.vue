@@ -26,7 +26,7 @@
         .item-block--title {{ "Longest Session" }}
         .item-block--info(
           v-if="item && (item.sessions || item.currentSession)"
-        ) {{ formatDuration(Math.max(...item.sessions)) || formatDuration(item.currentSession) }}
+        ) {{ currentSessionData.time > Math.max(...item.sessions) || item.currentSession > Math.max(...item.sessions) ? formatDuration(currentSessionData.time || item.currentSession) : formatDuration(Math.max(...item.sessions)) }}
       .item-block
         .item-block--title {{ "Sessions" }}
         .item-block--info {{ item.visited }}

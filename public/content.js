@@ -11,7 +11,33 @@ chrome.runtime.onMessage.addListener((request, sender) => {
   const blockPage = "blockPage";
   const limitsPage = "limitsPage";
   const popupTime = "popupTime";
+  const browserTimeSpent = "browserTimeSpent";
+  const siteTimeSpent = "siteTimeSpent";
+  const currentSession = "currentSession";
   switch (request.message) {
+    case browserTimeSpent: {
+      chrome.runtime.sendMessage({
+        time: request.time,
+        message: "browserTimeSpent",
+      });
+      break;
+    }
+    case siteTimeSpent: {
+      chrome.runtime.sendMessage({
+        siteUrl: request.siteUrl,
+        time: request.time,
+        message: "siteTimeSpent",
+      });
+      break;
+    }
+    case currentSession: {
+      chrome.runtime.sendMessage({
+        siteUrl: request.siteUrl,
+        time: request.time,
+        message: "currentSession",
+      });
+      break;
+    }
     case redirect: {
       chrome.runtime.sendMessage({
         message: "redirected",

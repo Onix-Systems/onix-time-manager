@@ -179,11 +179,7 @@ export const setDayOptions = () => {
   Object.assign(optionsData.value.scales.x.ticks, {
     callback: (value: string | number, index: number) => {
       if (selectedNavItem.value === PopupTrackerNavItemsEnum.day) {
-        if (index % 6 === 0) {
-          return value < 10 ? `0${value}` : value;
-        } else {
-          return null;
-        }
+        return String(value).padStart(2, "0");
       }
     },
   });
@@ -260,14 +256,19 @@ export const setWeekOptions = () => {
     },
   });
   optionsData.value.scales.y.ticks = {
-    stepSize: 180,
+    stepSize: 60,
     color: "#A9A9A9",
     callback: (value: number) => {
       return `${value / 60}h`;
     },
   };
   optionsData.value.scales.y.min = 0;
-  optionsData.value.scales.y.max = 1440;
+  optionsData.value.scales.y.max = null;
+  const nonNullValues = timeData.value.filter((item) => item !== null);
+  const maxItem = Math.max(...nonNullValues);
+  if (maxItem < 60) {
+    optionsData.value.scales.y.max = 60;
+  }
 };
 
 export const setMonthOptions = () => {
@@ -277,7 +278,7 @@ export const setMonthOptions = () => {
     0
   ).getDate();
   totalData.value = {};
-  for (let i = 0; i < monthCount; i++) {
+  for (let i = 1; i < monthCount + 1; i++) {
     names.value.push(i);
     const yearData = historyStorage.value[currentData.value.getFullYear()];
     const monthData = yearData && yearData[currentData.value.getMonth() + 1];
@@ -293,17 +294,17 @@ export const setMonthOptions = () => {
         if (timeSpent) {
           totalData.value.timeSpent += timeSpent;
         }
-        timeData.value[i] = timeSpent / 60;
+        timeData.value[i - 1] = timeSpent / 60;
       } else {
         Object.values(check).forEach((item: SiteInterface) => {
           const timeSpent = { ...item }?.timeSpent || 0;
           if (timeSpent) {
             totalData.value.timeSpent += timeSpent;
           }
-          if (!timeData.value[i]) {
-            timeData.value[i] = 0;
+          if (!timeData.value[i - 1]) {
+            timeData.value[i - 1] = 0;
           }
-          timeData.value[i] += timeSpent / 60;
+          timeData.value[i - 1] += timeSpent / 60;
         });
       }
     }
@@ -323,23 +324,24 @@ export const setMonthOptions = () => {
   Object.assign(optionsData.value.scales.x.ticks, {
     callback: (value: string | number, index: number) => {
       if (selectedNavItem.value === PopupTrackerNavItemsEnum.month) {
-        if ((index + 1) % 5 === 0) {
-          return index + 1;
-        } else {
-          return null;
-        }
+        return index + 1;
       }
     },
   });
   optionsData.value.scales.y.ticks = {
-    stepSize: 180,
+    stepSize: 60,
     color: "#A9A9A9",
     callback: (value: number) => {
-      return `${value / 60}h`;
+      return `${Math.ceil(value / 60)}h`;
     },
   };
   optionsData.value.scales.y.min = 0;
-  optionsData.value.scales.y.max = 1440;
+  optionsData.value.scales.y.max = null;
+  const nonNullValues = timeData.value.filter((item) => item !== null);
+  const maxItem = Math.max(...nonNullValues);
+  if (maxItem < 60) {
+    optionsData.value.scales.y.max = 60;
+  }
 };
 
 export { filteringData };
