@@ -12,15 +12,6 @@ main-modal
             :class="{ error: !errorUrl }"
           )
           .content--actions-input-error {{ !errorUrl ? "Please check validity of initial url" : "" }}
-          .content--actions-lists
-            button.content--actions-whitelist(
-              :class="isActive(PermissionList.whitelist)",
-              @click="updatePermissionDataList(PermissionList.whitelist)"
-            ) {{ PermissionList.whitelist }}
-            button.content--actions-blacklist(
-              :class="isActive(PermissionList.blacklist)",
-              @click="updatePermissionDataList(PermissionList.blacklist)"
-            ) {{ PermissionList.blacklist }}
       template(v-else)
         .content--header
           .title

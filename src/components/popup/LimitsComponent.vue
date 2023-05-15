@@ -8,11 +8,15 @@
   template(v-else)
     h2 The list of limits for web time is empty. Create limits to websites to see them here.
     img(:src="require(`@/assets/frame-L.svg`)", alt="Empty template")
+    button.content--button.tab-active.icon.icon--plus(
+      @click="openOptions(MenuItemsEnum.Limits)"
+    ) Add limit
 </template>
 
 <script setup lang="ts">
 import ListItems from "@/components/common/ListItems.vue";
 import { computed, onMounted, onUnmounted, ref } from "vue";
+import { openOptions } from "@/composables/popup/common/popupActions";
 import {
   limitsData,
   getLimits,
@@ -21,6 +25,7 @@ import {
 } from "@/composables/limitsComp";
 import { UserData } from "@/composables/scheduleComp";
 import { ObjectInterface } from "@/types/dataInterfaces";
+import { MenuItemsEnum } from "@/constants/menuItemsEnum";
 
 onMounted(() => {
   chrome.runtime.onMessage.addListener(handleRuntimeMessage);
@@ -117,6 +122,14 @@ const handleRuntimeMessage = (request: any, sender: any) => {
   img {
     margin: 0 auto;
     display: block;
+  }
+
+  .tab-active {
+    position: fixed;
+    bottom: 82px;
+    left: 12px;
+
+    width: calc(100% - 24px);
   }
 }
 </style>

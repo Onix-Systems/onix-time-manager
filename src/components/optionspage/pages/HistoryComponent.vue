@@ -72,12 +72,7 @@
                 button.cancel(@click="cancel()")
                 p Selected {{ Object.keys(selectedItems).length }}
               button.delete(@click="openModal(EnumModalKeys.History)") Delete
-  .history--delete(v-if="sortedItems.length")
-    .history--delete-button
-      h3 Delete Website History
-      p Reset and delete all of your website history
-    button(@click="clearStorage") Delete Data
-  .history--no-data(v-else)
+  .history--no-data(v-if="!sortedItems.length")
     p The history is empty. This list will be filled out after you first visit the website.
     .icon--data-empty
   delete-modal(
@@ -169,12 +164,6 @@ const toggleRow = (index: any) => {
 const cancel = () => {
   selectedItems.value = [];
   showModal.value = false;
-};
-const clearStorage = () => {
-  chrome.storage.local.remove(["pages"], () => {
-    location.reload();
-  });
-  showDelete.value = false;
 };
 
 let sortOrder = ref("time-descending");
@@ -429,45 +418,7 @@ const deleteItem = () => {
         background-size: cover;
       }
     }
-    &--delete {
-      z-index: 2;
-      display: flex;
-      justify-content: space-between;
-      position: fixed;
-      bottom: 0;
-      padding: 34px 0;
-      width: calc(100% - 270px);
-      background: var(--white);
-      h3 {
-        font-style: normal;
-        font-weight: 500;
-        font-size: 18px;
-        line-height: 25px;
-        margin-bottom: 4px;
-      }
-      p {
-        font-style: normal;
-        font-weight: 400;
-        font-size: 14px;
-        line-height: 19px;
-        color: var(--txt-light-grey);
-      }
-      button {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        height: 32px;
-        width: 169px;
-        background: var(--bttn-delete-lightblue);
-        border-radius: 6px;
-        font-style: normal;
-        font-weight: 600;
-        font-size: 14px;
-        line-height: 19px;
-        color: var(--txt-dark-grey);
-        border: none;
-      }
-    }
+
     &-page {
       &--title {
         border-bottom: 1px solid #f1f1f1;

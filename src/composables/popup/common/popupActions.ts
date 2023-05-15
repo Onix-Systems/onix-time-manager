@@ -1,5 +1,6 @@
 import { ref } from "vue";
 import { PopupNavItemsEnum } from "@/constants/popup/popupNavItemsEnum";
+import { MenuItemsEnum } from "@/constants/menuItemsEnum";
 
 //data
 
@@ -10,8 +11,12 @@ export const popupNavigationSelected = ref(
 
 //functions
 
-export const openOptions = () => {
-  return chrome.tabs.create({ url: chrome.runtime.getURL("index.html") });
+export const openOptions = (tab = MenuItemsEnum.Tracking) => {
+  chrome.tabs
+    .create({
+      url: chrome.runtime.getURL("index.html#" + tab),
+    })
+    .then();
 };
 
 export const selectNavItem = (item: PopupNavItemsEnum) => {

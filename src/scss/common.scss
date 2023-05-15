@@ -92,6 +92,37 @@
     color: var(--white);
   }
 
+  &.tab-active {
+    height: 40px;
+    padding: 10px 20px;
+
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 20px;
+
+    background: var(--bttn-delete-lightblue);
+    outline-color: var(--bttn-delete-lightblue);
+    color: var(--txt-dark-blue);
+  }
+
+  &.icon {
+    position: relative;
+
+    &--plus::before {
+      content: "";
+
+      width: 14px;
+      height: 14px;
+      margin-right: 13px;
+
+      mask-image: url("@/assets/icons/plus.svg");
+      background: var(--txt-dark-blue);
+      mask-position: center;
+      mask-repeat: no-repeat;
+      mask-size: contain;
+    }
+  }
+
   &.disabled {
     cursor: not-allowed;
 

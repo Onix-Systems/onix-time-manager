@@ -43,10 +43,14 @@ import PermissionPage from "@/components/optionspage/pages/PermissionPage.vue";
 import RedirectPage from "@/components/optionspage/pages/RedirectPage.vue";
 
 onMounted(() => {
+  if (window.location.hash) {
+    editTabIndex(window.location.hash.slice(1) as MenuItemsEnum);
+  } else {
+    editTabIndex(MenuItemsEnum.Tracking);
+  }
   showContent.value = false;
   updateSettingsData();
   getBytes();
-  editTabIndex(MenuItemsEnum.Tracking);
 });
 </script>
 

@@ -17,9 +17,6 @@
         :class="{ active: permissionData.permission === item }",
         @click="selectList(PermissionList[item])"
       ) {{ item }}
-    .permission-content--off(v-if="isOff")
-      .permission-content--notification-text {{ "The list option is disabled. You can use all sites without limits." }}
-      .permission-content--off-icon
     .permission-content--schedule(v-if="isWhiteList || isBlackList")
       schedule-component(
         :title="`Schedule for ${permissionData.permission}`",
@@ -29,17 +26,23 @@
     .permission-content--empty-list(v-if="showEmptyTemplate")
       .permission-content--notification-text {{ `The ${permissionData.permission} for permissions websites is empty. Add the sites you want to set permission to access.` }}
       .permission-content--empty-list-icon
+    .permission-content--off(v-else-if="isOff")
+      .permission-content--notification-text {{ "The list option is disabled. You can use all sites without limits." }}
+      .permission-content--off-icon
     .limits-page--content(v-else)
       list-items(
         :items="sitesList(permissionData.permission)",
         :deleteMode="true",
-        @deleteItem="openPermissionModal($event)"
+        @deleteItem="openPermissionModal($event)",
+        @editItem="openPermissionModal($event)",
+        :editMode="true"
       )
 permission-add-web(
   v-if="isOpen(EnumModalKeys.Permission)",
   :isDelete="!!itemForDelete",
   @close="closePermissionModal()",
-  @delete="deleteItem(itemForDelete)"
+  @delete="deleteItem(itemForDelete)",
+  @edit="editItem(itemForDelete)"
 )
 </template>
 
@@ -66,6 +69,7 @@ import {
   saveData,
   selectList,
   sitesList,
+  editItem,
 } from "@/composables/permissionComp";
 onMounted(() => {
   getPermission();
@@ -174,6 +178,7 @@ const closePermissionModal = () => {
     }
     &--schedule {
       margin-top: 16px;
+      display: none;
     }
     &--empty-list {
       display: flex;

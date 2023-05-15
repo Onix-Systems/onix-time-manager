@@ -56,7 +56,6 @@ export const isLengthWhiteList = computed(() => {
 
 export const showEmptyTemplate = computed(() => {
   return (
-    isOff.value ||
     (isWhiteList.value && !isLengthWhiteList.value) ||
     (isBlackList.value && !isLengthBlackList.value)
   );
@@ -74,6 +73,20 @@ export const deleteItem = (key: string) => {
   }
   if (isBlackList.value) {
     delete permissionData.value[PermissionList.blacklist].list[key];
+  }
+  setPermission();
+};
+
+export const editItem = (key: string, newKey: string) => {
+  if (isWhiteList.value) {
+    const item = permissionData.value[PermissionList.whitelist].list[key];
+    delete permissionData.value[PermissionList.whitelist].list[key];
+    permissionData.value[PermissionList.whitelist].list[newKey] = item;
+  }
+  if (isBlackList.value) {
+    const item = permissionData.value[PermissionList.blacklist].list[key];
+    delete permissionData.value[PermissionList.blacklist].list[key];
+    permissionData.value[PermissionList.blacklist].list[newKey] = item;
   }
   setPermission();
 };
