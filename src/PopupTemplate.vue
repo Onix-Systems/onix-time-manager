@@ -8,7 +8,7 @@
         :style="{ backgroundImage: `url(${selectedSite.icon})` }"
       )
       .popup--site-name {{ selectedSite.domain }}
-    button.popup--header-settings(@click="openOptions")
+    button.popup--header-settings(@click="openOptions()")
   section.popup--content
     template(v-if="popupNavigationSelected === PopupNavItemsEnum.tracker")
       tracker-component

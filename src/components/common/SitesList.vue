@@ -6,9 +6,10 @@
     @click="selectSite(item)"
   )
     .sites--item-content
-      .icon(:style="{ backgroundImage: `url(${item.icon})` }")
-      .info
+      .info--domain
+        .icon(:style="{ backgroundImage: `url(${item.icon})` }")
         .domain {{ item.domain }}
+      .info
         .percent-section
           .percent-section--info
             .percent-section--line
@@ -70,148 +71,173 @@ const handleRuntimeMessage = (request: any, sender: any) => {
   display: flex;
   flex-direction: column;
   gap: 32px;
-  width: 401px;
+  width: 100%;
+  max-width: 456px;
+
+  * {
+    font-family: var(--font-nunito);
+  }
 
   &--item {
     cursor: pointer;
-    display: flex;
     box-sizing: border-box;
-    padding: 0 12px;
-    height: 60px;
+    display: flex;
+
     width: 100%;
+    height: 60px;
+    padding: 12px;
+
+    border-radius: 8px;
+
     &-content {
-      display: flex;
-      align-items: center;
       width: 100%;
       height: max-content;
     }
-    &-activity {
-      display: flex;
-      gap: 9px;
-    }
-    .icon {
-      min-width: 40px;
-      min-height: 40px;
-      margin-right: 16px;
-      background-repeat: no-repeat;
-      background-size: contain;
-    }
+
     .info {
       display: flex;
       flex-direction: column;
-      gap: 4px;
       width: 100%;
-    }
-    .domain {
-      font-style: normal;
-      font-weight: 500;
-      font-size: 15px;
-      line-height: 18px;
-    }
-    .percent-section {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      width: 100%;
-      max-width: 400px;
-      &--info {
+
+      &--domain {
+        display: flex;
+        margin-bottom: 4px;
+
+        .icon {
+          min-width: 20px;
+          min-height: 20px;
+          margin-right: 6px;
+
+          border-radius: 50%;
+          background-color: var(--white);
+          background-repeat: no-repeat;
+          background-size: 16px;
+          background-position: center;
+        }
+
+        .domain {
+          font-size: 16px;
+          font-weight: 600;
+          line-height: 20px;
+
+          color: var(--txt-main-darkblue);
+        }
+      }
+
+      .percent-section {
         display: flex;
         align-items: center;
         justify-content: space-between;
+
         width: 100%;
-      }
-      &--line {
-        position: relative;
-        width: 100%;
-        height: 6px;
-        max-width: 304px;
-        border-radius: 100px;
-        background: var(--bttn-active-lightblue);
-        &-percent {
-          position: absolute;
-          height: 6px;
-          left: 0;
-          top: 0;
-          border-radius: 100px;
-          background: var(--purple_percent);
-        }
-      }
-      &--percent {
-        width: 36px;
-        margin-left: 24px;
-        font-style: normal;
-        font-weight: 700;
-        font-size: 13px;
-        line-height: 18px;
-        opacity: 0.6;
-      }
-      &--time {
-        width: 28px;
-        margin-left: 17px;
-        font-style: normal;
-        font-weight: 700;
-        font-size: 13px;
-        line-height: 18px;
-        opacity: 0.6;
-      }
-    }
-    .sessions {
-      font-style: normal;
-      font-weight: 500;
-      font-size: 12px;
-      line-height: 16px;
-      color: var(--txt-dark-grey);
-    }
-    &.current-session {
-      flex-direction: column;
-      justify-content: space-between;
-      height: 143px;
-      max-width: 401px;
-      box-sizing: border-box;
-      padding: 17px 12px 12px 12px;
-      background: var(--backgr-card-lightgrey);
-      border-radius: 8px;
-      .item-block {
-        display: flex;
-        flex-direction: column;
-        box-sizing: border-box;
-        gap: 4px;
-        height: 56px;
-        width: 100%;
-        padding: 7px 12px;
-        background: white;
-        border-radius: 6px;
-        &--title {
-          font-style: normal;
-          font-weight: 500;
-          font-size: 12px;
-          line-height: 16px;
-          color: var(--txt-dark-grey);
-        }
-        &--info {
-          font-style: normal;
-          font-weight: 600;
-          font-size: 18px;
-          line-height: 25px;
-        }
-      }
-      .icon {
-        margin-left: 0;
-        background-size: contain;
-      }
-      .percent-section {
-        width: 100%;
+
         &--info {
           display: flex;
           align-items: center;
+
+          width: 100%;
         }
+
         &--line {
-          background: white;
+          position: relative;
+
+          width: 100%;
+          height: 6px;
+          margin-right: 16px;
+
+          border-radius: 3px;
+          background: var(--bttn-active-lightblue);
+
+          &-percent {
+            position: absolute;
+            left: 0;
+            top: 0;
+
+            height: 6px;
+
+            border-radius: 3px;
+            background: var(--purple_percent);
+          }
         }
+
+        &--percent,
+        &--time {
+          white-space: nowrap;
+          opacity: 0.6;
+
+          margin-right: 8px;
+
+          font-size: 13px;
+          font-weight: 700;
+          line-height: 18px;
+
+          color: var(--txt-main-darkblue);
+        }
+
         &--time {
           margin-right: 0;
         }
       }
+
+      .sessions {
+        font-size: 12px;
+        font-weight: 500;
+        line-height: 16px;
+
+        color: var(--txt-dark-grey);
+      }
+    }
+
+    &-activity {
+      display: flex;
+      column-gap: 9px;
+
+      .item-block {
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+
+        width: 100%;
+        padding: 7px 12px;
+
+        background: var(--white);
+        border-radius: 6px;
+
+        &--title {
+          font-size: 12px;
+          font-weight: 500;
+          line-height: 16px;
+
+          color: var(--txt-dark-grey);
+        }
+
+        &--info {
+          font-size: 18px;
+          font-weight: 600;
+          line-height: 25px;
+
+          color: var(--txt-main-darkblue);
+        }
+      }
+    }
+
+    &.current-session {
+      flex-direction: column;
+      justify-content: space-between;
+
+      height: 143px;
+      background: var(--backgr-card-lightgrey);
+
+      .sites--item-content {
+        padding-top: 6px;
+      }
+
+      .percent-section {
+        &--line {
+          background: white;
+        }
+      }
+
       .sessions {
         display: none;
       }

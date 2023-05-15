@@ -1,8 +1,11 @@
 <template lang="pug">
 .permissions
-  .permissions-empty(v-if="showEmptyTemplate")
+  .permissions-empty(v-if="showEmptyTemplate || isOff")
     h2 The list for permissions websites is empty. Add the sites you want to set permission to access.
     img(:src="require(`@/assets/icons/empty-permission-list.svg`)")
+    button.content--button.tab-active.icon.icon--plus(
+      @click="openOptions(MenuItemsEnum.Permissions)"
+    ) Add rules
   .permissions-page--items(v-else)
     h2 You are in
       span {{ isWhiteList ? "Whitelist" : "Blacklist" }} mode.
@@ -14,16 +17,20 @@
 
 <script setup lang="ts">
 import ListItems from "@/components/common/ListItems.vue";
+import { openOptions } from "@/composables/popup/common/popupActions";
 import {
   isWhiteList,
   permissionData,
   showEmptyTemplate,
   sitesList,
+  isOff,
 } from "@/composables/permissionComp";
+import { MenuItemsEnum } from "@/constants/menuItemsEnum";
 </script>
 
 <style scoped lang="scss">
 .permissions {
+  position: relative;
   padding: 0 12px;
 
   img {
@@ -63,6 +70,14 @@ import {
         }
       }
     }
+  }
+
+  .tab-active {
+    position: fixed;
+    bottom: 82px;
+    left: 12px;
+
+    width: calc(100% - 24px);
   }
 }
 </style>

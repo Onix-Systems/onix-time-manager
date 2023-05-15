@@ -45,8 +45,8 @@
     .settings-page--section
       .item
         .item--main
-          span.title Delete Website History
-          span.subtitle Reset and delete all of your website history
+          span.title Delete Extension Settings
+          span.subtitle Reset settings and delete all of your website history
       .option
         button.clear(@click="clearStorage") Delete Data
 set-password(v-if="showSetPassword")

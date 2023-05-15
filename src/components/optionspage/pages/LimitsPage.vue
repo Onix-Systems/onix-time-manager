@@ -10,13 +10,14 @@
         :class="{ disable: !limitsData.listLimit }"
       ) {{ "Add time limit" }}
   .limits--block
-    div
+    .limits-content--schedule
       .limits--block--title {{ "The limit of use the browser " }}
       .limits--block--subtitle {{ "Set up limits or schedule of daily use the browser." }}
-    switcher-component(
-      :isChecked="limitsData.browserLimit",
-      @update:isChecked="editLimits('browserLimit', !limitsData.browserLimit)"
-    )
+    .limits-content--schedule
+      switcher-component(
+        :isChecked="limitsData.browserLimit",
+        @update:isChecked="editLimits('browserLimit', !limitsData.browserLimit)"
+      )
   .limits-content
     .limits-content--schedule(
       :class="{ 'schedule--visible': limitsData.browserLimit }"
@@ -401,13 +402,16 @@ onMounted(() => {
     &--schedule {
       margin-top: 16px;
       pointer-events: none;
+      display: none;
     }
     .limits-content--schedule.schedule--visible {
       opacity: 1;
       pointer-events: visible;
+      display: none;
     }
     .schedule.schedule--visible {
       background-color: #f5f5f7;
+      display: none;
     }
     &--empty-list {
       display: flex;

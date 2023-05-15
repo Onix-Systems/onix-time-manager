@@ -39,7 +39,7 @@ onMounted(() => {
     height: calc(100% - 45px);
     padding-left: 12px;
     &::v-deep(.percent-section--line) {
-      max-width: 224px;
+      max-width: 304px;
     }
   }
 }

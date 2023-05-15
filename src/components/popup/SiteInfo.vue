@@ -14,11 +14,14 @@
           v-if="getTimeTotal(item, timeForTotal)",
           v-html="getTimeTotal(item, timeForTotal)"
         )
-  button.site-info--limit {{ "Add limit" }}
+  button.content--button.tab-active.icon.icon--plus(
+    @click="openOptions(MenuItemsEnum.Limits)"
+  ) Add limit
 </template>
 
 <script setup lang="ts">
 import { timeForTotal, totalData } from "@/composables/common/chartBar";
+import { openOptions } from "@/composables/popup/common/popupActions";
 import {
   formatDuration,
   isTotal,
@@ -26,6 +29,7 @@ import {
 import ChartBar from "@/components/common/ChartBar.vue";
 import CalendarSlider from "@/components/common/CalendarSlider.vue";
 import { getTimeTotal, st } from "@/composables/common/dateComposable";
+import { MenuItemsEnum } from "@/constants/menuItemsEnum";
 </script>
 
 <style scoped lang="scss">
@@ -61,30 +65,10 @@ import { getTimeTotal, st } from "@/composables/common/dateComposable";
       color: #000000;
     }
   }
-  &--limit {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-sizing: border-box;
-    margin-top: 6px;
-    height: 40px;
-    width: 100%;
-    font-weight: 500;
-    font-size: 13px;
-    line-height: 16px;
-    color: #8d9297;
-    border: 1px solid #f1f1f3;
-    border-radius: 6px;
-    background: inherit;
-    &::before {
-      content: "";
-      margin-right: 11px;
-      background: url("@/assets/icons/plus.svg"), no-repeat center;
-      background-size: contain;
-      width: 14px;
-      height: 14px;
-    }
+  .tab-active {
+    margin: 12px 0;
   }
+
   .time-info {
     display: flex;
     flex-direction: column;
