@@ -3,7 +3,7 @@ main-modal
   template(v-slot:content)
     .content
       .content--header
-        .title {{ props.isEdit ? "Edit" : "Set up" }} a redirect
+        .title {{ isEdit ? "Edit" : "Set up" }} a redirect
         button.close(@click="close")
       .content--body
         input.content--input(
@@ -36,7 +36,14 @@ main-modal
 </template>
 
 <script setup lang="ts">
-import { defineEmits, onMounted, defineProps, ref, reactive } from "vue";
+import {
+  defineEmits,
+  onMounted,
+  defineProps,
+  ref,
+  reactive,
+  computed,
+} from "vue";
 import MainModal from "@/modals/MainModal.vue";
 
 const props = defineProps({
@@ -46,19 +53,19 @@ const props = defineProps({
       redirect: "",
     },
   },
-  isEdit: {
-    type: Boolean,
-    default: false,
-  },
   editIndex: {
     type: Number,
-    default: 0,
+    default: -1,
   },
 });
 const emit = defineEmits(["onClosed"]);
 const close = () => {
   emit("onClosed");
 };
+
+const isEdit = computed(() => {
+  return props.editIndex !== -1;
+});
 
 const checkForSecure = (url: string) => {
   if (!url.includes("https://")) {
@@ -102,7 +109,7 @@ const submit = () => {
       if (errors.initialSame) {
         const array = res.redirect;
         urlGroup.value.redirect = checkForSecure(urlGroup.value.redirect);
-        if (!props.isEdit) {
+        if (!isEdit.value) {
           array.push(urlGroup.value);
           chrome.storage.local.set({ redirect: array }).then(() => {
             close();
@@ -132,82 +139,5 @@ onMounted(() => {
   flex-direction: column;
 
   width: 654px;
-
-  &--body {
-    display: flex;
-    flex-direction: column;
-    width: 100%;
-
-    .content--input {
-      box-sizing: border-box;
-      width: 100%;
-      height: 40px;
-
-      padding: 12px 16px;
-
-      border: 1px solid #ebecee;
-      border-radius: 6px;
-
-      font-style: normal;
-      font-weight: 500;
-      font-size: 13px;
-      line-height: 15px;
-      color: var(--txt-main-darkblue);
-
-      &::placeholder {
-        color: var(--txt-light-grey);
-      }
-      &.error {
-        border: 1px solid var(--error);
-      }
-    }
-    &.delete {
-      justify-content: center;
-      align-items: center;
-      gap: 8px;
-
-      margin-bottom: 48px;
-
-      .title {
-        font-style: normal;
-        font-weight: 500;
-        font-size: 22px;
-        line-height: 27px;
-        text-align: center;
-        color: var(--txt-main-darkblue);
-      }
-      .subtitle {
-        max-width: 401px;
-
-        white-space: break-spaces;
-        font-style: normal;
-        font-weight: 400;
-        font-size: 16px;
-        line-height: 19px;
-        text-align: center;
-        color: var(--txt-dark-grey);
-      }
-    }
-  }
-  &--error {
-    display: flex;
-
-    visibility: hidden;
-
-    height: 18px;
-    width: 100%;
-
-    &.show {
-      visibility: visible;
-    }
-    p {
-      margin: 5px 0 0 0;
-      font-style: normal;
-      font-weight: 500;
-      font-size: 10px;
-      line-height: 10px;
-      color: var(--error);
-    }
-  }
 }
 </style>

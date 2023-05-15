@@ -20,7 +20,6 @@
       | The list of redirects is empty. Please set up a redirect to see them here.
 new-redirect-modal(
   v-if="isOpen(EnumModalKeys.RedirectEdit)",
-  :is-edit="isEdit",
   :initial-data="editData",
   :edit-index="currentIndex",
   @onClosed="modalClose"
@@ -50,7 +49,6 @@ import { EnumModalKeys } from "@/constants/EnumModalKeys";
 
 const data = ref([] as { initial: string; redirect: string }[]);
 
-const isEdit = ref(false);
 const editData = ref({});
 const currentIndex = ref(-1);
 
@@ -63,11 +61,9 @@ const modalClose = () => {
 const resetEdit = () => {
   currentIndex.value = -1;
   editData.value = {};
-  isEdit.value = false;
 };
 
 const editItem = (index: number) => {
-  isEdit.value = true;
   editData.value = { ...data.value[index] };
   currentIndex.value = index;
   openModal(EnumModalKeys.RedirectEdit);

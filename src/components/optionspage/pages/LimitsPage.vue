@@ -2,17 +2,18 @@
 .limits
   .option--header
     .option--header-left
-      .option--header--title {{ "Time Limits" }}
-      .option--header--subtitle {{ "Set up limits on time which can be used on the site" }}
+      .option--header--title Time Limits
+      .option--header--subtitle Set up limits on time which can be used on the site
     .option--header-right
-      button.option--header-btn(
-        @click="limitsData.listLimit ? openModal(EnumModalKeys.Limits) : ''",
-        :class="{ disable: !limitsData.listLimit }"
+      button.content--button.raised(
+        :disabled="!limitsData.listLimit",
+        :class="{ disable: !limitsData.listLimit }",
+        @click="openModal(EnumModalKeys.LimitsEdit)"
       ) {{ "Add time limit" }}
   .limits--block
     .limits-content--schedule
-      .limits--block--title {{ "The limit of use the browser " }}
-      .limits--block--subtitle {{ "Set up limits or schedule of daily use the browser." }}
+      .limits--block--title The limit of use the browser
+      .limits--block--subtitle Set up limits or schedule of daily use the browser.
     .limits-content--schedule
       switcher-component(
         :isChecked="limitsData.browserLimit",
@@ -46,27 +47,34 @@
         :editMode="true",
         :deleteMode="true",
         :limits="true",
-        @edit-item="editItem($event)",
-        @delete-item="deleteItem($event)"
+        @onEdit="editItem($event)",
+        @onDelete="deleteItem($event)"
       )
-    limits-add-web(
-      v-if="isOpen(EnumModalKeys.Limits)",
-      @close="modalClose",
-      :initialData="editData",
-      :isEdit="isEdit",
-      :editDomain="currentKey",
-      :isDelete="isDelete"
-    )
+new-limits-modal(
+  v-if="isOpen(EnumModalKeys.LimitsEdit)",
+  :initial-data="editData",
+  :edit-index="currentKey",
+  @onClosed="closeEditModal"
+)
+delete-modal(
+  v-if="isOpen(EnumModalKeys.LimitsDelete)",
+  :delete-type="`time limit`",
+  :delete-context="`After deleting you will not be able to use this limit to block the site again`",
+  @onSubmit="deleteAction",
+  @onClosed="closeModal(EnumModalKeys.LimitsDelete)"
+)
 </template>
 
 <script setup lang="ts">
-import { closeModal, isOpen, openModal } from "@/composables/modalActions";
-import { EnumModalKeys } from "@/constants/EnumModalKeys";
-import LimitsAddWeb from "@/modals/LimitsAddWeb.vue";
 import { onMounted, ref } from "vue";
+
+import DeleteModal from "@/modals/common/DeleteModal.vue";
+import NewLimitsModal from "@/modals/NewLimitsModal.vue";
+
 import ScheduleComponent from "@/components/common/ScheduleComponent.vue";
 import SwitcherComponent from "@/components/common/SwitcherComponent.vue";
 import ListItems from "@/components/common/ListItems.vue";
+
 import {
   limitsData,
   getLimits,
@@ -75,39 +83,43 @@ import {
   isLengthList,
   editLimits,
 } from "@/composables/limitsComp";
+import { closeModal, isOpen, openModal } from "@/composables/modalActions";
 
-const isEdit = ref(false);
+import { EnumModalKeys } from "@/constants/EnumModalKeys";
+
 const editData = ref({});
 const currentKey = ref("");
-
-const isDelete = ref(false);
-
-const modalClose = () => {
-  closeModal(EnumModalKeys.Limits);
+const sites = ref([]);
+const closeEditModal = () => {
   getLimits();
   resetEdit();
+  closeModal(EnumModalKeys.LimitsEdit);
 };
 
 const resetEdit = () => {
   currentKey.value = "";
   editData.value = {};
-  isEdit.value = false;
-  isDelete.value = false;
 };
 
 const editItem = (key: string) => {
-  isEdit.value = true;
   editData.value = { ...limitsData.value.list[key] };
   currentKey.value = key;
-  openModal(EnumModalKeys.Limits);
+  openModal(EnumModalKeys.LimitsEdit);
 };
 const deleteItem = (key: string) => {
-  isDelete.value = true;
   currentKey.value = key;
-  openModal(EnumModalKeys.Limits);
+  openModal(EnumModalKeys.LimitsDelete);
 };
 
-const sites = ref([]);
+const deleteAction = () => {
+  chrome.storage.local.get("limits").then((res) => {
+    const data = { ...res.limits };
+    delete data.list[currentKey.value];
+    chrome.storage.local.set({ limits: data }).then(() => {
+      getLimits();
+    });
+  });
+};
 
 onMounted(() => {
   getLimits();
