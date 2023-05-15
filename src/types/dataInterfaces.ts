@@ -14,6 +14,7 @@ export interface SiteInterface {
   timeSpent: number;
   sessions: number[];
   currentSession: number;
+  longestSession: number;
   lastVisit: string;
   firstVisit: string;
   mostActive: number;

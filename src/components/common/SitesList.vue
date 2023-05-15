@@ -17,7 +17,7 @@
               )
             .percent-section--percent {{ getPercent(item.timeSpent) + "%" }}
             .percent-section--time {{ formatDuration(item.timeSpent) }}
-        .sessions(v-if="!item.currentSession") {{ `${item.visited} sessions` }}
+        .sessions(v-if="!item.currentSession") {{ `${item.sessions} sessions` }}
     .sites--item-activity(v-if="item.currentSession && isShowCurrentSession")
       .item-block
         .item-block--title {{ "Current Session" }}
@@ -26,7 +26,7 @@
         .item-block--title {{ "Longest Session" }}
         .item-block--info(
           v-if="item && (item.sessions || item.currentSession)"
-        ) {{ currentSessionData.time > Math.max(...item.sessions) || item.currentSession > Math.max(...item.sessions) ? formatDuration(currentSessionData.time || item.currentSession) : formatDuration(Math.max(...item.sessions)) }}
+        ) {{ currentSessionData.time > item.longestSession || item.currentSession > item.longestSession ? formatDuration(currentSessionData.time || item.currentSession) : formatDuration(item.longestSession) }}
       .item-block
         .item-block--title {{ "Sessions" }}
         .item-block--info {{ item.visited }}
@@ -38,7 +38,7 @@ import {
   filteringData,
   formatDuration,
   getPercent,
-} from "@/composables/popup/pages/trackerPageActions";
+} from "@/composables/common/trackerPageActions";
 import { selectSite } from "@/composables/common/chartBar";
 import { ObjectInterface } from "@/types/dataInterfaces";
 const props = defineProps({

@@ -14,7 +14,7 @@ import {
   getHistory,
   selectedNavItem,
   selectNavItem,
-} from "@/composables/popup/pages/trackerPageActions";
+} from "@/composables/common/trackerPageActions";
 const items = Object.values(PopupTrackerNavItemsEnum);
 watch(
   () => selectedNavItem.value,

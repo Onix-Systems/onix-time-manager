@@ -6,7 +6,7 @@ import {
   historyStorage,
   selectedNavItem,
   totalTimeSpent,
-} from "@/composables/popup/pages/trackerPageActions";
+} from "@/composables/common/trackerPageActions";
 import { PopupTrackerNavItemsEnum } from "@/constants/popup/popupNavItemsEnum";
 import {
   currentData,

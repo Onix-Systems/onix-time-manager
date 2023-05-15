@@ -12,7 +12,7 @@
 import {
   getHistory,
   selectNavItem,
-} from "@/composables/popup/pages/trackerPageActions";
+} from "@/composables/common/trackerPageActions";
 import { onMounted } from "vue";
 import { isSelectedSite } from "@/composables/common/chartBar";
 import FilterSelect from "@/components/common/FilterSelect.vue";

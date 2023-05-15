@@ -1,4 +1,4 @@
-import { selectedNavItem } from "@/composables/popup/pages/trackerPageActions";
+import { selectedNavItem } from "@/composables/common/trackerPageActions";
 import { PopupTrackerNavItemsEnum } from "@/constants/popup/popupNavItemsEnum";
 import { computed, ref } from "vue";
 import { DateInterface } from "@/types/dataInterfaces";

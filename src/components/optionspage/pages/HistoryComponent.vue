@@ -97,7 +97,7 @@ import {
   getHistory,
   historyStorage,
   selectNavItem,
-} from "@/composables/popup/pages/trackerPageActions";
+} from "@/composables/common/trackerPageActions";
 import moment from "moment";
 import { closeModal, isOpen, openModal } from "@/composables/modalActions";
 import { EnumModalKeys } from "@/constants/EnumModalKeys";

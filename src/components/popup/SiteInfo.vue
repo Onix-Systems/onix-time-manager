@@ -22,7 +22,7 @@ import { timeForTotal, totalData } from "@/composables/common/chartBar";
 import {
   formatDuration,
   isTotal,
-} from "@/composables/popup/pages/trackerPageActions";
+} from "@/composables/common/trackerPageActions";
 import ChartBar from "@/components/common/ChartBar.vue";
 import CalendarSlider from "@/components/common/CalendarSlider.vue";
 import { getTimeTotal, st } from "@/composables/common/dateComposable";

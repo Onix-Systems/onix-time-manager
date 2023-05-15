@@ -12,8 +12,7 @@ chrome.runtime.onMessage.addListener((request, sender) => {
   const limitsPage = "limitsPage";
   const popupTime = "popupTime";
   const browserTimeSpent = "browserTimeSpent";
-  const siteTimeSpent = "siteTimeSpent";
-  const currentSession = "currentSession";
+  const activeTab = "activeTab";
   switch (request.message) {
     case browserTimeSpent: {
       chrome.runtime.sendMessage({
@@ -22,19 +21,10 @@ chrome.runtime.onMessage.addListener((request, sender) => {
       });
       break;
     }
-    case siteTimeSpent: {
+    case activeTab: {
       chrome.runtime.sendMessage({
-        siteUrl: request.siteUrl,
-        time: request.time,
-        message: "siteTimeSpent",
-      });
-      break;
-    }
-    case currentSession: {
-      chrome.runtime.sendMessage({
-        siteUrl: request.siteUrl,
-        time: request.time,
-        message: "currentSession",
+        activeTabId: request.activeTabId,
+        message: "activeTab",
       });
       break;
     }
