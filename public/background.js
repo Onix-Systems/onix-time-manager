@@ -74,6 +74,7 @@ const updatePageTime = (tabId, isUpdated) => {
 
         chrome.storage.local.get({ pages: {} }, async (result) => {
           let { pages } = result;
+          let timeSpent = 0;
 
           if (isUpdated) {
             if (!pages[currentUrl]) {
@@ -88,6 +89,8 @@ const updatePageTime = (tabId, isUpdated) => {
               path: tab.url,
               activity: [{ begin: new Date().getTime(), end: 0 }],
             });
+            const copySite = { ...pages[currentUrl] };
+            console.log(pages);
           } else {
             const sessions = pages?.[currentUrl]?.sessions ?? {};
             if (sessions[tab.id]) {
@@ -95,13 +98,21 @@ const updatePageTime = (tabId, isUpdated) => {
                 begin: new Date().getTime(),
                 end: 0,
               });
+              sessions[tab.id][0].activity.forEach((item) => {
+                if (!item.end) {
+                  timeSpent += new Date().getTime() - item.begin;
+                } else {
+                  timeSpent += item.end - item.begin;
+                }
+              });
             }
           }
-
           createMessage({
-            activeTabId: tab.id,
+            currentUrl: currentUrl,
+            timeSpent,
             message: "activeTab",
           });
+          console.log(pages);
 
           currentInformation = pages;
 

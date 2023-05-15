@@ -3,19 +3,13 @@ import { PopupTrackerNavItemsEnum } from "@/constants/popup/popupNavItemsEnum";
 import { getSiteData } from "@/composables/common/chartBar";
 import {
   currentData,
-  dayData,
-  dayIndex,
-  getSevenDays,
-  monthIndex,
   resetCurrentDay,
   sevenDays,
-  yearIndex,
 } from "@/composables/common/dateComposable";
 import {
   DateInterface,
   ObjectInterface,
   SiteInterface,
-  SiteObject,
 } from "@/types/dataInterfaces";
 
 //data
@@ -35,21 +29,9 @@ export const filteringData: ObjectInterface = computed(() => {
     const data: SiteInterface | ObjectInterface = Object.keys({
       ...historyStorage.value,
     }).reduce(accumulateSites, {});
-
-    const compareSites = (a: SiteInterface, b: SiteInterface): number => {
-      const aHasCurrentSession = a.currentSession > 0;
-      const bHasCurrentSession = b.currentSession > 0;
-      if (aHasCurrentSession && !bHasCurrentSession) {
-        return -1;
-      } else if (!aHasCurrentSession && bHasCurrentSession) {
-        return 1;
-      } else {
-        return b.timeSpent - a.timeSpent;
-      }
-    };
-    return Object.values(data).sort((a: unknown, b: unknown) =>
-      compareSites(a as SiteInterface, b as SiteInterface)
-    );
+    return Object.values(data).sort((a: any, b: any) => {
+      return b.timeSpent - a.timeSpent;
+    });
   } else {
     return {};
   }
@@ -109,15 +91,27 @@ const accumulateSites = (sites: ObjectInterface, siteKey: string) => {
   let sessions: ObjectInterface[] = [];
 
   if (siteKey) {
-    const filter = (tabData: any, date: any) => {
+    const filter = (tabData: any, date?: any) => {
       tabData.activity.forEach((item: any) => {
+        if (!date) {
+          if (!sites[siteKey]) {
+            sites[siteKey] = {
+              icon: site.icon,
+              domain: siteKey,
+              sessions: 0,
+              timeSpent: 0,
+            };
+          }
+          sessions.push(item);
+        }
         if (
-          (new Date(item.begin).setHours(0, 0, 0, 0) ===
+          date &&
+          ((new Date(item.begin).setHours(0, 0, 0, 0) ===
             date.setHours(0, 0, 0, 0) &&
             item.begin) ||
-          (new Date(item.end).setHours(0, 0, 0, 0) ===
-            date.setHours(0, 0, 0, 0) &&
-            item.end)
+            (new Date(item.end).setHours(0, 0, 0, 0) ===
+              date.setHours(0, 0, 0, 0) &&
+              item.end))
         ) {
           if (!sites[siteKey]) {
             sites[siteKey] = {
@@ -178,6 +172,28 @@ const accumulateSites = (sites: ObjectInterface, siteKey: string) => {
                   )
                 );
               });
+              break;
+            }
+            case PopupTrackerNavItemsEnum.month: {
+              const monthCount = new Date(
+                currentData.value.getFullYear(),
+                currentData.value.getMonth() + 1,
+                0
+              ).getDate();
+              for (let i = 1; i < monthCount + 1; i++) {
+                filter(
+                  item,
+                  new Date(
+                    currentData.value.getFullYear(),
+                    currentData.value.getMonth(),
+                    i
+                  )
+                );
+              }
+              break;
+            }
+            case PopupTrackerNavItemsEnum.total: {
+              filter(item, "");
               break;
             }
           }

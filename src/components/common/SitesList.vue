@@ -1,7 +1,7 @@
 <template lang="pug">
 .sites
   .sites--item(
-    v-for="item in filteringData",
+    v-for="item in filterData",
     :class="{ 'current-session': item.currentSession && isShowCurrentSession }",
     @click="selectSite(item)"
   )
@@ -34,36 +34,46 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, onMounted, onUnmounted, ref } from "vue";
+import { computed, defineProps, onMounted, onUnmounted, ref } from "vue";
 import {
   filteringData,
   formatDuration,
   getPercent,
 } from "@/composables/common/trackerPageActions";
 import { selectSite } from "@/composables/common/chartBar";
-import { ObjectInterface } from "@/types/dataInterfaces";
+import { ObjectInterface, SiteInterface } from "@/types/dataInterfaces";
 const props = defineProps({
   isShowCurrentSession: {
     type: Boolean,
     default: true,
   },
 });
+
+const intervalId = 0;
+
 onMounted(() => {
   chrome.runtime.onMessage.addListener(handleRuntimeMessage);
 });
 onUnmounted(() => {
   chrome.runtime.onMessage.removeListener(handleRuntimeMessage);
+  clearInterval(intervalId);
 });
 
 const currentSessionData = ref({} as ObjectInterface);
 
 const handleRuntimeMessage = (request: any, sender: any) => {
-  const currentSession = "currentSession";
-  if (request.message === currentSession) {
+  const activeTab = "activeTab";
+  console.log(request);
+  if (request.message === activeTab) {
     currentSessionData.value.domain = request.siteUrl;
     currentSessionData.value.time = request.time;
   }
 };
+
+const filterData: ObjectInterface = computed(() => {
+  const data = { ...filteringData.value };
+  return data;
+});
 </script>
 
 <style scoped lang="scss">
