@@ -45,7 +45,7 @@ import {
   selectedSite,
   selectSite,
 } from "@/composables/common/chartBar";
-import { getHistory } from "@/composables/popup/pages/trackerPageActions";
+import { getHistory } from "@/composables/common/trackerPageActions";
 import { getPermission } from "@/composables/permissionComp";
 onMounted(() => {
   getHistory();

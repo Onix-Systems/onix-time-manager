@@ -10,7 +10,7 @@ import {
   historyStorage,
   isTotal,
   selectedNavItem,
-} from "@/composables/popup/pages/trackerPageActions";
+} from "@/composables/common/trackerPageActions";
 import { currentData, changeDate } from "@/composables/common/dateComposable";
 import { computed } from "vue";
 import { PopupTrackerNavItemsEnum } from "@/constants/popup/popupNavItemsEnum";
