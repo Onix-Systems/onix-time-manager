@@ -71,16 +71,16 @@
               .modal--content-cancel
                 button.cancel(@click="cancel()")
                 p Selected {{ Object.keys(selectedItems).length }}
-              button.delete(@click="openModal(EnumModalKeys.History)") Delete
+              button.delete(@click="openModal(EnumModalKeys.Delete)") Delete
   .history--no-data(v-if="!sortedItems.length")
     p The history is empty. This list will be filled out after you first visit the website.
     .icon--data-empty
   delete-modal(
-    v-if="isOpen(EnumModalKeys.History)",
+    v-if="isOpen(EnumModalKeys.Delete)",
     :delete-type="`history page`",
     :delete-context="`You won't be able to view this story again after deleting it.`",
     @onSubmit="deleteItem",
-    @onClosed="closeModal(EnumModalKeys.History)"
+    @onClosed="closeModal(EnumModalKeys.Delete)"
   )
 </template>
 

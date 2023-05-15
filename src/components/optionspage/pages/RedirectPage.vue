@@ -19,17 +19,17 @@
     template(v-slot="")
       | The list of redirects is empty. Please set up a redirect to see them here.
 new-redirect-modal(
-  v-if="isOpen(EnumModalKeys.RedirectEdit)",
+  v-if="isOpen(EnumModalKeys.Edit)",
   :initial-data="editData",
   :edit-index="currentIndex",
   @onClosed="modalClose"
 )
 delete-modal(
-  v-if="isOpen(EnumModalKeys.RedirectDelete)",
+  v-if="isOpen(EnumModalKeys.Delete)",
   :delete-type="`this redirect`",
   :delete-context="`After deleting you will not be able to use this redirect for block the site again`",
   @onSubmit="deleteAction",
-  @onClosed="closeModal(EnumModalKeys.RedirectDelete)"
+  @onClosed="closeModal(EnumModalKeys.Delete)"
 )
 </template>
 
@@ -39,8 +39,8 @@ import { onMounted, ref } from "vue";
 import ListItems from "@/components/common/ListItems.vue";
 import PlaceholderComponent from "@/components/optionspage/common/PlaceholderComponent.vue";
 
-import DeleteModal from "@/modals/common/DeleteModal.vue";
 import NewRedirectModal from "@/modals/NewRedirectModal.vue";
+import DeleteModal from "@/modals/common/DeleteModal.vue";
 
 import { isOpen, openModal, closeModal } from "@/composables/modalActions";
 
@@ -53,9 +53,9 @@ const editData = ref({});
 const currentIndex = ref(-1);
 
 const modalClose = () => {
-  closeModal(EnumModalKeys.RedirectEdit);
   loadData();
   resetEdit();
+  closeModal(EnumModalKeys.Edit);
 };
 
 const resetEdit = () => {
@@ -66,11 +66,11 @@ const resetEdit = () => {
 const editItem = (index: number) => {
   editData.value = { ...data.value[index] };
   currentIndex.value = index;
-  openModal(EnumModalKeys.RedirectEdit);
+  openModal(EnumModalKeys.Edit);
 };
 const deleteItem = (index: number) => {
   currentIndex.value = index;
-  openModal(EnumModalKeys.RedirectDelete);
+  openModal(EnumModalKeys.Delete);
 };
 
 const loadData = () => {

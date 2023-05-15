@@ -90,6 +90,14 @@
   &.raised {
     background-color: var(--txt-dark-blue);
     color: var(--white);
+
+    &.disabled {
+      cursor: not-allowed;
+
+      background: var(--bttn-submit-disabled);
+      color: var(--txt-anti-flashlight);
+      outline: 1px solid var(--bttn-submit-disabled);
+    }
   }
 
   &.tab-active {
@@ -122,12 +130,11 @@
       mask-size: contain;
     }
   }
+}
 
-  &.disabled {
-    cursor: not-allowed;
+.sector-right {
+  display: flex;
+  justify-content: flex-end;
 
-    background: var(--bttn-submit-disabled);
-    color: var(--txt-anti-flashlight);
-    outline: 1px solid var(--bttn-submit-disabled);
-  }
+  width: 100%;
 }

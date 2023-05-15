@@ -11,12 +11,13 @@ export const popupNavigationSelected = ref(
 
 //functions
 
-export const openOptions = (tab = MenuItemsEnum.Tracking) => {
-  chrome.tabs
-    .create({
-      url: chrome.runtime.getURL("index.html#" + tab),
-    })
-    .then();
+export const openOptions = (tab = MenuItemsEnum.Tracking, target = false) => {
+  const url = chrome.runtime.getURL("index.html#" + tab);
+  if (target) {
+    chrome.tabs.update({ url }).then();
+  } else {
+    chrome.tabs.create({ url }).then();
+  }
 };
 
 export const selectNavItem = (item: PopupNavItemsEnum) => {

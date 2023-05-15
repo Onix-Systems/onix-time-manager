@@ -13,7 +13,10 @@
       p(v-if="redirect") From {{ value.initial }}
       p(v-else) {{ limits ? value.domain : value }}
     .item--controls
-      button.settings(v-if="editMode", @click="$emit('onEdit', key)")
+      button.settings(
+        v-if="editMode",
+        @click="$emit('onEdit', permission ? value : key)"
+      )
       button.delete(v-if="deleteMode", @click="$emit('onDelete', key)")
 </template>
 
@@ -37,6 +40,10 @@ const props = defineProps({
     default: false,
   },
   limits: {
+    type: Boolean,
+    default: false,
+  },
+  permission: {
     type: Boolean,
     default: false,
   },
@@ -66,11 +73,11 @@ const emit = defineEmits(["onEdit", "onDelete"]);
   }
 
   &--logo {
-    min-width: 40px;
+    min-width: 32px;
 
     img {
       width: 100%;
-      height: 40px;
+      height: 32px;
 
       border-radius: 50%;
     }

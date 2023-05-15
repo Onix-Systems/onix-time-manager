@@ -1,27 +1,15 @@
 import { PermissionList } from "@/constants/PermissionList";
-import { ObjectInterface } from "@/types/dataInterfaces";
 
 export interface PermissionInterface {
-  permission: PermissionList;
+  type: PermissionList;
+  list: PermissionItemInterface;
+}
+
+export interface PermissionItemInterface {
   whitelist: {
-    schedule: ObjectInterface;
-    list: ObjectInterface;
+    [key: string]: string;
   };
   blacklist: {
-    schedule: ObjectInterface;
-    list: ObjectInterface;
+    [key: string]: string;
   };
-  [key: string]: any;
-}
-
-export interface ScheduleTimeObject {
-  time: number;
-  period: string;
-  [key: string]: any;
-}
-
-export interface ScheduleTimeLimitsObject {
-  timeLimits: number;
-  period: string;
-  [key: string]: any;
 }

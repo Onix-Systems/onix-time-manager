@@ -1,9 +1,5 @@
 export enum EnumModalKeys {
-  RedirectEdit = "redirect-edit",
-  RedirectDelete = "redirect-delete",
-  LimitsEdit = "limits-edit",
-  LimitsDelete = "limits-delete",
-  Permission = "permission-modal",
-  History = "delete-modal",
+  Edit = "edit-modal",
+  Delete = "delete-modal",
   Password = "password-modal",
 }

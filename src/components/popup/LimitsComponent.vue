@@ -5,17 +5,22 @@
     p.subtitle {{ getGlobalLimit }}
   template(v-if="isLengthList")
     list-items(:items="limitsObject.list", :limits="true")
-  template(v-else)
-    h2 The list of limits for web time is empty. Create limits to websites to see them here.
-    img(:src="require(`@/assets/frame-L.svg`)", alt="Empty template")
+  empty-template.fixed(
+    v-else,
+    :image-path="'empty-limits-list.svg'",
+    :message="'The list of limits for web time is empty. Create limits to websites to see them here.'"
+  )
     button.content--button.tab-active.icon.icon--plus(
       @click="openOptions(MenuItemsEnum.Limits)"
     ) Add limit
 </template>
 
 <script setup lang="ts">
-import ListItems from "@/components/common/ListItems.vue";
 import { computed, onMounted, onUnmounted, ref } from "vue";
+
+import ListItems from "@/components/common/ListItems.vue";
+import EmptyTemplate from "@/components/common/EmptyTemplate.vue";
+
 import { openOptions } from "@/composables/popup/common/popupActions";
 import {
   limitsData,
@@ -24,7 +29,9 @@ import {
   resetUserData,
 } from "@/composables/limitsComp";
 import { UserData } from "@/composables/scheduleComp";
+
 import { ObjectInterface } from "@/types/dataInterfaces";
+
 import { MenuItemsEnum } from "@/constants/menuItemsEnum";
 
 onMounted(() => {
@@ -88,12 +95,12 @@ const handleRuntimeMessage = (request: any, sender: any) => {
 
 <style scoped lang="scss">
 .limits-page--content {
-  padding: 32px 12px 0;
+  padding: 0 12px;
 
   h2 {
-    margin-bottom: 59px;
+    margin: 32px 0 59px;
 
-    font-family: Nunito, sans-serif;
+    font-family: var(--font-nunito);
     font-weight: 500;
     font-size: 16px;
     line-height: 20px;
@@ -117,19 +124,6 @@ const handleRuntimeMessage = (request: any, sender: any) => {
     text-align: center;
 
     color: var(--txt-dark-blue);
-  }
-
-  img {
-    margin: 0 auto;
-    display: block;
-  }
-
-  .tab-active {
-    position: fixed;
-    bottom: 82px;
-    left: 12px;
-
-    width: calc(100% - 24px);
   }
 }
 </style>

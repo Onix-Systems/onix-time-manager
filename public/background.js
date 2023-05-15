@@ -11,7 +11,7 @@ chrome.runtime.onInstalled.addListener(() => {
   chrome.tabs.onActivated.addListener((tab) => {
     updateCurrentSession(tabIdCopy);
     tabIdCopy = tab.tabId;
-    detectRedirect();
+    detectRules();
     updatePageTime(tabIdCopy, false);
   });
   chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
@@ -19,7 +19,7 @@ chrome.runtime.onInstalled.addListener(() => {
       if (tabId === tabIdCopy) {
         tabIdCopy = tabId;
         updateCurrentSession(tabIdCopy);
-        detectRedirect();
+        detectRules();
         updatePageTime(tabIdCopy, true);
       }
     }
@@ -124,26 +124,57 @@ const updatePageTime = (tabId, isUpdated) => {
 };
 
 // Redirect
-const detectRedirect = () => {
+const detectRules = () => {
   chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
     if (tabs.length) {
-      chrome.storage.local.get("redirect").then((res) => {
-        if (res && res.redirect) {
-          const index = res.redirect.findIndex(
-            (value) => value.initial === tabs[0].url
-          );
-          if (index > -1) {
-            createMessage({
-              initial: res.redirect[index].initial,
-              url: res.redirect[index].redirect,
-              message: "redirect",
-            });
-          }
-        }
-      });
+      checkForRedirection(tabs[0].url);
+      checkForPermission(tabs[0].url);
     }
   });
 };
+
+const checkForRedirection = (tabUrl) => {
+  chrome.storage.local.get("redirect").then((res) => {
+    if (res && res.redirect) {
+      const index = res.redirect.findIndex((value) => value.initial === tabUrl);
+      if (index > -1) {
+        createMessage({
+          initial: res.redirect[index].initial,
+          url: res.redirect[index].redirect,
+          message: "redirect",
+        });
+      }
+    }
+  });
+};
+
+const checkForPermission = (tabUrl) => {
+  chrome.storage.local.get("permission").then((res) => {
+    if (res && res.permission) {
+      const type = res.permission.type;
+      if (type !== "off") {
+        const list = res.permission.list[type];
+        const keys = Object.keys(list);
+        console.log(tabUrl);
+        if (keys.length && tabUrl.includes("https://")) {
+          const includes = keys.includes(new URL(tabUrl).hostname);
+          if (includes) {
+            if (type === "blacklist") {
+              createMessage({
+                message: "blockPage",
+              });
+            }
+          } else if (type === "whitelist") {
+            createMessage({
+              message: "blockPage",
+            });
+          }
+        }
+      }
+    }
+  });
+};
+
 chrome.runtime.onMessage.addListener((request, sender) => {
   const redirect = "redirect";
   const goToOptions = "goToOptions";

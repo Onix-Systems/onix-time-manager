@@ -7,7 +7,7 @@
     .option--header-right
       button.content--button.raised(
         :disabled="!limitsData.listLimit",
-        :class="{ disable: !limitsData.listLimit }",
+        :class="{ disabled: !limitsData.listLimit }",
         @click="openModal(EnumModalKeys.LimitsEdit)"
       ) {{ "Add time limit" }}
   .limits--block
@@ -51,17 +51,17 @@
         @onDelete="deleteItem($event)"
       )
 new-limits-modal(
-  v-if="isOpen(EnumModalKeys.LimitsEdit)",
+  v-if="isOpen(EnumModalKeys.Edit)",
   :initial-data="editData",
   :edit-index="currentKey",
   @onClosed="closeEditModal"
 )
 delete-modal(
-  v-if="isOpen(EnumModalKeys.LimitsDelete)",
+  v-if="isOpen(EnumModalKeys.Delete)",
   :delete-type="`time limit`",
   :delete-context="`After deleting you will not be able to use this limit to block the site again`",
   @onSubmit="deleteAction",
-  @onClosed="closeModal(EnumModalKeys.LimitsDelete)"
+  @onClosed="closeModal(EnumModalKeys.Delete)"
 )
 </template>
 
@@ -93,7 +93,7 @@ const sites = ref([]);
 const closeEditModal = () => {
   getLimits();
   resetEdit();
-  closeModal(EnumModalKeys.LimitsEdit);
+  closeModal(EnumModalKeys.Edit);
 };
 
 const resetEdit = () => {
@@ -104,11 +104,11 @@ const resetEdit = () => {
 const editItem = (key: string) => {
   editData.value = { ...limitsData.value.list[key] };
   currentKey.value = key;
-  openModal(EnumModalKeys.LimitsEdit);
+  openModal(EnumModalKeys.Edit);
 };
 const deleteItem = (key: string) => {
   currentKey.value = key;
-  openModal(EnumModalKeys.LimitsDelete);
+  openModal(EnumModalKeys.Delete);
 };
 
 const deleteAction = () => {
@@ -405,7 +405,8 @@ onMounted(() => {
       margin-top: 74px;
       &-icon {
         margin-top: 36px;
-        background: url("@/assets/icons/smile.svg"), no-repeat, center;
+        background: url("@/assets/icons/empty/off-template.svg"), no-repeat,
+          center;
         background-size: cover;
         height: 180px;
         width: 180px;
@@ -441,7 +442,7 @@ onMounted(() => {
       }
       &-icon {
         margin-top: 24px;
-        background: url("@/assets/frame-L.svg") no-repeat;
+        background: url("@/assets/icons/empty/empty-limits-list.svg") no-repeat;
         background-size: contain;
         height: 200px;
         width: 184px;

@@ -41,7 +41,6 @@ chrome.runtime.onMessage.addListener((request, sender) => {
     case blockPage: {
       const urlHtml = chrome.runtime.getURL("./block-page/blockPage.html");
       const urlCss = chrome.runtime.getURL("./block-page/blockPage.css");
-      const urlImg = chrome.runtime.getURL("assets/warning-error.svg");
 
       Promise.all([fetch(urlHtml), fetch(urlCss)])
         .then((responses) =>
@@ -61,7 +60,7 @@ chrome.runtime.onMessage.addListener((request, sender) => {
 
           const link3 = document.createElement("link");
           link3.href =
-            "https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap";
+            "https://fonts.googleapis.com/css2?family=Nunito:wght@600&display=swap";
           link3.rel = "stylesheet";
 
           const style = document.createElement("style");
@@ -81,7 +80,7 @@ chrome.runtime.onMessage.addListener((request, sender) => {
           contentText.innerHTML = `You add <span>${baseUrl}</span> to a blacklist. It's probably there for a reason.`;
 
           const warningImage = document.createElement("img");
-          warningImage.src = urlImg;
+          warningImage.src = `https://s2.googleusercontent.com/s2/favicons?domain=${baseUrl}&sz=96`;
           warningImage.alt = "Warning";
 
           contentImage.appendChild(warningImage);

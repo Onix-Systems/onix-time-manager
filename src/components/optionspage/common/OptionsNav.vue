@@ -6,7 +6,7 @@
     li.navigation-tab(
       v-for="item in data",
       :class="[{ active: activeTabIndex === item }, item]",
-      @click="editTabIndex(item)"
+      @click="setTabIndex(item)"
     )
       span.navigation-tab--text {{ item }}
 </template>
@@ -15,9 +15,15 @@
 import { activeTabIndex, editTabIndex } from "@/composables/optionsActions";
 import { computed } from "vue";
 import { MenuItemsEnum } from "@/constants/menuItemsEnum";
+import { openOptions } from "@/composables/popup/common/popupActions";
 const data = computed(() => {
   return Object.keys(MenuItemsEnum);
 });
+
+const setTabIndex = (item: MenuItemsEnum) => {
+  editTabIndex(item);
+  openOptions(item, true);
+};
 </script>
 
 <style scoped lang="scss">
