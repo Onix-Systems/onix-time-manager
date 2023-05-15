@@ -13,6 +13,7 @@ chrome.runtime.onMessage.addListener((request, sender) => {
   const popupTime = "popupTime";
   const browserTimeSpent = "browserTimeSpent";
   const activeTab = "activeTab";
+  console.log(request);
   switch (request.message) {
     case browserTimeSpent: {
       chrome.runtime.sendMessage({
@@ -23,7 +24,8 @@ chrome.runtime.onMessage.addListener((request, sender) => {
     }
     case activeTab: {
       chrome.runtime.sendMessage({
-        activeTabId: request.activeTabId,
+        currentUrl: request.currentUrl,
+        timeSpent: request.timeSpent,
         message: "activeTab",
       });
       break;
