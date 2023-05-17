@@ -187,7 +187,7 @@ export const format = (
   timeDifference = false
 ) => {
   const date = new Date(timeInSeconds);
-  const maskKeys = ["DD", "MM", "YYYY", "H", "mm", "ss"];
+  const maskKeys = ["DD", "MM", "YYYY", "HH", "H", "mm", "ss"];
   maskKeys.forEach((separator) => {
     if (mask.includes(separator)) {
       let joinContent = "";
@@ -208,20 +208,40 @@ export const format = (
           }
           break;
         }
+        case "HH": {
+          if (timeDifference) {
+            const calculation =
+              timeInSeconds > 86400
+                ? Math.floor((timeInSeconds - 86400) / 3600)
+                : Math.floor(timeInSeconds / 3600);
+            joinContent = concatPrefix("0", calculation);
+          } else {
+            joinContent = concatPrefix("0", date.getHours());
+          }
+          break;
+        }
         case "H": {
-          const calculation =
-            timeInSeconds > 86400
-              ? Math.floor((timeInSeconds - 86400) / 3600)
-              : Math.floor(timeInSeconds / 3600);
-          joinContent = concatPrefix("0", calculation);
+          if (timeDifference) {
+            const calculation =
+              timeInSeconds > 86400
+                ? Math.floor((timeInSeconds - 86400) / 3600)
+                : Math.floor(timeInSeconds / 3600);
+            joinContent = calculation.toString();
+          } else {
+            joinContent = date.getHours().toString();
+          }
           break;
         }
         case "mm": {
-          const calculation =
-            timeInSeconds > 3600
-              ? Math.floor((timeInSeconds - 3600) / 60)
-              : Math.floor(timeInSeconds / 60);
-          joinContent = concatPrefix("0", calculation);
+          if (timeDifference) {
+            const calculation =
+              timeInSeconds > 3600
+                ? Math.floor((timeInSeconds - 3600) / 60)
+                : Math.floor(timeInSeconds / 60);
+            joinContent = concatPrefix("0", calculation);
+          } else {
+            joinContent = concatPrefix("0", date.getMinutes());
+          }
           break;
         }
         case "ss": {

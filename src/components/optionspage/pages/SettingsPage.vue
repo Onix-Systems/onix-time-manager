@@ -48,12 +48,25 @@
           span.title Delete Extension Settings
           span.subtitle Reset settings and delete all of your website history
       .option
-        button.clear(@click="clearStorage") Delete Data
+        button.clear(@click="openModal(EnumModalKeys.Delete)") Delete Data
 set-password(v-if="showSetPassword")
+delete-modal(
+  v-if="isOpen(EnumModalKeys.Delete)",
+  :delete-type="`Extension Settings`",
+  :delete-context="`You extension data (history, limits, permission & tracking data) will be resetting to default parameters.`",
+  @onSubmit="clearStorage",
+  @onClosed="closeModal(EnumModalKeys.Delete)"
+)
 </template>
 
 <script setup lang="ts">
 import SwitcherComponent from "@/components/common/SwitcherComponent.vue";
+
+import SetPassword from "@/modals/SetPassword.vue";
+import DeleteModal from "@/modals/common/DeleteModal.vue";
+
+import { closeModal, isOpen, openModal } from "@/composables/modalActions";
+import { permissionData } from "@/composables/permissionComp";
 import {
   settingsData,
   showSetPassword,
@@ -61,9 +74,9 @@ import {
   editShowSetPassword,
   setSettings,
 } from "@/composables/settingsComp";
-import SetPassword from "@/modals/SetPassword.vue";
+
 import { MenuItemsEnum } from "@/constants/menuItemsEnum";
-import { togglePermission, permissionData } from "@/composables/permissionComp";
+import { EnumModalKeys } from "@/constants/EnumModalKeys";
 
 const clearStorage = () => {
   chrome.storage.local.clear(() => {

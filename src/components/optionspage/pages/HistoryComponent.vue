@@ -8,80 +8,79 @@
         .history--sorting
           dropdown-component(:disable="true")
             template(v-slot:selectedItem="")
-              .item-selected {{ sortByText }}:
+              .item-selected {{ sortOption ? `By ${sortOption}` : "Sort by"}}:
             template(v-slot:content="props")
-              li(@click="sortByTime(props)") By date
-              li(@click="sortByLastVisit(props)") By total time
-              li(@click="sortByVisits(props)") By session
-    table.history-page--table
-      thead
-        tr.history-page--title
-          th
-          th Web address
-          th.col-width Sessions
-          th.col-width Last visit
-          th.col-width Total time
-      template(v-if="true")
-        tbody(
-          v-for="(item, index) in historyList",
-          :key="`History_key__${index}`",
-          :id="`${index}`"
-        )
-          tr
-            td.font-14
-              input.checkbox.global(
-                type="checkbox",
-                :id="`${index}`",
-                :value="index",
-                v-model="selectedItems",
-                :checked="isChecked(item.domain)",
-                @change="select(index)"
-              )
-            td
-              .icon(:style="{ backgroundImage: `url(${item.icon})` }")
-              p {{ `https://${item.domain}/` }}
-            td.arrow(
-              :class="{ active: activeRow === index }",
-              :style="{ cursor: 'pointer' }",
-              @click="toggleRow(index)"
+              li(
+                v-for="(item, index) in Object.values(SortEnum)",
+                :key="`option_enum__${index}`",
+                @click="sortBy(item as SortEnum, props);"
+              ) By {{ item }}
+      .modal(v-if="selectedItems.length > 0")
+        .modal--content
+          .modal--content-cancel
+            button.cancel(@click="cancel")
+            p Selected {{ selectedItems.length }}
+          button.delete(@click="openModal(EnumModalKeys.Delete)") Delete
+  .history-page--table
+    .history-page--title
+      .tr
+        .th
+        .th.align-left Web address
+        .th.align-left Sessions
+        .th Last visit
+        .th Total time
+    .history-page--body(v-if="historyList.length")
+      .body--group(
+        v-for="(item, index) in historyList",
+        :key="`History_key__${index}`",
+        :id="`${index}`"
+      )
+        .tr
+          .td
+            input.global(
+              type="checkbox",
+              :id="`${index}`",
+              :value="index",
+              :checked="isChildSelected(item.sessions)",
+              @change="toggleChild(item.sessions, isChildSelected(item.sessions))"
             )
-              p {{ item.sessions.length }}
-            td
-              p {{ lastVisit(item.sessions) }}
-            td
-              p {{ timeSpent(item.sessions) }}
-          tr(
-            v-for="(activity, subIndex) in item.sessions",
-            :id="`row-${index}-col-${subIndex}`",
-            v-show="activeRow === index"
+          .td
+            .icon(:style="{ backgroundImage: `url(${item.icon})` }")
+            p {{ `https://${item.domain}/` }}
+          .td.arrow(
+            :class="{ active: activeRow === index }",
+            @click="toggleRow(index)"
           )
-            td
-            td
+            p {{ item.sessions.length }}
+          .td.align-right
+            p {{ lastVisit(item.sessions) }}
+          .td.align-right
+            p {{ timeSpent(item.sessions) }}
+        .toggle(v-show="activeRow === index")
+          .tr.smaller(
+            v-for="(activity, subIndex) in item.sessions",
+            :id="`row-${index}-col-${subIndex}`"
+          )
+            .td
               input.sub(
                 type="checkbox",
                 :id="`${index}-${subIndex}`",
                 :value="`${index}-${subIndex}`",
-                v-model="selectedItems",
-                :checked="isChecked(item.domain)",
-                @change="subSelect(index)"
+                :checked="isChecked(activity.id)",
+                @change="toggleCheckList(activity.id)"
               )
-              p.smaller {{ activity.path }}
-            td
-            td
-              p.smaller {{ format("DD.MM.YYYY", activity.activity[0].begin) }}
-            td
-              p.smaller {{ format("Hh mmm sss", timeSpentCalculation(activity.activity), true) }}
-          .modal(v-if="Object.keys(selectedItems).length > 0")
-            .modal--content
-              .modal--content-cancel
-                button.cancel(@click="cancel()")
-                p Selected {{ Object.keys(selectedItems).length }}
-              button.delete(@click="openModal(EnumModalKeys.Delete)") Delete
-  empty-template.desktop(
-    v-if="!sortedItems.length",
-    :image-path="'frame-no-dataL.svg'",
-    :message="'The history is empty. This list will be filled out after you first visit the website.'"
-  )
+            .td
+              p {{ activity.path }}
+            .td
+            .td.align-right
+              p {{ format("DD.MM.YYYY HH:mm", activity.activity[activity.activity.length - 1].begin) }}
+            .td.align-right
+              p {{ format("Hh mmm sss", timeSpentCalculation(activity.activity), true) }}
+    empty-template.desktop(
+      v-else,
+      :image-path="'frame-no-dataL.svg'",
+      :message="'The history is empty. This list will be filled out after you first visit the website.'"
+    )
   delete-modal(
     v-if="isOpen(EnumModalKeys.Delete)",
     :delete-type="`history page`",
@@ -95,65 +94,77 @@
 import { ref, computed, onMounted } from "vue";
 
 import DropdownComponent from "@/components/common/DropdownComponent.vue";
-
-import DeleteModal from "@/modals/common/DeleteModal.vue";
 import EmptyTemplate from "@/components/common/EmptyTemplate.vue";
 
-import {
-  checkDataInStorage,
-  filteringData,
-  historyStorage,
-  selectNavItem,
-  timeSpentCalculation,
-} from "@/composables/common/trackerPageActions";
-import { closeModal, isOpen, openModal } from "@/composables/modalActions";
-import { EnumModalKeys } from "@/constants/EnumModalKeys";
+import DeleteModal from "@/modals/common/DeleteModal.vue";
+
 import { format } from "@/composables/common/dateComposable";
+import { timeSpentCalculation } from "@/composables/common/trackerPageActions";
+import { closeModal, isOpen, openModal } from "@/composables/modalActions";
+
+import { EnumModalKeys } from "@/constants/EnumModalKeys";
 import { MenuItemsEnum } from "@/constants/menuItemsEnum";
 
 import { SessionInterface } from "@/types/TrackingInterface";
+enum SortEnum {
+  date = "date",
+  time = "total time",
+  session = "session",
+}
 
-import moment from "moment";
+interface HistoryListInterface {
+  domain: string;
+  icon: string;
+  sessions: SessionInterface[];
+}
 
+interface DomainItemInterface {
+  icon: string;
+  sessions: {
+    [key: string]: SessionInterface[];
+  };
+}
+interface HistoryStorageInterface {
+  [key: string]: DomainItemInterface;
+}
+const sortOption = ref<SortEnum>();
+const selectedItems = ref<string[]>([]);
 const activeRow = ref(-1);
+const historyList = ref<HistoryListInterface[]>([]);
 
-const historyList = ref<
-  { domain: string; icon: string; sessions: SessionInterface[] }[]
->([]);
-
-const select = (index: number) => {
-  Object.keys(sortedItems.value[index].urls).forEach((elem, numb) => {
-    if (selectedItems.value.includes(index)) {
-      selectedItems.value.push(`${index}-${numb}`);
-    } else {
-      const indexOf = selectedItems.value.indexOf(`${index}-${numb}`);
-      selectedItems.value.splice(indexOf, 1);
-    }
-  });
-};
-
-const subSelect = (index: number) => {
-  const keys = Object.keys(sortedItems.value[index].urls);
-  if (
-    keys.reduce((acum, elem, numb) => {
-      return acum + (selectedItems.value.includes(`${index}-${numb}`) ? 1 : 0);
-    }, 0) === keys.length
-  ) {
-    selectedItems.value.push(index);
-  } else {
-    if (selectedItems.value.includes(index)) {
-      const indexOf = selectedItems.value.indexOf(index);
-      selectedItems.value.splice(indexOf, 1);
-    }
+const sortBy = (option: SortEnum, props?: { toggleVisibility(): void }) => {
+  if (props) {
+    props.toggleVisibility();
   }
-};
-
-const selectedItems = ref<(number | string)[]>([]);
-const sortByText = ref("Sort by date");
-
-const isChecked = (domain: string) => {
-  // let result = selectedItems.value.includes(item);
-  return false;
+  historyList.value = historyList.value.sort(
+    (a: HistoryListInterface, b: HistoryListInterface) => {
+      switch (true) {
+        case option === SortEnum.time: {
+          return (
+            totalTimeCalculation(b.sessions) - totalTimeCalculation(a.sessions)
+          );
+        }
+        case option === SortEnum.session: {
+          return b.sessions.length - a.sessions.length;
+        }
+        default: {
+          const lastItemA = new Date(
+            a.sessions[a.sessions.length - 1].activity.slice(-1)[0].begin
+          );
+          const lastItemB = new Date(
+            b.sessions[b.sessions.length - 1].activity.slice(-1)[0].begin
+          );
+          if (lastItemA < lastItemB) {
+            return 1;
+          } else if (lastItemA > lastItemB) {
+            return -1;
+          }
+          return 0;
+        }
+      }
+    }
+  );
+  sortOption.value = option;
 };
 
 const toggleRow = (index: number) => {
@@ -168,159 +179,138 @@ const cancel = () => {
   closeModal(EnumModalKeys.Delete);
 };
 
-let sortOrder = ref("time-descending");
-let sortedItems = computed(() => {
-  return sorting(filteringData);
-});
-
-enum Order {
-  time = "time",
-  visited = "visited",
-  timeSpent = "timeSpent",
-}
-const sorting = (filteringData: any) => {
-  switch (sortOrder.value) {
-    case Order.time: {
-      return filteringData.value.sort((a: any, b: any) =>
-        moment(b.firstOpen).diff(a.firstOpen)
-      );
-    }
-    case Order.visited: {
-      return filteringData.value.sort(
-        (a: any, b: any) => b.visited - a.visited
-      );
-    }
-    case Order.timeSpent: {
-      return filteringData.value.sort(
-        (a: any, b: any) => b.timeSpent - a.timeSpent
-      );
-    }
-    default: {
-      return filteringData.value;
-    }
-  }
-};
-
-const sortByVisits = (props: any) => {
-  sortOrder.value = Order.visited;
-  sortByText.value = "Sort by session";
-  props.toggleVisibility();
-};
-const sortByLastVisit = (props: any) => {
-  sortOrder.value = Order.time;
-  sortByText.value = "Sort by total time";
-  props.toggleVisibility();
-};
-const sortByTime = (props: any) => {
-  sortOrder.value = Order.timeSpent;
-  sortByText.value = "Sort by date";
-  props.toggleVisibility();
-};
-
 const deleteItem = () => {
-  getHistory();
-  const history = { ...historyStorage.value };
-  if (selectedItems.value) {
-    const domainKeys = selectedItems.value.filter((item) => {
-      return typeof item === "number";
-    });
-    selectedItems.value.forEach((item: any) => {
-      if (domainKeys.includes(item)) {
-        const site: any = sortedItems.value[item];
-        if (site) {
-          Object.values(site.urls).forEach((elem: any) => {
-            elem.visited.forEach((data: any) => {
-              const [day, month, year] = data.split(".");
-              const selectData = {
-                year,
-                month,
-                day,
-              };
-              if (checkDataInStorage(selectData)) {
-                delete history[selectData.year][Number(selectData.month)][
-                  Number(selectData.day)
-                ][site.domain];
-              }
-            });
-          });
-        }
-      } else {
-        const [key, subKey] = item.split("-");
-        if (!domainKeys.includes(Number(key))) {
-          const site: any = sortedItems.value[key];
-          const siteKey = Object.keys(site.urls)[subKey];
-          const siteUrl: any = site.urls[siteKey];
-          if (siteUrl) {
-            siteUrl.visited.forEach((data: any) => {
-              const [day, month, year] = data.split(".");
-              const selectData = {
-                year,
-                month,
-                day,
-              };
-              if (checkDataInStorage(selectData)) {
-                delete history[selectData.year][Number(selectData.month)][
-                  Number(selectData.day)
-                ][site.domain]["urls"][siteKey];
-              }
-            });
-          }
-        }
-      }
-    });
-  }
-  chrome.storage.local.set({ pages: history }, () => {
-    getHistory();
-    selectedItems.value = [];
-  });
-};
-
-const getHistory = () => {
   chrome.storage.local.get({ pages: {} }, (result) => {
     if (result.pages) {
-      const keys = Object.keys(result.pages);
-      historyList.value = keys.map((domain) => {
-        const {
-          icon,
-          sessions,
-        }: {
-          icon: string;
-          sessions: {
-            [key: string]: SessionInterface[];
+      const originPages: HistoryStorageInterface = {};
+      const domainKeys = Object.keys(result.pages);
+      domainKeys.forEach((domainKey) => {
+        const sessionsObj: { [key: string]: SessionInterface[] } = {};
+        const sessionsKeys = Object.keys(result.pages[domainKey].sessions);
+        sessionsKeys.forEach((sessionKey) => {
+          const sessions: SessionInterface[] = [];
+          result.pages[domainKey].sessions[sessionKey].forEach(
+            (session: SessionInterface) => {
+              if (!selectedItems.value.includes(session.id)) {
+                sessions.push({ ...session });
+              }
+            }
+          );
+          if (sessions.length) {
+            sessionsObj[sessionKey] = sessions;
+          }
+        });
+        if (Object.keys(sessionsObj).length) {
+          originPages[domainKey] = {
+            icon: result.pages[domainKey].icon,
+            sessions: sessionsObj,
           };
-        } = result.pages[domain];
-
-        const sessionsKeys = Object.values(sessions);
-        return {
-          domain,
-          icon,
-          sessions: sessionsKeys.reduce(
-            (a: SessionInterface[], b: SessionInterface[]) => {
-              return a.concat(b);
-            },
-            []
-          ),
-        };
+        }
+      });
+      chrome.storage.local.get({ pages: {} }, (result) => {
+        if (result.pages) {
+          chrome.storage.local.set({ pages: originPages });
+          createStructure(originPages);
+          sortBy(SortEnum.date);
+          selectedItems.value = [];
+          activeRow.value = -1;
+        } else {
+          historyList.value = [];
+        }
       });
     }
   });
 };
 
+const getHistory = () => {
+  chrome.storage.local.get({ pages: {} }, (result: any) => {
+    if (Object.keys(result.pages).length) {
+      createStructure(result.pages);
+      sortBy(SortEnum.date);
+    }
+  });
+};
+
+const createStructure = (pages: {
+  [key: string]: {
+    icon: string;
+    sessions: {
+      [key: string]: SessionInterface[];
+    };
+  };
+}) => {
+  const keys = Object.keys(pages);
+  historyList.value = keys.map((domain) => {
+    const {
+      icon,
+      sessions,
+    }: {
+      icon: string;
+      sessions: {
+        [key: string]: SessionInterface[];
+      };
+    } = pages[domain];
+    const sessionsKeys = Object.values(sessions);
+    return {
+      domain,
+      icon,
+      sessions: sessionsKeys.reduce(
+        (a: SessionInterface[], b: SessionInterface[]) => {
+          return a.concat(b);
+        },
+        []
+      ),
+    };
+  });
+};
+const isChildSelected = (sessions: SessionInterface[]) => {
+  return sessions.every((e) => selectedItems.value.includes(e.id));
+};
+
+const isChecked = (id: string) => {
+  return selectedItems.value.includes(id);
+};
+
+const toggleChild = (sessions: SessionInterface[], status: boolean) => {
+  sessions.forEach((f) => {
+    const index = selectedItems.value.indexOf(f.id);
+    if (status) {
+      selectedItems.value.splice(index, 1);
+    } else if (index === -1) {
+      selectedItems.value.push(f.id);
+    }
+  });
+};
+
+const toggleCheckList = (id: string) => {
+  const index = selectedItems.value.indexOf(id);
+  if (index === -1) {
+    selectedItems.value.push(id);
+  } else {
+    selectedItems.value.splice(index, 1);
+  }
+};
+
 const lastVisit = (session: SessionInterface[]) => {
-  const lastItem = session[0].activity.slice(-1);
-  return format("DD.MM.YYYY", lastItem[0].begin);
+  const lastItem = session[session.length - 1].activity.slice(-1);
+  return format("DD.MM.YYYY HH:mm", lastItem[0].begin);
 };
 
 const timeSpent = (session: SessionInterface[]) => {
-  const difference = session.reduce(
+  const difference = totalTimeCalculation(session);
+  const mask = difference > 86400 ? "DDd Hh mmm sss" : "Hh mmm sss";
+  return format(mask, difference, true);
+};
+
+const totalTimeCalculation = (session: SessionInterface[]) => {
+  return session.reduce(
     (sessionPrev: number, sessionCurrent: SessionInterface) => {
       return sessionPrev + timeSpentCalculation(sessionCurrent.activity);
     },
     0
   );
-  const mask = difference > 86400 ? "DDd Hh mmm sss" : "Hh mmm sss";
-  return format(mask, difference, true);
 };
+
 onMounted(() => {
   getHistory();
 });
@@ -328,7 +318,8 @@ onMounted(() => {
 
 <style lang="scss" scoped>
 .container {
-  padding-bottom: 116px;
+  padding-bottom: 46px;
+
   .modal {
     &--content {
       z-index: 2;
@@ -389,200 +380,233 @@ onMounted(() => {
       }
     }
   }
-  .global {
-    margin-right: 9px;
-  }
-  .sub {
-    margin-left: 10px !important;
-    margin-right: 0 !important;
-  }
+
   .history {
     margin-top: 3px;
     .history--sorting {
       height: 40px;
-      &::v-deep(.drop-down) {
-        height: 40px;
-        background: inherit;
-        .selected-item {
-          padding: 0 25px 0 10px;
-          font-style: normal;
-          font-weight: 400;
-          font-size: 14px;
-          line-height: 19px;
-          color: var(--txt-dark-grey);
-          border: 1px solid var(--backgr-card-lightgrey);
-          border-radius: 4px;
-          &--arrow {
-            right: 15px;
-            background: var(--txt-dark-grey);
-          }
-          &.active {
-            border-bottom: 1px solid var(--white);
-            border-radius: 4px 4px 0 0;
-          }
-        }
-        .drop-down {
-          &--content {
-            box-sizing: border-box;
-            top: 40px;
-            background: var(--white);
-            border: 1px solid var(--backgr-card-lightgrey);
-            border-top: 0;
-            border-radius: 0 0 4px 4px;
-          }
-          &--list {
-            overflow: inherit;
-            background: var(--white);
-            li {
-              cursor: pointer;
-              display: flex;
-              align-items: center;
-              height: 40px;
-              font-style: normal;
-              font-weight: 400;
-              font-size: 14px;
-              line-height: 19px;
-              color: var(--txt-dark-grey);
-              border-top: 1px solid var(--backgr-card-lightgrey);
-              padding-left: 10px;
-            }
-          }
-        }
-      }
     }
 
     &-page {
-      &--title {
-        border-bottom: 1px solid #f1f1f1;
-        th {
-          font-style: normal;
-          font-weight: 500;
-          font-size: 12px;
-          line-height: 16px;
-          color: var(--txt-light-grey);
-          text-align: right;
-          &:nth-child(2) {
-            text-align: left;
-          }
-          &.col-width {
-            width: 130px;
-            min-width: 130px;
+      &--table {
+        display: flex;
+        flex-direction: column;
+
+        padding-top: 45px;
+      }
+
+      &--title,
+      &--body {
+        .tr {
+          display: flex;
+          width: 100%;
+
+          .td,
+          .th {
+            font-family: var(--font-nunito);
+            font-weight: 500;
+            font-size: 12px;
+            line-height: 16px;
+
+            color: var(--txt-light-grey);
+
+            &:nth-child(1) {
+              min-width: 40px;
+            }
+
+            &:nth-child(2) {
+              width: 100%;
+            }
+
+            &:nth-child(3) {
+              min-width: 70px;
+            }
+
+            &:nth-child(4) {
+              min-width: 168px;
+            }
+
+            &:nth-child(5) {
+              min-width: 140px;
+            }
           }
         }
       }
-      &--table {
-        width: 100%;
-        height: auto;
-        margin-top: 45px;
-        th:first-child {
-          width: 38px;
-        }
-        th {
-          padding-bottom: 10px;
-        }
-        td {
-          padding: 24px 0;
+
+      &--title {
+        padding-bottom: 10px;
+
+        border-bottom: 1px solid var(--txt-anti-flashlight);
+
+        .th {
           text-align: right;
-          margin-right: 10px;
 
-          p {
-            overflow: hidden;
+          &.align-left {
+            text-align: left;
+          }
+        }
+      }
 
-            max-width: 380px;
+      &--body {
+        .body--group {
+          display: flex;
+          flex-direction: column;
 
-            font-family: var(--font-nunito);
-            font-size: 16px;
-            font-weight: 600;
-            line-height: 22px;
-            white-space: nowrap;
-            text-overflow: ellipsis;
+          .tr {
+            height: 40px;
+            margin: 12px 0;
 
-            color: var(--txt-main-darkblue);
+            .td {
+              display: flex;
+              align-items: center;
+
+              p {
+                overflow: hidden;
+
+                max-width: 560px;
+
+                font-family: var(--font-nunito);
+                font-size: 16px;
+                font-weight: 600;
+                line-height: 32px;
+                white-space: nowrap;
+                text-overflow: ellipsis;
+
+                color: var(--txt-main-darkblue);
+              }
+
+              .icon {
+                width: 32px;
+                min-width: 32px;
+                height: 32px;
+                margin-right: 16px;
+
+                background-color: var(--txt-anti-flashlight);
+                background-size: 26px;
+                background-position: center;
+                background-repeat: no-repeat;
+                border-radius: 50%;
+              }
+
+              input[type="checkbox"] {
+                position: relative;
+                cursor: pointer;
+                line-height: 0;
+                vertical-align: text-top;
+                outline: 0;
+
+                width: 20px;
+                height: 20px;
+                min-width: 20px;
+                min-height: 20px;
+
+                -webkit-appearance: none;
+                background: var(--white);
+                border: 1px solid var(--txt-water-link);
+                border-radius: 4px;
+                background: none;
+
+                &:checked {
+                  opacity: 1;
+
+                  background-color: var(--bttn-active-lightblue);
+                  border: 1px solid var(--bttn-active-lightblue);
+
+                  &:before {
+                    content: "";
+                    position: absolute;
+                    right: 50%;
+                    top: 50%;
+                    display: block;
+                    z-index: 2;
+
+                    width: 4px;
+                    height: 10px;
+                    margin: -1px -1px 0 -1px;
+
+                    border: solid var(--txt-light-grey);
+                    border-width: 0 2px 2px 0;
+                    transform: rotate(45deg) translate(-50%, -50%);
+                  }
+                }
+              }
+
+              &.arrow {
+                position: relative;
+                cursor: pointer;
+
+                &::before {
+                  position: absolute;
+                  left: 6px;
+                  top: 15px;
+                  content: "";
+                  display: inline-block;
+                  cursor: pointer;
+
+                  width: 6px;
+                  height: 12px;
+                  margin-bottom: 2px;
+                  margin-right: 18px;
+
+                  background-image: url("@/assets/icons/arrow-left.svg");
+                  transform: rotate(-90deg);
+                }
+
+                p {
+                  padding-left: 28px;
+                }
+
+                &.active {
+                  &::before {
+                    transform: rotate(90deg);
+                    transition: all 0.3s;
+                  }
+                }
+              }
+
+              &.align-right {
+                justify-content: flex-end;
+              }
+            }
 
             &.smaller {
-              font-size: 12px;
-              font-weight: 500;
-              line-height: 16px;
+              .td {
+                p {
+                  font-size: 12px;
+                  font-weight: 500;
+                  line-height: 16px;
 
-              color: var(--txt-water-link);
+                  color: var(--txt-water-link);
+                }
+              }
             }
           }
 
-          &:nth-child(2) {
-            text-align: left;
+          .toggle {
             display: flex;
-            align-items: center;
-          }
+            flex-direction: column;
+            overflow: auto;
 
-          .checkbox {
-            margin-right: 10px;
-          }
+            max-height: 448px;
+            padding: 0 10px 0 30px;
 
-          .icon {
-            min-width: 32px;
-            height: 32px;
-            margin-right: 16px;
+            .tr {
+              margin: 0;
+              padding: 8px 0 0;
+              border-top: 1px solid var(--txt-anti-flashlight);
 
-            background-size: contain;
-            background-repeat: no-repeat;
-            background-color: var(--white);
-            border-radius: 50%;
-          }
-        }
+              .td {
+                height: 20px;
+                padding: 6px 0;
 
-        input[type="checkbox"] {
-          position: relative;
-          border: 1px solid #757575;
-          border-radius: 4px;
-          background: none;
-          cursor: pointer;
-          line-height: 0;
-          margin: 0 21px 0 0;
-          outline: 0;
-          padding: 0 !important;
-          vertical-align: text-top;
-          height: 20px;
-          width: 20px;
-          min-width: 20px;
-          min-height: 20px;
-          -webkit-appearance: none;
-          background: var(--white);
-        }
+                &:nth-child(1) {
+                  margin-left: 8px;
+                }
+              }
 
-        input[type="checkbox"]:checked {
-          background-color: var(--bttn-active-lightblue);
-          border: 1px solid var(--bttn-active-lightblue);
-          opacity: 1;
-          &:before {
-            display: block;
-            content: "";
-            position: absolute;
-            right: 50%;
-            top: 50%;
-            width: 4px;
-            height: 10px;
-            border: solid var(--txt-light-grey);
-            border-width: 0 2px 2px 0;
-            margin: -1px -1px 0 -1px;
-            transform: rotate(45deg) translate(-50%, -50%);
-            z-index: 2;
-          }
-        }
-        td.arrow {
-          &::before {
-            cursor: pointer;
-            display: inline-block;
-            content: "";
-            background-image: url("@/assets/icons/arrow-left.svg");
-            width: 12px;
-            height: 6px;
-            margin-bottom: 2px;
-            margin-right: 18px;
-          }
-          &.active {
-            &::before {
-              transform: rotate(180deg);
-              transition: all 0.3s;
+              &:last-child {
+                border-bottom: 1px solid var(--txt-anti-flashlight);
+              }
             }
           }
         }

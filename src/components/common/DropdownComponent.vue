@@ -45,16 +45,17 @@ useClickOutside(customSelect, () => {
 
 <style scoped lang="scss">
 .drop-down {
-  height: 32px;
+  height: 40px;
   width: 222px;
   font-style: normal;
   font-weight: 400;
   font-size: 13px;
   line-height: 16px;
   color: #a9a9a9;
-  background: var(--white);
+  background: inherit;
   border-radius: 4px;
   border: 1px solid var(--backgr-card-lightgrey2);
+
   &--section {
     width: 100%;
     height: 100%;
@@ -65,21 +66,34 @@ useClickOutside(customSelect, () => {
     cursor: pointer;
     display: flex;
     align-items: center;
+
     height: 100%;
     width: 100%;
-    padding: 0 20px 0 18px;
+    padding: 0 25px 0 10px;
+
+    font-style: normal;
+    font-weight: 400;
+    font-size: 14px;
+    line-height: 19px;
+    color: var(--txt-dark-grey);
+
     background: inherit;
     border: none;
+    border-radius: 4px;
+
     &--arrow {
       position: absolute;
-      right: 8px;
+      right: 15px;
+
       width: 10px;
       height: 6px;
+
       mask-image: url("@/assets/arrow.svg");
       mask-repeat: no-repeat;
       mask-size: cover;
-      background: #a9a9a9;
+      background: var(--txt-dark-grey);
     }
+
     &.disable {
       cursor: auto;
       .selected-item--arrow {
@@ -87,7 +101,9 @@ useClickOutside(customSelect, () => {
       }
     }
     &.active {
-      border-bottom: none;
+      border-bottom: 1px solid var(--white);
+      border-radius: 4px 4px 0 0;
+
       .selected-item--arrow {
         transform: rotate(180deg);
         transition: all 0.3s;
@@ -95,30 +111,42 @@ useClickOutside(customSelect, () => {
     }
   }
   &--list {
-    overflow: auto;
+    overflow: inherit;
     width: 100%;
     background: var(--white);
     border-radius: 0 0 4px 4px;
-    &::v-deep(.item--name) {
+
+    ::v-deep(li) {
       cursor: pointer;
       display: flex;
       align-items: center;
+
+      height: 40px;
       padding-left: 10px;
-      height: 36px;
-      &.active {
-        background: #ecf3fa;
-      }
+
+      font-family: var(--font-nunito);
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 19px;
+
+      color: var(--txt-dark-grey);
+      border-top: 1px solid var(--backgr-card-lightgrey2);
     }
   }
   &--content {
     z-index: 100;
-    display: none;
-    left: -1px;
     position: absolute;
-    top: 32px;
+    left: -1px;
+    top: 40px;
+    display: none;
+
     width: 100%;
+
+    background: var(--white);
     border: 1px solid var(--backgr-card-lightgrey2);
-    border-top: none;
+    border-top: 0;
+    border-radius: 0 0 4px 4px;
+
     &.active {
       display: flex;
       flex-direction: column;
