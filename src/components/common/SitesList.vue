@@ -1,7 +1,7 @@
 <template lang="pug">
-.sites
+.sites(v-if="!isLoader(EnumLoaderKeys.trackingList)")
   .sites--item(
-    v-for="item in filterData",
+    v-for="item in filteringData",
     :class="{ 'current-session': item.currentSession && isShowCurrentSession }",
     @click="selectSite(item)"
   )
@@ -22,61 +22,62 @@
     .sites--item-activity(v-if="item.currentSession && isShowCurrentSession")
       .item-block
         .item-block--title {{ "Current Session" }}
-        .item-block--info {{ formatDuration(currentSessionData.time || item.currentSession) }}
+        .item-block--info {{ formatDuration(currentSessionData.time || item.currentSession, true) }}
       .item-block
         .item-block--title {{ "Longest Session" }}
         .item-block--info(
           v-if="item && (item.sessions || item.currentSession)"
-        ) {{ currentSessionData.time > item.longestSession || item.currentSession > item.longestSession ? formatDuration(currentSessionData.time || item.currentSession) : formatDuration(item.longestSession) }}
+        ) {{ currentSessionData.time > item.longestSession || item.currentSession > item.longestSession ? formatDuration(currentSessionData.time || item.currentSession, true) : formatDuration(item.longestSession, true) }}
       .item-block
         .item-block--title {{ "Sessions" }}
-        .item-block--info {{ item.visited }}
+        .item-block--info {{ item.sessions }}
+.loader(v-else)
+  circul-loader
 </template>
 
 <script setup lang="ts">
-import { computed, defineProps, onMounted, onUnmounted, ref } from "vue";
+import { defineProps } from "vue";
 import {
+  currentSessionData,
   filteringData,
   formatDuration,
   getPercent,
+  initialTracker,
 } from "@/composables/common/trackerPageActions";
 import { selectSite } from "@/composables/common/chartBar";
-import { ObjectInterface, SiteInterface } from "@/types/dataInterfaces";
+import { isLoader } from "@/composables/common/loaderActions";
+import { EnumLoaderKeys } from "@/constants/EnumLoaderKeys";
+import CirculLoader from "@/components/common/CirculLoader.vue";
 const props = defineProps({
   isShowCurrentSession: {
     type: Boolean,
     default: true,
   },
 });
-
-const intervalId = 0;
-
-onMounted(() => {
-  chrome.runtime.onMessage.addListener(handleRuntimeMessage);
-});
-onUnmounted(() => {
-  chrome.runtime.onMessage.removeListener(handleRuntimeMessage);
-  clearInterval(intervalId);
-});
-
-const currentSessionData = ref({} as ObjectInterface);
-
-const handleRuntimeMessage = (request: any, sender: any) => {
-  const activeTab = "activeTab";
-  console.log(request);
-  if (request.message === activeTab) {
-    currentSessionData.value.domain = request.siteUrl;
-    currentSessionData.value.time = request.time;
-  }
-};
-
-const filterData: ObjectInterface = computed(() => {
-  const data = { ...filteringData.value };
-  return data;
-});
 </script>
 
 <style scoped lang="scss">
+.loader {
+  content: "";
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+
+  width: 32px;
+  height: 32px;
+  margin: calc(50% - 16px) calc(50% - 16px);
+
+  &:before {
+    content: "";
+    display: block;
+    position: absolute;
+    width: 32px;
+    height: 32px;
+
+    border-radius: 50%;
+  }
+}
 .sites {
   display: flex;
   flex-direction: column;
@@ -146,6 +147,7 @@ const filterData: ObjectInterface = computed(() => {
           align-items: center;
 
           width: 100%;
+          column-gap: 8px;
         }
 
         &--line {
@@ -153,7 +155,7 @@ const filterData: ObjectInterface = computed(() => {
 
           width: 100%;
           height: 6px;
-          margin-right: 16px;
+          margin-right: 8px;
 
           border-radius: 3px;
           background: var(--bttn-active-lightblue);
@@ -172,10 +174,10 @@ const filterData: ObjectInterface = computed(() => {
 
         &--percent,
         &--time {
+          display: flex;
+          justify-content: flex-start;
           white-space: nowrap;
           opacity: 0.6;
-
-          margin-right: 8px;
 
           font-size: 13px;
           font-weight: 700;
@@ -185,6 +187,7 @@ const filterData: ObjectInterface = computed(() => {
         }
 
         &--time {
+          min-width: 35px;
           margin-right: 0;
         }
       }

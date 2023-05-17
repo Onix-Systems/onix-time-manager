@@ -10,8 +10,13 @@ import {
   historyStorage,
   isTotal,
   selectedNavItem,
+  sinceData,
 } from "@/composables/common/trackerPageActions";
-import { currentData, changeDate } from "@/composables/common/dateComposable";
+import {
+  currentData,
+  changeDate,
+  parseDate,
+} from "@/composables/common/dateComposable";
 import { computed } from "vue";
 import { PopupTrackerNavItemsEnum } from "@/constants/popup/popupNavItemsEnum";
 
@@ -33,17 +38,11 @@ const currentDate = computed(() => {
       data = `${month} ${currentData.value.getFullYear()}`;
       break;
     case PopupTrackerNavItemsEnum.total:
-      if (Object.keys(historyStorage.value).length) {
-        const firstKey = Object.keys(historyStorage.value)[0];
-        const secondKey = Object.keys(historyStorage.value[firstKey])[0];
-        const thirdKey = Object.keys(
-          historyStorage.value[firstKey][secondKey]
-        )[0];
-        data = `Since ${thirdKey.padStart(2, "0")}.${secondKey.padStart(
-          2,
-          "0"
-        )}.${firstKey}`;
-      }
+      data = `Since ${
+        sinceData.value
+          ? parseDate(sinceData.value)
+          : parseDate(new Date().toString())
+      }`;
       break;
   }
   return data;

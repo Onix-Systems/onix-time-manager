@@ -118,6 +118,55 @@ export const getTimeTotal = (number: number, timeInSeconds: number) => {
   return result;
 };
 
+enum DiffMeasurements {
+  seconds = "seconds",
+  minutes = "minutes",
+  hours = "hours",
+  days = "days",
+}
+export const dateDiff = (
+  a: number,
+  b: number,
+  measurements: DiffMeasurements = DiffMeasurements.seconds
+) => {
+  const begin = new Date(a);
+  const end = new Date(b);
+  let divider = 1000;
+
+  switch (measurements) {
+    case DiffMeasurements.minutes: {
+      divider *= 60;
+      break;
+    }
+    case DiffMeasurements.hours: {
+      divider *= 3600;
+      break;
+    }
+    case DiffMeasurements.days: {
+      divider *= 86400;
+      break;
+    }
+  }
+
+  const utc1 = Date.UTC(
+    begin.getFullYear(),
+    begin.getMonth(),
+    begin.getDate(),
+    begin.getHours(),
+    begin.getMinutes(),
+    begin.getSeconds()
+  );
+  const utc2 = Date.UTC(
+    end.getFullYear(),
+    end.getMonth(),
+    end.getDate(),
+    end.getHours(),
+    end.getMinutes(),
+    end.getSeconds()
+  );
+  return Math.floor((utc2 - utc1) / divider);
+};
+
 export const timeAmTo24 = (item: string) => {
   const [hourString, period] = item.split(" ");
   let hour = parseInt(hourString);
@@ -127,4 +176,77 @@ export const timeAmTo24 = (item: string) => {
     hour = 0;
   }
   return hour;
+};
+export const concatPrefix = (prefix: string, item: number) => {
+  return item < 10 ? `0${item}` : `${item}`;
+};
+
+export const format = (
+  mask: string,
+  timeInSeconds: number,
+  timeDifference = false
+) => {
+  const date = new Date(timeInSeconds);
+  const maskKeys = ["DD", "MM", "YYYY", "H", "mm", "ss"];
+  maskKeys.forEach((separator) => {
+    if (mask.includes(separator)) {
+      let joinContent = "";
+      switch (separator) {
+        case "YYYY": {
+          joinContent = `${date.getFullYear()}`;
+          break;
+        }
+        case "MM": {
+          joinContent = concatPrefix("0", date.getMonth() + 1);
+          break;
+        }
+        case "DD": {
+          if (timeDifference) {
+            joinContent = Math.floor(timeInSeconds / 86400).toString();
+          } else {
+            joinContent = concatPrefix("0", date.getDate());
+          }
+          break;
+        }
+        case "H": {
+          const calculation =
+            timeInSeconds > 86400
+              ? Math.floor((timeInSeconds - 86400) / 3600)
+              : Math.floor(timeInSeconds / 3600);
+          joinContent = concatPrefix("0", calculation);
+          break;
+        }
+        case "mm": {
+          const calculation =
+            timeInSeconds > 3600
+              ? Math.floor((timeInSeconds - 3600) / 60)
+              : Math.floor(timeInSeconds / 60);
+          joinContent = concatPrefix("0", calculation);
+          break;
+        }
+        case "ss": {
+          const calculation =
+            timeInSeconds > 60
+              ? timeInSeconds - Math.floor(timeInSeconds / 60) * 60
+              : timeInSeconds;
+          joinContent = concatPrefix("0", calculation);
+          break;
+        }
+      }
+      mask = mask.split(separator).join(joinContent);
+    }
+  });
+  return mask;
+};
+
+export const parseDate = (dateString: number | string) => {
+  if (dateString) {
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}.${month}.${year}`;
+  } else {
+    return "";
+  }
 };

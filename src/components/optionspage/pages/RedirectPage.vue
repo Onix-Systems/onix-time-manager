@@ -15,9 +15,11 @@
       @onEdit="editItem($event)",
       @onDelete="deleteItem($event)"
     )
-  placeholder-component(:img-name="'redirect-placeholder.svg'", v-else)
-    template(v-slot="")
-      | The list of redirects is empty. Please set up a redirect to see them here.
+  empty-template.desktop(
+    v-else,
+    :image-path="'redirect-placeholder.svg'",
+    :message="'The list of redirects is empty. Please set up a redirect to see them here.'"
+  )
 new-redirect-modal(
   v-if="isOpen(EnumModalKeys.Edit)",
   :initial-data="editData",
@@ -37,7 +39,7 @@ delete-modal(
 import { onMounted, ref } from "vue";
 
 import ListItems from "@/components/common/ListItems.vue";
-import PlaceholderComponent from "@/components/optionspage/common/PlaceholderComponent.vue";
+import EmptyTemplate from "@/components/common/EmptyTemplate.vue";
 
 import NewRedirectModal from "@/modals/NewRedirectModal.vue";
 import DeleteModal from "@/modals/common/DeleteModal.vue";

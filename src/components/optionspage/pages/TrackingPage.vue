@@ -13,19 +13,19 @@
   .tracking--filter
     filter-select
     calendar-slider
-  .tracking--site-info(v-if="isSelectedSite && !isTotal")
+  .tracking--site-info(v-if="currentSite && isSelectedSite && !isTotal")
     .tracking--site-board
       .tracking--site-title {{ "Usage" }}
       .tracking--site-count {{ formatDuration(currentSite.timeSpent) }}
     .tracking--site-board
       .tracking--site-title {{ "Session" }}
-      .tracking--site-count {{ currentSite.visited }}
+      .tracking--site-count {{ currentSite.sessions }}
     .tracking--site-board
       .tracking--site-title {{ "Last visit" }}
-      .tracking--site-count {{ currentSite.lastVisit }}
+      .tracking--site-count {{ parseDate(currentSite.lastVisit) }}
     .tracking--site-board
       .tracking--site-title {{ "Longest Session" }}
-      .tracking--site-count {{ formatDuration(Math.max(...currentSite.sessions)) }}
+      .tracking--site-count {{ formatDuration(currentSite.longestSession) }}
   .tracking--chart-bar(:class="{ selected: isSelectedSite }")
     template(v-if="!isTotal")
       chart-bar
@@ -42,16 +42,16 @@
   .tracking--site-info(v-if="isSelectedSite && isTotal")
     .tracking--site-board.total
       .tracking--site-title.total {{ "Session" }}
-      .tracking--site-count.total {{ currentSite.visited }}
+      .tracking--site-count.total {{ currentSite.sessions }}
     .tracking--site-board.total
       .tracking--site-title.total {{ "Longest Session" }}
-      .tracking--site-count.total {{ formatDuration(Math.max(...currentSite.sessions)) }}
+      .tracking--site-count.total {{ formatDuration(currentSite.longestSession) }}
     .tracking--site-board.total
       .tracking--site-title.total {{ "First visit" }}
-      .tracking--site-count.total {{ currentSite.firstVisit }}
+      .tracking--site-count.total {{ parseDate(currentSite.firstVisit) }}
     .tracking--site-board.total
       .tracking--site-title.total {{ "Last visit" }}
-      .tracking--site-count.total {{ currentSite.lastVisit }}
+      .tracking--site-count.total {{ parseDate(currentSite.lastVisit) }}
     .tracking--site-board.total
       .tracking--site-title.total {{ "Most active day" }}
       .tracking--site-count.total {{ formatDuration(currentSite.mostActive) }}
@@ -81,20 +81,35 @@ import {
   selectSite,
   timeForTotal,
 } from "@/composables/common/chartBar";
-import { getTimeTotal, st } from "@/composables/common/dateComposable";
+import {
+  getTimeTotal,
+  parseDate,
+  st,
+} from "@/composables/common/dateComposable";
 onMounted(() => {
   getHistory();
   selectSite({});
   selectNavItem(PopupTrackerNavItemsEnum.day);
 });
-
 const currentSite = computed(() => {
+  const defaultData = {
+    sessions: "",
+    timeSpent: "",
+    firstVisit: "",
+    lastVisit: "",
+    longestSession: "",
+  };
   if (selectedSite.value) {
-    return Object.values(filteringData.value).find((item: any) => {
+    const site = Object.values(filteringData.value).find((item: any) => {
       return item.domain === selectedSite.value.domain;
     });
+    if (site) {
+      return site;
+    } else {
+      return defaultData;
+    }
   }
-  return {};
+  return defaultData;
 });
 </script>
 
