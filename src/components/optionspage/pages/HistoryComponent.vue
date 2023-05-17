@@ -21,9 +21,9 @@
           th.col-width Sessions
           th.col-width Last visit
           th.col-width Total time
-      template(v-if="sortedItems.length")
+      template(v-if="true")
         tbody(
-          v-for="(item, index) in sortedItems",
+          v-for="(item, index) in historyList",
           :key="`History_key__${index}`",
           :id="`${index}`"
         )
@@ -34,21 +34,24 @@
                 :id="`${index}`",
                 :value="index",
                 v-model="selectedItems",
-                :checked="isChecked(item)",
+                :checked="isChecked(item.domain)",
                 @change="select(index)"
               )
             td
               .icon(:style="{ backgroundImage: `url(${item.icon})` }")
               p {{ `https://${item.domain}/` }}
-            td.arrow.font-14(
+            td.arrow(
               :class="{ active: activeRow === index }",
               :style="{ cursor: 'pointer' }",
               @click="toggleRow(index)"
-            ) {{ item.visited }}
-            td.font-14 {{ item.lastVisit }}
-            td.font-14 {{ formatTime(item.timeSpent) }}
+            )
+              p {{ item.sessions.length }}
+            td
+              p {{ lastVisit(item.sessions) }}
+            td
+              p {{ timeSpent(item.sessions) }}
           tr(
-            v-for="(key, subIndex) in Object.keys(item.urls)",
+            v-for="(activity, subIndex) in item.sessions",
             :id="`row-${index}-col-${subIndex}`",
             v-show="activeRow === index"
           )
@@ -59,22 +62,26 @@
                 :id="`${index}-${subIndex}`",
                 :value="`${index}-${subIndex}`",
                 v-model="selectedItems",
-                :checked="isChecked(item.urls[key])",
+                :checked="isChecked(item.domain)",
                 @change="subSelect(index)"
               )
-              span {{ `https://${item.domain}` }}{{ key }}
+              p.smaller {{ activity.path }}
             td
-            td.child {{ item.urls[key].firstVisit }}
-            td.child {{ formatTime(item.urls[key].timeSpent) }}
+            td
+              p.smaller {{ format("DD.MM.YYYY", activity.activity[0].begin) }}
+            td
+              p.smaller {{ format("Hh mmm sss", timeSpentCalculation(activity.activity), true) }}
           .modal(v-if="Object.keys(selectedItems).length > 0")
             .modal--content
               .modal--content-cancel
                 button.cancel(@click="cancel()")
                 p Selected {{ Object.keys(selectedItems).length }}
               button.delete(@click="openModal(EnumModalKeys.Delete)") Delete
-  .history--no-data(v-if="!sortedItems.length")
-    p The history is empty. This list will be filled out after you first visit the website.
-    .icon--data-empty
+  empty-template.desktop(
+    v-if="!sortedItems.length",
+    :image-path="'frame-no-dataL.svg'",
+    :message="'The history is empty. This list will be filled out after you first visit the website.'"
+  )
   delete-modal(
     v-if="isOpen(EnumModalKeys.Delete)",
     :delete-type="`history page`",
@@ -85,37 +92,34 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from "vue";
+import { ref, computed, onMounted } from "vue";
+
+import DropdownComponent from "@/components/common/DropdownComponent.vue";
+
+import DeleteModal from "@/modals/common/DeleteModal.vue";
+import EmptyTemplate from "@/components/common/EmptyTemplate.vue";
+
 import {
   checkDataInStorage,
   filteringData,
-  getHistory,
   historyStorage,
   selectNavItem,
+  timeSpentCalculation,
 } from "@/composables/common/trackerPageActions";
-import moment from "moment";
 import { closeModal, isOpen, openModal } from "@/composables/modalActions";
 import { EnumModalKeys } from "@/constants/EnumModalKeys";
-import DeleteModal from "@/modals/common/DeleteModal.vue";
+import { format } from "@/composables/common/dateComposable";
 import { MenuItemsEnum } from "@/constants/menuItemsEnum";
-import DropdownComponent from "@/components/common/DropdownComponent.vue";
-import { PopupTrackerNavItemsEnum } from "@/constants/popup/popupNavItemsEnum";
 
-onMounted(() => {
-  selectNavItem(PopupTrackerNavItemsEnum.total);
-});
-const activeRow = ref(null);
+import { SessionInterface } from "@/types/TrackingInterface";
 
-const formatTime = (timeInSeconds: number) => {
-  let hours = Math.floor(timeInSeconds / 3600);
-  let minutes = Math.floor((timeInSeconds - hours * 3600) / 60);
-  let seconds = timeInSeconds - hours * 3600 - minutes * 60;
+import moment from "moment";
 
-  let hoursString = hours.toString().padStart(2, "0");
-  let minutesString = minutes.toString().padStart(2, "0");
-  let secondsString = seconds.toString().padStart(2, "0");
-  return `${hoursString}h ${minutesString}m ${secondsString}s`;
-};
+const activeRow = ref(-1);
+
+const historyList = ref<
+  { domain: string; icon: string; sessions: SessionInterface[] }[]
+>([]);
 
 const select = (index: number) => {
   Object.keys(sortedItems.value[index].urls).forEach((elem, numb) => {
@@ -144,26 +148,24 @@ const subSelect = (index: number) => {
   }
 };
 
-const showDelete = ref(false);
 const selectedItems = ref<(number | string)[]>([]);
-const showModal = ref(false);
 const sortByText = ref("Sort by date");
 
-const isChecked = (item: number) => {
-  let result = selectedItems.value.includes(item);
-  return result;
+const isChecked = (domain: string) => {
+  // let result = selectedItems.value.includes(item);
+  return false;
 };
 
-const toggleRow = (index: any) => {
+const toggleRow = (index: number) => {
   if (activeRow.value === index) {
-    activeRow.value = null;
+    activeRow.value = -1;
   } else {
     activeRow.value = index;
   }
 };
 const cancel = () => {
   selectedItems.value = [];
-  showModal.value = false;
+  closeModal(EnumModalKeys.Delete);
 };
 
 let sortOrder = ref("time-descending");
@@ -272,6 +274,56 @@ const deleteItem = () => {
     selectedItems.value = [];
   });
 };
+
+const getHistory = () => {
+  chrome.storage.local.get({ pages: {} }, (result) => {
+    if (result.pages) {
+      const keys = Object.keys(result.pages);
+      historyList.value = keys.map((domain) => {
+        const {
+          icon,
+          sessions,
+        }: {
+          icon: string;
+          sessions: {
+            [key: string]: SessionInterface[];
+          };
+        } = result.pages[domain];
+
+        const sessionsKeys = Object.values(sessions);
+        return {
+          domain,
+          icon,
+          sessions: sessionsKeys.reduce(
+            (a: SessionInterface[], b: SessionInterface[]) => {
+              return a.concat(b);
+            },
+            []
+          ),
+        };
+      });
+    }
+  });
+};
+
+const lastVisit = (session: SessionInterface[]) => {
+  const lastItem = session[0].activity.slice(-1);
+  return format("DD.MM.YYYY", lastItem[0].begin);
+};
+
+const timeSpent = (session: SessionInterface[]) => {
+  const difference = session.reduce(
+    (sessionPrev: number, sessionCurrent: SessionInterface) => {
+      return sessionPrev + timeSpentCalculation(sessionCurrent.activity);
+    },
+    0
+  );
+  const mask = difference > 86400 ? "DDd Hh mmm sss" : "Hh mmm sss";
+  return format(mask, difference, true);
+};
+onMounted(() => {
+  getHistory();
+});
 </script>
 
 <style lang="scss" scoped>
@@ -398,26 +450,6 @@ const deleteItem = () => {
         }
       }
     }
-    &--no-data {
-      display: block;
-      p {
-        font-style: normal;
-        font-weight: 400;
-        font-size: 20px;
-        line-height: 22px;
-        text-align: center;
-        color: var(--txt-light-grey);
-        margin: 70px auto 30px;
-        width: 486px;
-      }
-      .icon--data-empty {
-        height: 170px;
-        width: 206px;
-        margin: 0 auto;
-        background: url("@/assets/frame-no-dataL.svg") no-repeat center;
-        background-size: cover;
-      }
-    }
 
     &-page {
       &--title {
@@ -450,53 +482,54 @@ const deleteItem = () => {
         }
         td {
           padding: 24px 0;
-          font-style: normal;
-          font-weight: 600;
-          font-size: 16px;
-          line-height: 22px;
-          color: #000000;
           text-align: right;
           margin-right: 10px;
-          &.font-14 {
-            vertical-align: middle;
-            font-style: normal;
-            font-weight: 500;
-            font-size: 14px;
-            line-height: 19px;
+
+          p {
+            overflow: hidden;
+
+            max-width: 380px;
+
+            font-family: var(--font-nunito);
+            font-size: 16px;
+            font-weight: 600;
+            line-height: 22px;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+
+            color: var(--txt-main-darkblue);
+
+            &.smaller {
+              font-size: 12px;
+              font-weight: 500;
+              line-height: 16px;
+
+              color: var(--txt-water-link);
+            }
           }
+
           &:nth-child(2) {
             text-align: left;
             display: flex;
             align-items: center;
           }
+
           .checkbox {
             margin-right: 10px;
           }
 
           .icon {
-            width: 40px;
-            height: 40px;
+            min-width: 32px;
+            height: 32px;
             margin-right: 16px;
+
             background-size: contain;
             background-repeat: no-repeat;
+            background-color: var(--white);
+            border-radius: 50%;
           }
+        }
 
-          span {
-            font-style: normal;
-            font-weight: 500;
-            font-size: 12px;
-            line-height: 16px;
-            color: #757575;
-            margin-left: 10px;
-          }
-        }
-        td.child {
-          font-style: normal;
-          font-weight: 400;
-          font-size: 12px;
-          line-height: 15px;
-          color: #757575;
-        }
         input[type="checkbox"] {
           position: relative;
           border: 1px solid #757575;
@@ -540,7 +573,7 @@ const deleteItem = () => {
             cursor: pointer;
             display: inline-block;
             content: "";
-            background-image: url("@/assets/vector1.svg");
+            background-image: url("@/assets/icons/arrow-left.svg");
             width: 12px;
             height: 6px;
             margin-bottom: 2px;
@@ -552,23 +585,6 @@ const deleteItem = () => {
               transition: all 0.3s;
             }
           }
-        }
-        h4 {
-          cursor: pointer;
-          font-style: normal;
-          font-weight: 500;
-          font-size: 14px;
-          line-height: 17px;
-          color: #000000;
-          padding: 16px;
-        }
-        h4::after {
-          display: inline-block;
-          content: "";
-          background-image: url("@/assets/Vector.svg");
-          width: 9px;
-          height: 5px;
-          margin: 0 0 2px 8px;
         }
       }
     }

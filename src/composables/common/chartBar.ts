@@ -23,7 +23,7 @@ import {
 } from "@/types/dataInterfaces";
 //data
 
-export const selectedSite = ref({} as SiteInterface | ObjectInterface);
+export const selectedSite = ref({} as ObjectInterface);
 export const isSelectedSite = computed(() => {
   return Object.keys(selectedSite.value).length;
 });
@@ -81,21 +81,21 @@ export const timeData = ref([] as number[]);
 export const optionsData = ref({ ...defaultChart } as ObjectInterface);
 export const totalData = ref({} as ObjectInterface);
 
-export const getSiteData = () => {
+export const getSiteData = (data: any) => {
   names.value = [];
   timeData.value = [];
   optionsData.value = { ...defaultChart };
   switch (selectedNavItem.value) {
     case PopupTrackerNavItemsEnum.day: {
-      setDayOptions();
+      setDayOptions(data);
       break;
     }
     case PopupTrackerNavItemsEnum.week: {
-      setWeekOptions();
+      setWeekOptions(data);
       break;
     }
     case PopupTrackerNavItemsEnum.month: {
-      setMonthOptions();
+      setMonthOptions(data);
       break;
     }
   }
@@ -126,44 +126,37 @@ export const selectSite = (item: SiteInterface | ObjectInterface) => {
   resetCurrentDay();
 };
 
-export const setDayOptions = () => {
+export const setDayOptions = (data: any) => {
   totalData.value = {};
-  if (Object.keys(checkDataInStorage(dayData.value)).length) {
-    if (isSelectedSite.value) {
-      totalData.value = Object.values(checkDataInStorage(dayData.value)).find(
-        (item: SiteInterface) => {
-          return item.domain === selectedSite.value.domain;
+  totalDataValues();
+  if (isSelectedSite.value) {
+    const site = data.find((item: SiteInterface) => {
+      return item.domain === selectedSite.value.domain;
+    });
+    if (site) {
+      for (let i = 1; i < 25; i++) {
+        const timeSpent = site.dayActivity[i] || 0;
+        if (timeSpent) {
+          totalData.value.timeSpent += timeSpent;
         }
-      );
-      if (totalData.value && Object.keys(totalData.value).length) {
-        for (let i = 0; i < 24; i++) {
-          const timeSpent = totalData.value.dayActivity[i]?.timeSpent || 0;
-          timeData.value[i] = timeSpent / 60;
-        }
-      } else {
-        totalData.value = {
-          timeSpent: 0,
-        };
+        timeData.value[i] = timeSpent / 60;
       }
-    } else {
-      Object.values(checkDataInStorage(dayData.value)).forEach(
-        (item: ObjectInterface) => {
-          for (let i = 0; i < 24; i++) {
-            const timeSpent = item.dayActivity[i]?.timeSpent || 0;
-            if (!timeData.value[i]) {
-              timeData.value[i] = 0;
-            }
-            timeData.value[i] += timeSpent / 60;
-          }
-        }
-      );
     }
   } else {
-    totalData.value = {
-      timeSpent: 0,
-    };
+    data.forEach((item: ObjectInterface) => {
+      for (let i = 1; i < 25; i++) {
+        const timeSpent = item.dayActivity[i] || 0;
+        if (!timeData.value[i]) {
+          timeData.value[i] = 0;
+        }
+        if (timeSpent) {
+          totalData.value.timeSpent += timeSpent;
+        }
+        timeData.value[i] += timeSpent / 60;
+      }
+    });
   }
-  for (let i = 0; i < 24; i++) {
+  for (let i = 1; i < 25; i++) {
     names.value.push(i);
   }
   Object.assign(optionsData.value.plugins.tooltip.callbacks, {
@@ -194,47 +187,41 @@ export const setDayOptions = () => {
   optionsData.value.scales.y.max = 60;
 };
 
-const totalDataValues = (time: SiteInterface | undefined) => {
-  if (!Object.keys(totalData.value).length && time) {
-    totalData.value = { ...time };
+const totalDataValues = () => {
+  if (!Object.keys(totalData.value).length) {
     totalData.value.timeSpent = 0;
   }
 };
 
-export const setWeekOptions = () => {
+export const setWeekOptions = (data: any) => {
   names.value = ["M", "T", "W", "T", "F", "S", "S"];
   totalData.value = {};
-  getSevenDays();
-  sevenDays.value.forEach((dayData: DateInterface, index: number) => {
-    if (Object.keys(checkDataInStorage(dayData)).length) {
-      if (isSelectedSite.value) {
-        const time: SiteInterface = Object.values(
-          checkDataInStorage(dayData)
-        ).find((item: SiteInterface) => {
-          return item.domain === selectedSite.value.domain;
-        });
-        totalDataValues(time);
-        const timeSpent = { ...time }?.timeSpent || 0;
+  totalDataValues();
+  for (let index = 0; index < 7; index++) {
+    if (isSelectedSite.value) {
+      const site = data.find((item: SiteInterface) => {
+        return item.domain === selectedSite.value.domain;
+      });
+      if (site) {
+        const timeSpent = site.weekActivity[index] || 0;
         if (timeSpent) {
           totalData.value.timeSpent += timeSpent;
         }
         timeData.value[index] = timeSpent / 60;
-      } else {
-        Object.values(checkDataInStorage(dayData)).forEach(
-          (item: SiteInterface) => {
-            const timeSpent = { ...item }?.timeSpent || 0;
-            if (timeSpent) {
-              totalData.value.timeSpent += timeSpent;
-            }
-            if (!timeData.value[index]) {
-              timeData.value[index] = 0;
-            }
-            timeData.value[index] += timeSpent / 60;
-          }
-        );
       }
+    } else {
+      data.forEach((item: any) => {
+        const timeSpent = item.weekActivity[index] || 0;
+        if (timeSpent) {
+          totalData.value.timeSpent += timeSpent;
+        }
+        if (!timeData.value[index]) {
+          timeData.value[index] = 0;
+        }
+        timeData.value[index] += timeSpent / 60;
+      });
     }
-  });
+  }
   Object.assign(optionsData.value.plugins.tooltip.callbacks, {
     title: (tooltipItem: TooltipItem[]) => {
       const monthNumber: number =
@@ -271,42 +258,39 @@ export const setWeekOptions = () => {
   }
 };
 
-export const setMonthOptions = () => {
+export const setMonthOptions = (data: any) => {
   const monthCount = new Date(
     currentData.value.getFullYear(),
     currentData.value.getMonth() + 1,
     0
   ).getDate();
   totalData.value = {};
+  totalDataValues();
   for (let i = 1; i < monthCount + 1; i++) {
     names.value.push(i);
-    const yearData = historyStorage.value[currentData.value.getFullYear()];
-    const monthData = yearData && yearData[currentData.value.getMonth() + 1];
-    const check: SiteInterface[] = monthData && monthData[i];
-    if (check) {
-      let time: SiteInterface | undefined;
-      if (isSelectedSite.value) {
-        time = Object.values(check).find((item: SiteInterface) => {
-          return item.domain === selectedSite.value.domain;
-        });
-        totalDataValues(time);
-        const timeSpent = { ...time }?.timeSpent || 0;
+    if (isSelectedSite.value) {
+      const site = data.find((item: SiteInterface) => {
+        return item.domain === selectedSite.value.domain;
+      });
+      if (site) {
+        const timeSpent = site.monthActivity[i] || 0;
         if (timeSpent) {
           totalData.value.timeSpent += timeSpent;
         }
         timeData.value[i - 1] = timeSpent / 60;
-      } else {
-        Object.values(check).forEach((item: SiteInterface) => {
-          const timeSpent = { ...item }?.timeSpent || 0;
-          if (timeSpent) {
-            totalData.value.timeSpent += timeSpent;
-          }
-          if (!timeData.value[i - 1]) {
-            timeData.value[i - 1] = 0;
-          }
-          timeData.value[i - 1] += timeSpent / 60;
-        });
       }
+    } else {
+      data.forEach((item: any) => {
+        const timeSpent = item.monthActivity[i] || 0;
+
+        if (timeSpent) {
+          totalData.value.timeSpent += timeSpent;
+        }
+        if (!timeData.value[i - 1]) {
+          timeData.value[i - 1] = 0;
+        }
+        timeData.value[i - 1] += timeSpent / 60;
+      });
     }
   }
   Object.assign(optionsData.value.plugins.tooltip.callbacks, {
@@ -343,5 +327,3 @@ export const setMonthOptions = () => {
     optionsData.value.scales.y.max = 60;
   }
 };
-
-export { filteringData };

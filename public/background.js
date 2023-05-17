@@ -3,6 +3,7 @@ const validUrlRegex = /^(http|https):\/\//i; // Modified regular expression to p
 let tabIdCopy = 0;
 let currentUrl = "";
 
+let intervalId = 0;
 let settings = [];
 let showNotification = false;
 let currentInformation = {};
@@ -25,11 +26,17 @@ chrome.runtime.onInstalled.addListener(() => {
     }
   });
   chrome.tabs.onRemoved.addListener((tabId, info) => {
+    if (tabIdCopy === tabId) {
+      updateCurrentSession(tabId);
+    }
+  });
+  chrome.windows.onRemoved.addListener((tabId, info) => {
     updateCurrentSession(tabId);
   });
 });
 
 const updateCurrentSession = (tabID) => {
+  clearInterval(intervalId);
   if (currentInformation[currentUrl]) {
     let data = currentInformation[currentUrl].sessions;
     if (data[tabID] && data[tabID].length) {
@@ -74,44 +81,39 @@ const updatePageTime = (tabId, isUpdated) => {
 
         chrome.storage.local.get({ pages: {} }, async (result) => {
           let { pages } = result;
-          let timeSpent = 0;
+
+          if (!pages[currentUrl]) {
+            pages[currentUrl] = {
+              icon: tab.favIconUrl,
+              sessions: {},
+            };
+          }
+          const sessions = pages[currentUrl].sessions;
+          if (!sessions[tab.id]) {
+            sessions[tab.id] = [];
+          }
 
           if (isUpdated) {
-            if (!pages[currentUrl]) {
-              pages[currentUrl] = { icon: tab.favIconUrl, sessions: {} };
-            }
-            const sessions = pages[currentUrl].sessions;
-            if (!sessions[tab.id]) {
-              sessions[tab.id] = [];
-            }
             sessions[tab.id].unshift({
               id: tab.id + new Date().getTime(),
               path: tab.url,
               activity: [{ begin: new Date().getTime(), end: 0 }],
             });
-            const copySite = { ...pages[currentUrl] };
-            console.log(pages);
           } else {
             const sessions = pages?.[currentUrl]?.sessions ?? {};
-            if (sessions[tab.id]) {
+            if (sessions[tab.id] && sessions[tab.id].length) {
               sessions[tab.id][0].activity.unshift({
                 begin: new Date().getTime(),
                 end: 0,
               });
-              sessions[tab.id][0].activity.forEach((item) => {
-                if (!item.end) {
-                  timeSpent += new Date().getTime() - item.begin;
-                } else {
-                  timeSpent += item.end - item.begin;
-                }
+            } else {
+              sessions[tab.id].unshift({
+                id: tab.id + new Date().getTime(),
+                path: tab.url,
+                activity: [{ begin: new Date().getTime(), end: 0 }],
               });
             }
           }
-          createMessage({
-            currentUrl: currentUrl,
-            timeSpent,
-            message: "activeTab",
-          });
           console.log(pages);
 
           currentInformation = pages;
@@ -155,7 +157,6 @@ const checkForPermission = (tabUrl) => {
       if (type !== "off") {
         const list = res.permission.list[type];
         const keys = Object.keys(list);
-        console.log(tabUrl);
         if (keys.length && tabUrl.includes("https://")) {
           const includes = keys.includes(new URL(tabUrl).hostname);
           if (includes) {

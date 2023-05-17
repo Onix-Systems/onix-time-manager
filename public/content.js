@@ -6,6 +6,7 @@ function formatTime(time) {
     seconds < 10 ? "0" + seconds : seconds
   }s`;
 }
+
 chrome.runtime.onMessage.addListener((request, sender) => {
   const redirect = "redirect";
   const blockPage = "blockPage";
@@ -13,7 +14,6 @@ chrome.runtime.onMessage.addListener((request, sender) => {
   const popupTime = "popupTime";
   const browserTimeSpent = "browserTimeSpent";
   const activeTab = "activeTab";
-  console.log(request);
   switch (request.message) {
     case browserTimeSpent: {
       chrome.runtime.sendMessage({
@@ -25,7 +25,8 @@ chrome.runtime.onMessage.addListener((request, sender) => {
     case activeTab: {
       chrome.runtime.sendMessage({
         currentUrl: request.currentUrl,
-        timeSpent: request.timeSpent,
+        currentTab: request.currentTab,
+        time: request.time,
         message: "activeTab",
       });
       break;

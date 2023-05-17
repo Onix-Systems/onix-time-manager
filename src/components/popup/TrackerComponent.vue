@@ -2,7 +2,10 @@
 .tracker
   .tracker--nav-section
     filter-select
-  .tracker--sites-list(v-show="!isSelectedSite")
+  .tracker--sites-list(
+    v-show="!isSelectedSite",
+    :class="{ loading: isLoader(EnumLoaderKeys.trackingList) }"
+  )
     sites-list
   .tracker--sites-bar(v-show="isSelectedSite")
     site-info
@@ -11,19 +14,19 @@
 <script setup lang="ts">
 import {
   getHistory,
+  initialTracker,
   selectNavItem,
 } from "@/composables/common/trackerPageActions";
 import { onMounted } from "vue";
-import { isSelectedSite } from "@/composables/common/chartBar";
+import { getSiteData, isSelectedSite } from "@/composables/common/chartBar";
 import FilterSelect from "@/components/common/FilterSelect.vue";
 import SiteInfo from "@/components/popup/SiteInfo.vue";
 import { PopupTrackerNavItemsEnum } from "@/constants/popup/popupNavItemsEnum";
 import SitesList from "@/components/common/SitesList.vue";
+import { isLoader } from "@/composables/common/loaderActions";
+import { EnumLoaderKeys } from "@/constants/EnumLoaderKeys";
 
-onMounted(() => {
-  getHistory();
-  selectNavItem(PopupTrackerNavItemsEnum.day);
-});
+initialTracker(true);
 </script>
 
 <style scoped lang="scss">
@@ -37,9 +40,15 @@ onMounted(() => {
     overflow-x: hidden;
     overflow-y: auto;
     height: calc(100% - 45px);
-    padding-left: 12px;
+    padding: 0 12px;
+
     &::v-deep(.percent-section--line) {
       max-width: 304px;
+    }
+
+    &.loading {
+      padding: 0;
+      overflow: hidden;
     }
   }
 }

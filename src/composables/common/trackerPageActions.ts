@@ -1,18 +1,84 @@
-import { computed, ref } from "vue";
+import {
+  computed,
+  onBeforeUnmount,
+  onMounted,
+  onUnmounted,
+  ref,
+  watch,
+} from "vue";
 import { PopupTrackerNavItemsEnum } from "@/constants/popup/popupNavItemsEnum";
 import { getSiteData } from "@/composables/common/chartBar";
 import {
   currentData,
+  dateDiff,
+  getSevenDays,
   resetCurrentDay,
   sevenDays,
+  validUrlRegex,
 } from "@/composables/common/dateComposable";
 import {
   DateInterface,
   ObjectInterface,
   SiteInterface,
 } from "@/types/dataInterfaces";
+import {
+  finishLoader,
+  isLoader,
+  startLoader,
+} from "@/composables/common/loaderActions";
+import { EnumLoaderKeys } from "@/constants/EnumLoaderKeys";
+import { ActivityInterface } from "@/types/TrackingInterface";
 
 //data
+
+export const initialTracker = (isShowCurrentSession: boolean) => {
+  let intervalId = 0;
+  onMounted(() => {
+    getHistory();
+    selectNavItem(PopupTrackerNavItemsEnum.day);
+    chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
+      if (
+        isShowCurrentSession &&
+        tabs &&
+        tabs.length &&
+        validUrlRegex.test(`${tabs[0].url}`)
+      ) {
+        startLoader(EnumLoaderKeys.trackingList);
+        currentSessionData.value.currentUrl = new URL(
+          String(tabs[0].url)
+        ).hostname;
+        currentSessionData.value.currentTab = tabs[0].id;
+        intervalId = setInterval(() => {
+          let timeSpent = 0;
+          const site =
+            historyStorage.value[currentSessionData.value.currentUrl];
+          if (site && site.sessions[currentSessionData.value.currentTab]) {
+            site.sessions[
+              currentSessionData.value.currentTab
+            ][0].activity.forEach((item: any) => {
+              if (!item.end) {
+                timeSpent += (new Date().getTime() - item.begin) / 1000;
+              } else {
+                timeSpent += (item.end - item.begin) / 1000;
+              }
+            });
+          }
+          currentSessionData.value.time = timeSpent;
+          finishLoader(EnumLoaderKeys.trackingList);
+        }, 1000);
+      }
+    });
+  });
+  onUnmounted(() => {
+    clearInterval(intervalId);
+  });
+};
+
+export const currentSessionData = ref({
+  currentTab: "",
+  currentUrl: "",
+  time: 0,
+} as ObjectInterface);
 
 export const selectedNavItem = ref(
   PopupTrackerNavItemsEnum.day as PopupTrackerNavItemsEnum
@@ -25,17 +91,38 @@ export const isTotal = computed(() => {
 
 export const filteringData: ObjectInterface = computed(() => {
   if (Object.keys(historyStorage.value).length) {
-    getSiteData();
     const data: SiteInterface | ObjectInterface = Object.keys({
       ...historyStorage.value,
     }).reduce(accumulateSites, {});
-    return Object.values(data).sort((a: any, b: any) => {
-      return b.timeSpent - a.timeSpent;
+    const findSite: any = Object.values(data).find((item: any) => {
+      return item.domain === currentSessionData.value.currentUrl;
     });
+    if (findSite) {
+      findSite.currentSession = currentSessionData.value.time;
+      findSite.timeSpent = findSite.timeSpent += 1;
+    }
+    const compareSites = (a: SiteInterface, b: SiteInterface): number => {
+      const aHasCurrentSession = a.currentSession > 0;
+      const bHasCurrentSession = b.currentSession > 0;
+      if (aHasCurrentSession && !bHasCurrentSession) {
+        return -1;
+      } else if (!aHasCurrentSession && bHasCurrentSession) {
+        return 1;
+      } else {
+        return b.timeSpent - a.timeSpent;
+      }
+    };
+    const filter = Object.values(data).sort((a: unknown, b: unknown) =>
+      compareSites(a as SiteInterface, b as SiteInterface)
+    );
+    getSiteData(filter);
+    return filter;
   } else {
     return {};
   }
 });
+
+export const sinceData = ref(0);
 
 export const totalTimeSpent = computed(() => {
   if (Object.keys(historyStorage.value).length) {
@@ -89,9 +176,11 @@ const accumulateSites = (sites: ObjectInterface, siteKey: string) => {
   const totalData = { ...historyStorage.value };
   const site = totalData[siteKey];
   let sessions: ObjectInterface[] = [];
-
+  const tabs: string[] = [];
+  getSevenDays();
   if (siteKey) {
-    const filter = (tabData: any, date?: any) => {
+    const filter = (tabData: any, date: any, index: number) => {
+      let isActiveSesssion = false;
       tabData.activity.forEach((item: any) => {
         if (!date) {
           if (!sites[siteKey]) {
@@ -100,7 +189,17 @@ const accumulateSites = (sites: ObjectInterface, siteKey: string) => {
               domain: siteKey,
               sessions: 0,
               timeSpent: 0,
+              firstVisit: 0,
+              lastVisit: 0,
+              mostInactive: { day: "", time: 0 },
+              mostActive: { day: "", time: 0 },
+              longestSession: 0,
+              tabs,
             };
+          }
+          if (!isActiveSesssion) {
+            sites[siteKey].sessions += 1;
+            isActiveSesssion = true;
           }
           sessions.push(item);
         }
@@ -119,6 +218,12 @@ const accumulateSites = (sites: ObjectInterface, siteKey: string) => {
               domain: siteKey,
               sessions: 0,
               timeSpent: 0,
+              lastVisit: 0,
+              longestSession: 0,
+              dayActivity: [],
+              weekActivity: [],
+              monthActivity: [],
+              tabs,
             };
           }
           if (
@@ -135,41 +240,101 @@ const accumulateSites = (sites: ObjectInterface, siteKey: string) => {
           ) {
             item.end = new Date(item.end).setHours(24, 0, 0, 0);
           }
+          if (!isActiveSesssion) {
+            sites[siteKey].sessions += 1;
+            isActiveSesssion = true;
+          }
           sessions.push(item);
         }
       });
       if (sessions.length) {
         sessions.forEach((item: any) => {
+          let timeSpent = 0;
           if (!item.end) {
-            sites[siteKey].timeSpent +=
-              (new Date().getTime() - item.begin) / 1000;
+            timeSpent = (new Date().getTime() - item.begin) / 1000;
           } else {
-            sites[siteKey].timeSpent += (item.end - item.begin) / 1000;
+            timeSpent = (item.end - item.begin) / 1000;
           }
-          sites[siteKey].sessions += 1;
+          if (sites[siteKey].lastVisit < item.end) {
+            sites[siteKey].lastVisit = item.end;
+          }
+          if (!sinceData.value || sinceData.value > item.begin) {
+            sinceData.value = item.begin;
+          }
+          if (
+            sites[siteKey].firstVisit > item.begin ||
+            !sites[siteKey].firstVisit
+          ) {
+            sites[siteKey].firstVisit = item.begin;
+          }
+          sites[siteKey].timeSpent += timeSpent;
+
+          if (sites[siteKey].longestSession < timeSpent && item.end) {
+            sites[siteKey].longestSession = timeSpent;
+          }
+          switch (selectedNavItem.value) {
+            case PopupTrackerNavItemsEnum.day: {
+              let timeIndex: number = new Date(item.begin).getHours();
+              const day = sites[siteKey].dayActivity;
+              if (!day[timeIndex]) {
+                day[timeIndex] = 0;
+              }
+              while (timeSpent > 0) {
+                if (day[timeIndex] + timeSpent < 3600) {
+                  day[timeIndex] += timeSpent;
+                  timeSpent = 0;
+                } else {
+                  const timeInHour = 3600 - day[timeIndex];
+                  day[timeIndex] += timeInHour;
+                  timeSpent -= timeInHour;
+                  timeIndex += 1;
+                  if (!day[timeIndex]) {
+                    day[timeIndex] = 0;
+                  }
+                }
+              }
+              break;
+            }
+            case PopupTrackerNavItemsEnum.week: {
+              const week = sites[siteKey].weekActivity;
+              if (!week[index]) {
+                week[index] = 0;
+              }
+              week[index] += timeSpent;
+              break;
+            }
+            case PopupTrackerNavItemsEnum.month: {
+              const month = sites[siteKey].monthActivity;
+              if (!month[index]) {
+                month[index] = 0;
+              }
+              month[index] += timeSpent;
+              break;
+            }
+          }
         });
         sessions = [];
       }
     };
     if (Object.keys(site.sessions).length) {
-      Object.values(site.sessions).forEach((tab: any) => {
+      Object.values(site.sessions).forEach((tab: any, key) => {
+        tabs.push(`${Object.keys(site.sessions)[key]}`);
         tab.forEach((item: any) => {
           switch (selectedNavItem.value) {
             case PopupTrackerNavItemsEnum.day: {
-              sessions = [];
-              filter(item, currentData.value);
+              filter(item, currentData.value, 0);
               break;
             }
             case PopupTrackerNavItemsEnum.week: {
-              sessions = [];
-              sevenDays.value.forEach((date) => {
+              sevenDays.value.forEach((date, index) => {
                 filter(
                   item,
                   new Date(
                     `${String(date.month).padStart(2, "0")}.${String(
                       date.day
                     ).padStart(2, "0")}.${date.year}`
-                  )
+                  ),
+                  index
                 );
               });
               break;
@@ -187,13 +352,14 @@ const accumulateSites = (sites: ObjectInterface, siteKey: string) => {
                     currentData.value.getFullYear(),
                     currentData.value.getMonth(),
                     i
-                  )
+                  ),
+                  i
                 );
               }
               break;
             }
             case PopupTrackerNavItemsEnum.total: {
-              filter(item, "");
+              filter(item, "", 0);
               break;
             }
           }
@@ -207,23 +373,23 @@ const accumulateSites = (sites: ObjectInterface, siteKey: string) => {
 export const getPercent = (timeSpent: number) => {
   const totalTime: number = totalTimeSpent.value;
   if (totalTime) {
-    return Math.round((timeSpent / totalTime) * 100);
+    return ((timeSpent / totalTime) * 100).toFixed(2);
   } else {
     return 0;
   }
 };
 
-export const formatDuration = (seconds: number) => {
+export const formatDuration = (seconds: number, allTime = false) => {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   const remainingSeconds = Math.floor(seconds % 60);
 
   if (hours > 0) {
-    return `${hours}h`;
+    return allTime ? `${hours}h ${minutes}m ${remainingSeconds}s` : `${hours}h`;
   }
 
   if (minutes > 0) {
-    return `${minutes}m`;
+    return allTime ? `${minutes}m ${remainingSeconds}s` : `${minutes}m`;
   }
 
   if (remainingSeconds > 0) {
@@ -231,4 +397,19 @@ export const formatDuration = (seconds: number) => {
   }
 
   return "";
+};
+
+export const timeSpentCalculation = (activity: ActivityInterface[]) => {
+  return activity.reduce(
+    (activityPrev: number, activityCurrent: ActivityInterface) => {
+      if (activityCurrent.end) {
+        return (
+          activityPrev + dateDiff(activityCurrent.begin, activityCurrent.end)
+        );
+      } else {
+        return activityPrev;
+      }
+    },
+    0
+  );
 };
