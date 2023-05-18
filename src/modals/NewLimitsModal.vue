@@ -49,16 +49,18 @@ main-modal
 <script setup lang="ts">
 import { defineEmits, onMounted, defineProps, ref, computed } from "vue";
 import MainModal from "@/modals/MainModal.vue";
+import {
+  convertTimeHMS,
+  convertToSeconds,
+  parseDate,
+  validUrlRegex,
+} from "@/composables/common/dateComposable";
+import { isValidUrl } from "@/composables/common/common";
 
 const emit = defineEmits(["onClosed"]);
 const props = defineProps({
   initialData: {
-    default: {
-      domain: "",
-      hours: "",
-      minutes: "",
-      seconds: "",
-    },
+    default: {},
   },
   editIndex: {
     type: String,
@@ -73,14 +75,6 @@ const isEdit = computed(() => {
   return !!props.editIndex;
 });
 
-const isValidUrl = (urlString: string) => {
-  try {
-    return Boolean(new URL(urlString));
-  } catch (e) {
-    return false;
-  }
-};
-
 const errors = ref({
   domain: true,
   domainSame: true,
@@ -92,6 +86,7 @@ const urlGroup = ref({
   hours: "",
   minutes: "",
   seconds: "",
+  timeSpent: 0,
 });
 
 const submit = () => {
@@ -106,9 +101,9 @@ const submit = () => {
     if (errors.value.domain) {
       chrome.storage.local.get("limits").then((res) => {
         if (
-          props.initialData.hours !== urlGroup.value.hours &&
-          props.initialData.minutes !== urlGroup.value.minutes &&
-          props.initialData.seconds !== urlGroup.value.seconds
+          initialData.value.hours !== urlGroup.value.hours &&
+          initialData.value.minutes !== urlGroup.value.minutes &&
+          initialData.value.seconds !== urlGroup.value.seconds
         ) {
           errors.value.errorTime = true;
           if (res.limits.list && Object.keys(res.limits.list).length) {
@@ -129,15 +124,27 @@ const submit = () => {
           copyGroup.domain = `https://${
             new URL(urlGroup.value.domain).hostname
           }/`;
+          const hour = Number(copyGroup.hours);
+          const minute = Number(copyGroup.minutes);
+          const second = Number(copyGroup.seconds);
+          const timeItem = { hour, minute, second };
+          const item = {
+            domain: copyGroup.domain,
+            siteLimit: {
+              date: parseDate(new Date().getTime()),
+              timeLimit: convertToSeconds(timeItem),
+              timeSpent: 0,
+            },
+          };
           if (!isEdit.value) {
             Object.assign(data.list, {
-              [copyGroup.domain]: copyGroup,
+              [copyGroup.domain]: item,
             });
             chrome.storage.local.set({ limits: data }).then(() => {
               close();
             });
           } else {
-            data.list[props.editIndex] = copyGroup;
+            data.list[props.editIndex] = item;
             chrome.storage.local.set({ limits: data }).then(() => {
               close();
             });
@@ -150,8 +157,31 @@ const submit = () => {
   }
 };
 
+const initialData = ref();
+
 onMounted(() => {
-  urlGroup.value = { ...props.initialData };
+  let initial: any = { ...props.initialData };
+
+  if (!Object.keys(initial).length) {
+    initial = {
+      domain: "",
+      siteLimit: {
+        date: 0,
+        timeLimit: 0,
+        timeSpent: 0,
+      },
+    };
+  }
+
+  const time = convertTimeHMS(Number(initial.siteLimit.timeLimit));
+
+  urlGroup.value.domain = initial.domain;
+  urlGroup.value.hours = time.hour.toString();
+  urlGroup.value.minutes = time.minute.toString();
+  urlGroup.value.seconds = time.second.toString();
+  urlGroup.value.timeSpent = initial.siteLimit.timeSpent;
+
+  initialData.value = urlGroup.value;
 });
 </script>
 

@@ -4,9 +4,9 @@ import { computed, ref } from "vue";
 import { DateInterface } from "@/types/dataInterfaces";
 import { timeForTotal } from "@/composables/common/chartBar";
 
-const SECONDS_PER_DAY = 86400;
-const SECONDS_PER_HOUR = 3600;
-const SECONDS_PER_MINUTE = 60;
+export const SECONDS_PER_DAY = 86400;
+export const SECONDS_PER_HOUR = 3600;
+export const SECONDS_PER_MINUTE = 60;
 export const validUrlRegex = /^(http|https):\/\//i;
 
 export const st = ["first", "second", "third"];
@@ -177,8 +177,8 @@ export const timeAmTo24 = (item: string) => {
   }
   return hour;
 };
-export const concatPrefix = (prefix: string, item: number) => {
-  return item < 10 ? `0${item}` : `${item}`;
+export const concatPrefix = (item: number) => {
+  return item.toString().padStart(2, "0");
 };
 
 export const format = (
@@ -197,14 +197,14 @@ export const format = (
           break;
         }
         case "MM": {
-          joinContent = concatPrefix("0", date.getMonth() + 1);
+          joinContent = concatPrefix(date.getMonth() + 1);
           break;
         }
         case "DD": {
           if (timeDifference) {
             joinContent = Math.floor(timeInSeconds / 86400).toString();
           } else {
-            joinContent = concatPrefix("0", date.getDate());
+            joinContent = concatPrefix(date.getDate());
           }
           break;
         }
@@ -214,9 +214,9 @@ export const format = (
               timeInSeconds > 86400
                 ? Math.floor((timeInSeconds - 86400) / 3600)
                 : Math.floor(timeInSeconds / 3600);
-            joinContent = concatPrefix("0", calculation);
+            joinContent = concatPrefix(calculation);
           } else {
-            joinContent = concatPrefix("0", date.getHours());
+            joinContent = concatPrefix(date.getHours());
           }
           break;
         }
@@ -238,9 +238,9 @@ export const format = (
               timeInSeconds > 3600
                 ? Math.floor((timeInSeconds - 3600) / 60)
                 : Math.floor(timeInSeconds / 60);
-            joinContent = concatPrefix("0", calculation);
+            joinContent = concatPrefix(calculation);
           } else {
-            joinContent = concatPrefix("0", date.getMinutes());
+            joinContent = concatPrefix(date.getMinutes());
           }
           break;
         }
@@ -249,7 +249,7 @@ export const format = (
             timeInSeconds > 60
               ? timeInSeconds - Math.floor(timeInSeconds / 60) * 60
               : timeInSeconds;
-          joinContent = concatPrefix("0", calculation);
+          joinContent = concatPrefix(calculation);
           break;
         }
       }
@@ -269,4 +269,19 @@ export const parseDate = (dateString: number | string) => {
   } else {
     return "";
   }
+};
+
+export const convertTimeHMS = (seconds: number) => {
+  const hour = Math.floor(seconds / 3600) || "";
+  const minute = Math.floor((seconds % 3600) / 60) || "";
+  const second = seconds % 60 || "";
+  return {
+    hour,
+    minute,
+    second,
+  };
+};
+
+export const convertToSeconds = ({ hour = 0, minute = 0, second = 0 }) => {
+  return hour * 3600 + minute * 60 + second;
 };

@@ -13,7 +13,7 @@ chrome.runtime.onMessage.addListener((request, sender) => {
   const limitsPage = "limitsPage";
   const popupTime = "popupTime";
   const browserTimeSpent = "browserTimeSpent";
-  const activeTab = "activeTab";
+  const stopTracking = "stopTracking";
   switch (request.message) {
     case browserTimeSpent: {
       chrome.runtime.sendMessage({
@@ -22,12 +22,9 @@ chrome.runtime.onMessage.addListener((request, sender) => {
       });
       break;
     }
-    case activeTab: {
+    case stopTracking: {
       chrome.runtime.sendMessage({
-        currentUrl: request.currentUrl,
-        currentTab: request.currentTab,
-        time: request.time,
-        message: "activeTab",
+        message: "stopTracking",
       });
       break;
     }
@@ -100,7 +97,6 @@ chrome.runtime.onMessage.addListener((request, sender) => {
     case limitsPage: {
       const urlHtml = chrome.runtime.getURL("./limits-page/limitsPage.html");
       const urlCss = chrome.runtime.getURL("./block-page/blockPage.css");
-      const urlImg = chrome.runtime.getURL("assets/warning-error.svg");
 
       Promise.all([fetch(urlHtml), fetch(urlCss)])
         .then((responses) =>
@@ -140,7 +136,7 @@ chrome.runtime.onMessage.addListener((request, sender) => {
           contentText.innerHTML = `The time limit for this site has expired. <span>${baseUrl}</span> is blocked`;
 
           const warningImage = document.createElement("img");
-          warningImage.src = urlImg;
+          warningImage.src = `https://s2.googleusercontent.com/s2/favicons?domain=${baseUrl}&sz=96`;
           warningImage.alt = "Warning";
 
           contentImage.appendChild(warningImage);

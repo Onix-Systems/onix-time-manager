@@ -3,7 +3,7 @@
   .site-info--header
     .site-info--usage
       .title {{ "Usage" }}
-      .time(v-if="!isTotal") {{ formatDuration(totalData.timeSpent) || "0m" }}
+      .time(v-if="!isTotal") {{ formatDuration(totalData.timeSpent, true) || "0m" }}
     .site-info--calendar
       calendar-slider
   .site-info--content

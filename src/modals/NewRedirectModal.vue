@@ -45,6 +45,8 @@ import {
   computed,
 } from "vue";
 import MainModal from "@/modals/MainModal.vue";
+import { validUrlRegex } from "@/composables/common/dateComposable";
+import { checkForSecure, isValidUrl } from "@/composables/common/common";
 
 const props = defineProps({
   initialData: {
@@ -66,20 +68,6 @@ const close = () => {
 const isEdit = computed(() => {
   return props.editIndex !== -1;
 });
-
-const checkForSecure = (url: string) => {
-  if (!url.includes("https://")) {
-    return `https://${url}`;
-  }
-  return url;
-};
-const isValidUrl = (urlString: string) => {
-  try {
-    return Boolean(new URL(checkForSecure(urlString)));
-  } catch (e) {
-    return false;
-  }
-};
 
 const errors = reactive({
   initial: true,

@@ -8,7 +8,7 @@
       )
     .item--info(:class="{ limits, redirect }")
       p.bold
-        template(v-if="limits") {{ `Block after ${value.hours ? value.hours + " hours " : " "} ${value.minutes ? value.minutes + " minutes " : " "} ${value.seconds ? value.seconds + " seconds " : " "}` }}
+        template(v-if="limits") {{ time(value.siteLimit, block) }}
         template(v-if="redirect") {{ `Redirection to ${value.redirect}` }}
       p(v-if="redirect") From {{ value.initial }}
       p(v-else) {{ limits ? value.domain : value }}
@@ -22,6 +22,7 @@
 
 <script setup lang="ts">
 import { defineProps, defineEmits } from "vue";
+import { convertTimeHMS } from "@/composables/common/dateComposable";
 const props = defineProps({
   items: {
     type: Array,
@@ -39,6 +40,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  block: {
+    type: Boolean,
+    default: false,
+  },
   limits: {
     type: Boolean,
     default: false,
@@ -48,6 +53,28 @@ const props = defineProps({
     default: false,
   },
 });
+
+const time = (blockItem: any, block: boolean) => {
+  const blockAfter = block
+    ? blockItem.timeLimit - blockItem.timeSpent
+    : blockItem.timeLimit;
+  const h = convertTimeHMS(blockAfter).hour || 0;
+  const m = convertTimeHMS(blockAfter).minute || 0;
+  const s = convertTimeHMS(blockAfter).second || 0;
+  const addS = (numb: number | string) => {
+    return Number(numb) > 1 ? "s" : "";
+  };
+  const prefixH = !block ? ` hour${addS(h)} ` : "h ";
+  const prefixM = !block ? ` minute${addS(h)} ` : "m ";
+  const prefixS = !block ? ` second${addS(h)} ` : "s ";
+  if (h > 0 || m > 0 || s > 0) {
+    return `Block after ${h ? h + prefixH : " "} ${m ? m + prefixM : " "} ${
+      s ? s + prefixS : " "
+    }`;
+  } else {
+    return "Blocked";
+  }
+};
 
 const imgPath = (value: { domain?: string; initial?: string } & string) => {
   if (props.limits) {

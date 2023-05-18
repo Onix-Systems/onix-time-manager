@@ -134,7 +134,7 @@ export const setDayOptions = (data: any) => {
       return item.domain === selectedSite.value.domain;
     });
     if (site) {
-      for (let i = 1; i < 25; i++) {
+      for (let i = 0; i < 24; i++) {
         const timeSpent = site.dayActivity[i] || 0;
         if (timeSpent) {
           totalData.value.timeSpent += timeSpent;
@@ -144,7 +144,7 @@ export const setDayOptions = (data: any) => {
     }
   } else {
     data.forEach((item: ObjectInterface) => {
-      for (let i = 1; i < 25; i++) {
+      for (let i = 0; i < 24; i++) {
         const timeSpent = item.dayActivity[i] || 0;
         if (!timeData.value[i]) {
           timeData.value[i] = 0;
@@ -156,7 +156,7 @@ export const setDayOptions = (data: any) => {
       }
     });
   }
-  for (let i = 1; i < 25; i++) {
+  for (let i = 0; i < 24; i++) {
     names.value.push(i);
   }
   Object.assign(optionsData.value.plugins.tooltip.callbacks, {
