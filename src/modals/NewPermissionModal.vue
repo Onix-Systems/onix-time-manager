@@ -34,6 +34,8 @@ import {
   setPermission,
   whiteList,
 } from "@/composables/permissionComp";
+import { validUrlRegex } from "@/composables/common/dateComposable";
+import { isValidUrl } from "@/composables/common/common";
 
 const props = defineProps({
   editIndex: {
@@ -60,14 +62,6 @@ const hasError = computed(() => {
 onMounted(() => {
   sitePermissionData.value = props.editIndex;
 });
-
-const isValidUrl = (urlString: string) => {
-  try {
-    return Boolean(new URL(urlString));
-  } catch (e) {
-    return false;
-  }
-};
 
 const isUniqueUrl = (urlString: string) => {
   try {

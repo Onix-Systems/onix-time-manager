@@ -47,7 +47,9 @@ import {
 } from "@/composables/common/chartBar";
 import { getHistory } from "@/composables/common/trackerPageActions";
 import { getPermission } from "@/composables/permissionComp";
+import { getLimits } from "@/composables/limitsComp";
 onMounted(() => {
+  getLimits();
   getHistory();
   getPermission();
 });

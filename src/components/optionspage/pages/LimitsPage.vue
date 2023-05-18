@@ -4,43 +4,46 @@
     .option--header-left
       .option--header--title Time Limits
       .option--header--subtitle Set up limits on time which can be used on the site
-    .option--header-right
-      button.content--button.raised(
-        :disabled="!limitsData.listLimit",
-        :class="{ disabled: !limitsData.listLimit }",
-        @click="openModal(EnumModalKeys.LimitsEdit)"
-      ) {{ "Add time limit" }}
   .limits--block
-    .limits-content--schedule
+    .limits--block-left
       .limits--block--title The limit of use the browser
-      .limits--block--subtitle Set up limits or schedule of daily use the browser.
-    .limits-content--schedule
+      .limits--block--subtitle Set up limits for using the browser.
+    .limits--block-right
       switcher-component(
         :isChecked="limitsData.browserLimit",
-        @update:isChecked="editLimits('browserLimit', !limitsData.browserLimit)"
+        @update:isChecked="disableBrowser()"
       )
   .limits-content
-    .limits-content--schedule(
-      :class="{ 'schedule--visible': limitsData.browserLimit }"
-    )
-      schedule-component(
-        :class="{ 'schedule--visible': !limitsData.browserLimit }",
-        :title="`Schedule for use browser`",
-        :isChecked="limitsData.browserLimit",
-        @save="saveData()",
-        @close="resetUserData()"
-      )
-    .limits--block
-      div
+    .schedule(:class="{ 'schedule--visible': limitsData.browserLimit }")
+      .schedule-left
+        button.schedule--time(
+          :class="{ disable: !limitsData.browserLimit }",
+          @click="openTimeLimit()"
+        ) {{ `${String(convertTimeToHM.hour).padStart(2, "0")} h ${String(convertTimeToHM.minute).padStart(2, "0")} m` }}
+        time-modal-limits(
+          v-if="isOpenTimeLimit",
+          :itemTimeLimits="convertTimeToHM",
+          @cancel="isOpenTimeLimit = false",
+          @saveLimits="saveLocalGlobalLimit($event)"
+        )
+      .schedule-right
+        button.content--button.raised(
+          :class="{ edit: !isOpenSchedule, disabled: !limitsData.browserLimit }",
+          @click="openSchedule()"
+        ) {{ isOpenSchedule ? "Save" : "Edit" }}
+    .limits--block.mb
+      .limits--block-left
         .limits--block--title {{ "List of limits" }}
         .limits--block--subtitle {{ "Set up daily limits for sites" }}
-      switcher-component(
-        :isChecked="limitsData.listLimit",
-        @update:isChecked="editLimits('listLimit', !limitsData.listLimit)"
-      )
-    .limits-content--empty-list(v-if="!isLengthList || !limitsData.listLimit")
-      .limits-content--notification-text {{ `The list of limits for web time is empty. Create limits to websites to see them here.` }}
-      .limits-content--empty-list-icon
+      .limits--block-right
+        button.content--button.raised.icon.icon--plus(
+          @click="openModal(EnumModalKeys.Edit)"
+        ) Add time limit
+    empty-template.desktop(
+      v-if="!isLengthList",
+      :image-path="'empty-limits-list.svg'",
+      :message="'The list of limits for web time is empty. Create limits to websites to see them here.'"
+    )
     .limits-page--content(v-else)
       list-items(
         :items="limitsData.list",
@@ -66,30 +69,31 @@ delete-modal(
 </template>
 
 <script setup lang="ts">
-import { onMounted, ref } from "vue";
+import { computed, onMounted, ref } from "vue";
 
 import DeleteModal from "@/modals/common/DeleteModal.vue";
 import NewLimitsModal from "@/modals/NewLimitsModal.vue";
-
-import ScheduleComponent from "@/components/common/ScheduleComponent.vue";
 import SwitcherComponent from "@/components/common/SwitcherComponent.vue";
 import ListItems from "@/components/common/ListItems.vue";
 
 import {
   limitsData,
   getLimits,
-  resetUserData,
-  saveData,
   isLengthList,
   editLimits,
+  saveGlobalLimit,
 } from "@/composables/limitsComp";
 import { closeModal, isOpen, openModal } from "@/composables/modalActions";
 
 import { EnumModalKeys } from "@/constants/EnumModalKeys";
+import EmptyTemplate from "@/components/common/EmptyTemplate.vue";
+import TimeModalLimits from "@/modals/TimeModalLimits.vue";
+import { convertTimeHMS } from "@/composables/common/dateComposable";
 
 const editData = ref({});
 const currentKey = ref("");
-const sites = ref([]);
+const isOpenTimeLimit = ref(false);
+
 const closeEditModal = () => {
   getLimits();
   resetEdit();
@@ -100,6 +104,16 @@ const resetEdit = () => {
   currentKey.value = "";
   editData.value = {};
 };
+
+const convertTimeToHM = computed(() => {
+  let time = 0;
+  if (localLimit.value) {
+    time = localLimit.value;
+  } else if (limitsData.value && limitsData.value.browserTime) {
+    time = limitsData.value.browserTime.timeLimit;
+  }
+  return convertTimeHMS(time);
+});
 
 const editItem = (key: string) => {
   editData.value = { ...limitsData.value.list[key] };
@@ -121,331 +135,145 @@ const deleteAction = () => {
   });
 };
 
+const openTimeLimit = () => {
+  if (limitsData.value.browserLimit && isOpenSchedule.value) {
+    isOpenTimeLimit.value = !isOpenTimeLimit.value;
+  }
+};
+
+const isOpenSchedule = ref(false);
+
+const openSchedule = () => {
+  if (limitsData.value.browserLimit) {
+    if (isOpenSchedule.value) {
+      saveGlobalLimit(
+        localLimit.value
+          ? localLimit.value
+          : limitsData.value.browserTime.timeLimit
+      );
+      localLimit.value = 0;
+      isOpenTimeLimit.value = false;
+    }
+    isOpenSchedule.value = !isOpenSchedule.value;
+  }
+};
+
+const localLimit = ref(0);
+
+const saveLocalGlobalLimit = (time: number) => {
+  isOpenTimeLimit.value = false;
+  localLimit.value = time;
+};
+
+const disableBrowser = () => {
+  if (limitsData.value.browserLimit) {
+    localLimit.value = 0;
+    isOpenSchedule.value = false;
+    isOpenTimeLimit.value = false;
+  }
+  editLimits("browserLimit", !limitsData.value.browserLimit);
+};
+
 onMounted(() => {
   getLimits();
-  resetUserData();
 });
 </script>
 
 <style scoped lang="scss">
-.limits-page--content {
-  margin-top: 23px;
-}
-.redirect-page {
-  &--header {
-    display: flex;
-    width: 100%;
-    justify-content: space-between;
-  }
-  &--title {
-    display: flex;
-    flex-direction: column;
-    .main {
-      font-style: normal;
-      font-weight: 600;
-      font-size: 28px;
-      line-height: 34px;
-      color: #545d64;
-    }
-    .sub {
-      font-style: normal;
-      font-weight: 400;
-      font-size: 14px;
-      line-height: 17px;
-      color: #a9a9a9;
-    }
-  }
-  &--button {
-    box-sizing: border-box;
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-
-    width: 170px;
-    height: 36px;
-
-    font-style: normal;
-    font-weight: 500;
-    font-size: 15px;
-    color: #a9a9a9;
-
-    background: transparent;
-    border: 1px solid #a9a9a9;
-    border-radius: 6px;
-
-    &::before {
-      content: "";
-      display: block;
-
-      width: 10px;
-      height: 10px;
-      margin-right: 13px;
-
-      background-image: url("@/assets/icons/plus.svg");
-      background-size: contain;
-      background-repeat: no-repeat;
-    }
-  }
-  &--content {
-    box-sizing: border-box;
-    display: flex;
-    flex-direction: column;
-
-    padding-top: 40px;
-
-    width: 100%;
-    height: 100%;
-
-    .item {
-      overflow: hidden;
-      box-sizing: border-box;
-      justify-content: space-between;
-      display: flex;
-
-      width: 100%;
-      height: 64px;
-
-      padding: 12px;
-
-      border-bottom: 1px solid #bebebe;
-
-      &--main {
-        overflow: hidden;
-        box-sizing: border-box;
-        display: flex;
-
-        height: 100%;
-        gap: 12px;
-      }
-
-      &--logo {
-        display: flex;
-        min-width: 40px;
-        min-height: 40px;
-        overflow: hidden;
-
-        img {
-          width: 100%;
-          height: 100%;
-          border-radius: 100%;
-        }
-      }
-      &--info {
-        display: flex;
-        flex-direction: column;
-        justify-content: space-between;
-
-        gap: 6px;
-        span {
-          max-width: 400px;
-          display: inline-block;
-          overflow: hidden;
-          text-overflow: ellipsis;
-          white-space: nowrap;
-        }
-        .redirect {
-          font-style: normal;
-          font-weight: 500;
-          font-size: 15px;
-          line-height: 18px;
-          color: #5c5a5a;
-        }
-        .initial {
-          font-style: normal;
-          font-weight: 500;
-          font-size: 12px;
-          line-height: 15px;
-          color: #a9a9a9;
-        }
-      }
-      &--controls {
-        display: flex;
-        max-width: 64px;
-        min-width: 64px;
-        height: 100%;
-        align-items: center;
-        justify-content: space-between;
-
-        button {
-          cursor: pointer;
-          display: block;
-          border: none;
-
-          background-color: transparent;
-          background-repeat: no-repeat;
-          background-size: contain;
-
-          width: 24px;
-          height: 24px;
-        }
-        .delete {
-          background-image: url("@/assets/trash-L.svg");
-        }
-        .return {
-          background-image: url("@/assets/settings-L.svg");
-        }
-      }
-    }
-  }
-}
-.content {
-  position: absolute;
-  top: 0;
-  width: 400px;
-  padding: 20px;
-  background: white;
-}
-.fullscreen-block {
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100%;
-  height: 100%;
-  background-color: rgba(0, 0, 0, 0.5);
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  z-index: 9999;
-}
 .limits {
   &--block {
     display: flex;
     justify-content: space-between;
     margin-top: 24px;
+    &.mb {
+      margin-bottom: 23px;
+    }
     &--title {
       font-style: normal;
-      font-weight: 500;
+      font-weight: 600;
       font-size: 20px;
-      line-height: 24px;
+      line-height: 27px;
       color: var(--txt-main-darkblue);
     }
     &--subtitle {
       font-style: normal;
-      font-weight: 400;
+      font-weight: 500;
       font-size: 12px;
-      line-height: 15px;
+      line-height: 16px;
       color: var(--txt-light-grey);
+    }
+    .content--button {
+      width: auto;
+      height: 32px;
+      padding: 6px 21px 6px 26px;
+
+      &.icon--plus {
+        &::before {
+          background-color: white;
+        }
+      }
     }
   }
   .option--header {
     margin-bottom: 36px;
   }
   &-content {
-    &--subtitle {
-      margin-bottom: 8px;
-      font-weight: 500;
-      font-size: 14px;
-      line-height: 17px;
-      color: #5c5a5a;
-    }
-    &--slider {
+    .schedule {
       display: flex;
-      gap: 10px;
+      justify-content: space-between;
       box-sizing: border-box;
-      padding: 2px;
-      height: 36px;
-      width: max-content;
-      background: #f1f1f3;
+      height: 64px;
+      width: 100%;
+      margin-top: 15px;
+      padding: 16px;
+      background: var(--ghost-white);
       border-radius: 6px;
-      &-item {
-        position: relative;
-        display: flex;
-        align-items: center;
-        padding: 7px 12px 7px 39px;
+      &--time {
+        cursor: inherit;
         font-style: normal;
-        font-weight: 500;
-        font-size: 15px;
-        line-height: 18px;
-        color: #a9a9a9;
-        text-transform: capitalize;
-
-        &:before {
-          position: absolute;
-          content: "";
-          width: 15px;
-          height: 15px;
-          left: 12px;
-          background: #ffffff;
-          border-radius: 50%;
-        }
-        &.active {
-          color: #5c5a5a;
-          background: #ffffff;
-          border-radius: 6px;
-          &:before {
-            background: #f1f1f1;
-          }
-          &:after {
-            position: absolute;
-            content: "";
-            width: 9px;
-            height: 9px;
-            left: 15px;
-            background: #5c5b5b;
-            border-radius: 50%;
-          }
-        }
-      }
-    }
-    &--notification-text {
-      max-width: 418px;
-      font-style: normal;
-      font-weight: 400;
-      font-size: 18px;
-      line-height: 22px;
-      text-align: center;
-      color: #a9a9a9;
-    }
-    &--off {
-      display: flex;
-      align-items: center;
-      flex-direction: column;
-      justify-content: center;
-      margin-top: 74px;
-      &-icon {
-        margin-top: 36px;
-        background: url("@/assets/icons/empty/off-template.svg"), no-repeat,
-          center;
-        background-size: cover;
-        height: 180px;
-        width: 180px;
-      }
-    }
-    &--schedule {
-      margin-top: 16px;
-      pointer-events: none;
-      display: none;
-    }
-    .limits-content--schedule.schedule--visible {
-      opacity: 1;
-      pointer-events: visible;
-      display: none;
-    }
-    .schedule.schedule--visible {
-      background-color: #f5f5f7;
-      display: none;
-    }
-    &--empty-list {
-      display: flex;
-      align-items: center;
-      flex-direction: column;
-      justify-content: center;
-      margin-top: 74px;
-      .limits-content--notification-text {
-        max-width: 486px;
-        font-style: normal;
-        font-weight: 500;
+        font-weight: 600;
         font-size: 20px;
-        line-height: 22px;
+        line-height: 27px;
         color: var(--txt-light-grey);
       }
-      &-icon {
-        margin-top: 24px;
-        background: url("@/assets/icons/empty/empty-limits-list.svg") no-repeat;
-        background-size: contain;
-        height: 200px;
-        width: 184px;
+      &-left {
+        display: flex;
+        align-items: center;
+        position: relative;
+      }
+      &-right {
+        .content--button.raised {
+          width: 82px;
+          height: 32px;
+          padding: 0;
+          background: inherit;
+          outline: none;
+          &.disabled {
+            cursor: inherit;
+            border: 1px solid var(--txt-light-grey);
+            color: var(--txt-light-grey);
+          }
+        }
+      }
+      &.schedule--visible {
+        background: var(--bttn-delete-lightblue);
+        .schedule {
+          &--time {
+            cursor: pointer;
+            color: var(--txt-main-darkblue);
+          }
+          &-right {
+            .content--button.raised {
+              background: var(--txt-dark-blue);
+
+              &.edit {
+                background: inherit;
+                color: var(--txt-dark-blue);
+                border: 1px solid var(--txt-dark-blue);
+              }
+            }
+          }
+        }
       }
     }
   }

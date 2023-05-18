@@ -5,7 +5,7 @@
       .option--header--title {{ MenuItemsEnum.Redirect }}
       .option--header--subtitle {{ "Set up redirect for the blocked sites" }}
     .option--header-right
-      button.option--header-btn(@click="openModal(EnumModalKeys.RedirectEdit)") Add redirect
+      button.option--header-btn(@click="openModal(EnumModalKeys.Edit)") Add redirect
   .limits-page--content(v-if="data.length")
     list-items(
       :items="data",

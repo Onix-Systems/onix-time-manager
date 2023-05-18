@@ -1,23 +1,14 @@
-import { ObjectInterface, ScheduleInterface } from "@/types/dataInterfaces";
+import { ObjectInterface } from "@/types/dataInterfaces";
 import { computed, ref } from "vue";
-import { UserData } from "@/composables/scheduleComp";
-import { dayData } from "@/composables/common/dateComposable";
+import { currentData, parseDate } from "@/composables/common/dateComposable";
 
 const defaultLimits = {
   browserLimit: false,
-  listLimit: false,
-  browserTimeSpent: {
-    date: `${dayData.value.month}.${dayData.value.day}.${dayData.value.year}`,
-    time: 0,
+  browserTime: {
+    date: parseDate(String(currentData.value)),
+    timeLimit: 0,
+    timeSpent: 0,
   },
-  schedule: {
-    isAllDay: false,
-    selectOption: "Today",
-    weekly: [],
-    daily: 1,
-    date: `${dayData.value.month}.${dayData.value.day}.${dayData.value.year}`,
-    timeLimits: { hour: 0, minute: 0 },
-  } as ScheduleInterface,
   list: {},
 };
 
@@ -26,13 +17,14 @@ export const limitsData = ref({
 } as ObjectInterface);
 
 export const isLengthList = computed(() => {
-  return Object.keys(limitsData.value.list).length;
+  return (
+    limitsData.value &&
+    limitsData.value.list &&
+    Object.keys(limitsData.value.list).length
+  );
 });
 
 export const editLimits = (key: string, data: any) => {
-  if (key === "browserLimit") {
-    limitsData.value.browserTimeSpent.time = 0;
-  }
   limitsData.value[key] = data;
   setLimits();
 };
@@ -44,7 +36,6 @@ export const getLimits = () => {
       setLimits();
     } else {
       limitsData.value = result.limits;
-      resetUserData();
     }
   });
 };
@@ -60,14 +51,8 @@ export const setLimits = () => {
   );
 };
 
-export const resetUserData = () => {
-  UserData.value = {
-    ...limitsData.value.schedule,
-  };
-};
-
-export const saveData = () => {
-  limitsData.value.browserTimeSpent.time = 0;
-  limitsData.value.schedule = UserData.value;
+export const saveGlobalLimit = (time: number) => {
+  getLimits();
+  limitsData.value.browserTime.timeLimit = time;
   setLimits();
 };

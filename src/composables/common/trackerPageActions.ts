@@ -30,9 +30,10 @@ import { EnumLoaderKeys } from "@/constants/EnumLoaderKeys";
 import { ActivityInterface } from "@/types/TrackingInterface";
 
 //data
+let intervalId = 0;
+let isEdit = true;
 
 export const initialTracker = (isShowCurrentSession: boolean) => {
-  let intervalId = 0;
   onMounted(() => {
     getHistory();
     selectNavItem(PopupTrackerNavItemsEnum.day);
@@ -55,29 +56,47 @@ export const initialTracker = (isShowCurrentSession: boolean) => {
           if (site && site.sessions[currentSessionData.value.currentTab]) {
             site.sessions[
               currentSessionData.value.currentTab
-            ][0].activity.forEach((item: any) => {
-              if (!item.end) {
-                timeSpent += (new Date().getTime() - item.begin) / 1000;
-              } else {
+            ][0].activity.forEach((item: any, key: number) => {
+              if (!key && isEdit) {
+                item.end = new Date().getTime();
+              } else if (!key && !isEdit) {
+                item.end = item.begin;
+              }
+              if (item.end) {
                 timeSpent += (item.end - item.begin) / 1000;
               }
             });
           }
           currentSessionData.value.time = timeSpent;
-          finishLoader(EnumLoaderKeys.trackingList);
+          if (isLoader(EnumLoaderKeys.trackingList)) {
+            finishLoader(EnumLoaderKeys.trackingList);
+          }
         }, 1000);
       }
     });
+    chrome.runtime.onMessage.addListener(handleRuntimeMessage);
   });
   onUnmounted(() => {
+    chrome.runtime.onMessage.removeListener(handleRuntimeMessage);
     clearInterval(intervalId);
   });
+};
+
+const handleRuntimeMessage = (request: any, sender: any) => {
+  const stopTracking = "stopTracking";
+  if (request.message === stopTracking) {
+    isEdit = false;
+    clearInterval(intervalId);
+    if (isLoader(EnumLoaderKeys.trackingList)) {
+      finishLoader(EnumLoaderKeys.trackingList);
+    }
+  }
 };
 
 export const currentSessionData = ref({
   currentTab: "",
   currentUrl: "",
-  time: 0,
+  time: 1,
 } as ObjectInterface);
 
 export const selectedNavItem = ref(
@@ -90,7 +109,10 @@ export const isTotal = computed(() => {
 });
 
 export const filteringData: ObjectInterface = computed(() => {
-  if (Object.keys(historyStorage.value).length) {
+  if (
+    Object.keys(historyStorage.value).length &&
+    currentSessionData.value.time
+  ) {
     const data: SiteInterface | ObjectInterface = Object.keys({
       ...historyStorage.value,
     }).reduce(accumulateSites, {});

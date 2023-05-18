@@ -1,5 +1,5 @@
 <template lang="pug">
-.modal-time(v-if="show")
+.modal-time
   .modal-time--padding
     .modal-time--title {{ "Enter time" }}
     .modal-time--timer
@@ -30,13 +30,16 @@
 <script setup lang="ts">
 import { ref, defineProps, defineEmits, onMounted } from "vue";
 import { ObjectInterface } from "@/types/dataInterfaces";
+import {
+  SECONDS_PER_HOUR,
+  SECONDS_PER_MINUTE,
+} from "@/composables/common/dateComposable";
 
 const props = defineProps({
-  show: Boolean,
   itemTimeLimits: {
     type: Object as () => { hour: number; minute: number },
     default: () => {
-      return { hour: 0, minute: 0 };
+      return { hour: "", minute: "" };
     },
   },
 });
@@ -58,7 +61,7 @@ const parseInput = (evt: any, key: number) => {
   }
 
   if (storage.value.hour === 24) {
-    storage.value.minute = 0;
+    storage.value.minute = "";
   }
   if (condition < 24 && !key) {
     return;
@@ -84,13 +87,18 @@ const storage = ref({
 const selected = ref("");
 
 const save = () => {
+  let time = 0;
   if (!storage.value.minute) {
-    storage.value.minute = 0;
+    storage.value.minute = "";
+  } else {
+    time += storage.value.minute * SECONDS_PER_MINUTE;
   }
   if (!storage.value.hour) {
-    storage.value.hour = 0;
+    storage.value.hour = "";
+  } else {
+    time += storage.value.hour * SECONDS_PER_HOUR;
   }
-  emit("saveLimits", storage.value);
+  emit("saveLimits", time);
 };
 </script>
 
@@ -103,10 +111,11 @@ const save = () => {
   align-items: center;
   box-sizing: border-box;
   top: 25px;
-  right: -196px;
+  left: -17px;
   width: 264px;
   height: 243px;
   background: var(--white);
+  box-shadow: 1px 1px 40px rgba(56, 106, 241, 0.1);
   border-radius: 28px;
   &--title {
     margin-bottom: 24px;

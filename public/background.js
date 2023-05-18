@@ -4,12 +4,14 @@ let tabIdCopy = 0;
 let currentUrl = "";
 
 let intervalId = 0;
+let siteIsBlocked = false;
 let settings = [];
 let showNotification = false;
 let currentInformation = {};
 
 chrome.runtime.onInstalled.addListener(() => {
   chrome.tabs.onActivated.addListener((tab) => {
+    siteIsBlocked = false;
     updateCurrentSession(tabIdCopy);
     tabIdCopy = tab.tabId;
     detectRules();
@@ -18,6 +20,7 @@ chrome.runtime.onInstalled.addListener(() => {
   chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     if (changeInfo.status === "complete" && validUrlRegex.test(tab.url)) {
       if (tabId === tabIdCopy) {
+        siteIsBlocked = false;
         tabIdCopy = tabId;
         updateCurrentSession(tabIdCopy);
         detectRules();
@@ -27,23 +30,18 @@ chrome.runtime.onInstalled.addListener(() => {
   });
   chrome.tabs.onRemoved.addListener((tabId, info) => {
     if (tabIdCopy === tabId) {
+      siteIsBlocked = false;
       updateCurrentSession(tabId);
     }
   });
   chrome.windows.onRemoved.addListener((tabId, info) => {
+    siteIsBlocked = false;
     updateCurrentSession(tabId);
   });
 });
 
-const updateCurrentSession = (tabID) => {
+const updateCurrentSession = () => {
   clearInterval(intervalId);
-  if (currentInformation[currentUrl]) {
-    let data = currentInformation[currentUrl].sessions;
-    if (data[tabID] && data[tabID].length) {
-      data[tabID][0].activity[0].end = Date.now();
-    }
-    chrome.storage.local.set({ pages: currentInformation }).then();
-  }
 };
 
 const createNotification = (message = "") => {
@@ -93,32 +91,95 @@ const updatePageTime = (tabId, isUpdated) => {
             sessions[tab.id] = [];
           }
 
-          if (isUpdated) {
+          const createSession = () => {
             sessions[tab.id].unshift({
               id: tab.id + new Date().getTime(),
               path: tab.url,
-              activity: [{ begin: new Date().getTime(), end: 0 }],
+              activity: [
+                { begin: new Date().getTime(), end: new Date().getTime() },
+              ],
             });
+          };
+
+          if (isUpdated) {
+            createSession();
           } else {
-            const sessions = pages?.[currentUrl]?.sessions ?? {};
             if (sessions[tab.id] && sessions[tab.id].length) {
               sessions[tab.id][0].activity.unshift({
                 begin: new Date().getTime(),
-                end: 0,
+                end: new Date().getTime(),
               });
             } else {
-              sessions[tab.id].unshift({
-                id: tab.id + new Date().getTime(),
-                path: tab.url,
-                activity: [{ begin: new Date().getTime(), end: 0 }],
-              });
+              createSession();
             }
           }
-          console.log(pages);
 
-          currentInformation = pages;
+          const trackerFunction = () => {
+            if (sessions[tab.id]) {
+              sessions[tab.id][0].activity[0].end = new Date().getTime();
+            }
+            limitsFunction();
+          };
 
+          const limitsFunction = () => {
+            chrome.storage.local.get({ limits: {} }, async (result) => {
+              const { limits } = result;
+              const currentDate = parseDate(new Date().getTime());
+              if (limits.browserLimit) {
+                if (limits.browserTime.date !== currentDate) {
+                  limits.browserTime.timeSpent = 0;
+                  limits.browserTime.date = currentDate;
+                } else {
+                  limits.browserTime.timeSpent += 1;
+                }
+                if (
+                  limits.browserTime.timeSpent >= limits.browserTime.timeLimit
+                ) {
+                  createMessage({
+                    message: "limitsPage",
+                  });
+                  siteIsBlocked = true;
+                }
+              }
+              const limitUrl = `https://${currentUrl}/`;
+              const limit =
+                limits &&
+                limits.list &&
+                Object.keys(limits.list).includes(limitUrl)
+                  ? limits.list[limitUrl]
+                  : "";
+              if (limit) {
+                if (limit.siteLimit.date !== currentDate) {
+                  limit.siteLimit.timeSpent = 0;
+                  limit.siteLimit.date = currentDate;
+                } else {
+                  limit.siteLimit.timeSpent += 1;
+                }
+                if (limit.siteLimit.timeSpent >= limit.siteLimit.timeLimit) {
+                  createMessage({
+                    message: "limitsPage",
+                  });
+                  siteIsBlocked = true;
+                }
+              }
+
+              chrome.storage.local.set({ limits }).then();
+            });
+          };
+
+          trackerFunction();
           await chrome.storage.local.set({ pages });
+          intervalId = setInterval(() => {
+            if (!siteIsBlocked) {
+              trackerFunction();
+            } else {
+              createMessage({
+                message: "stopTracking",
+              });
+            }
+            currentInformation = pages;
+            chrome.storage.local.set({ pages });
+          }, 1000);
         });
       }
     });
@@ -164,11 +225,13 @@ const checkForPermission = (tabUrl) => {
               createMessage({
                 message: "blockPage",
               });
+              siteIsBlocked = true;
             }
           } else if (type === "whitelist") {
             createMessage({
               message: "blockPage",
             });
+            siteIsBlocked = true;
           }
         }
       }
@@ -199,3 +262,15 @@ chrome.runtime.onMessage.addListener((request, sender) => {
     }
   }
 });
+
+const parseDate = (dateString) => {
+  if (dateString) {
+    const date = new Date(dateString);
+    const day = String(date.getDate()).padStart(2, "0");
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const year = date.getFullYear();
+    return `${day}.${month}.${year}`;
+  } else {
+    return "";
+  }
+};
