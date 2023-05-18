@@ -73,7 +73,7 @@
               p {{ activity.path }}
             .td
             .td.align-right
-              p {{ format("DD.MM.YYYY HH:mm", activity.activity[activity.activity.length - 1].begin) }}
+              p {{ format("DD.MM.YYYY HH:mm", activity.activity[0].begin) }}
             .td.align-right
               p {{ format("Hh mmm sss", timeSpentCalculation(activity.activity), true) }}
     empty-template.desktop(
@@ -98,7 +98,7 @@ import EmptyTemplate from "@/components/common/EmptyTemplate.vue";
 
 import DeleteModal from "@/modals/common/DeleteModal.vue";
 
-import { format } from "@/composables/common/dateComposable";
+import { format, sortByDate } from "@/composables/common/dateComposable";
 import { timeSpentCalculation } from "@/composables/common/trackerPageActions";
 import { closeModal, isOpen, openModal } from "@/composables/modalActions";
 
@@ -148,18 +148,10 @@ const sortBy = (option: SortEnum, props?: { toggleVisibility(): void }) => {
           return b.sessions.length - a.sessions.length;
         }
         default: {
-          const lastItemA = new Date(
-            a.sessions[a.sessions.length - 1].activity.slice(-1)[0].begin
+          return sortByDate(
+            a.sessions[0].activity[0].begin,
+            b.sessions[0].activity[0].begin
           );
-          const lastItemB = new Date(
-            b.sessions[b.sessions.length - 1].activity.slice(-1)[0].begin
-          );
-          if (lastItemA < lastItemB) {
-            return 1;
-          } else if (lastItemA > lastItemB) {
-            return -1;
-          }
-          return 0;
         }
       }
     }
@@ -254,12 +246,13 @@ const createStructure = (pages: {
     return {
       domain,
       icon,
-      sessions: sessionsKeys.reduce(
-        (a: SessionInterface[], b: SessionInterface[]) => {
+      sessions: sessionsKeys
+        .reduce((a: SessionInterface[], b: SessionInterface[]) => {
           return a.concat(b);
-        },
-        []
-      ),
+        }, [])
+        .sort((a: SessionInterface, b: SessionInterface) => {
+          return sortByDate(a.activity[0].begin, b.activity[0].begin);
+        }),
     };
   });
 };
@@ -292,8 +285,7 @@ const toggleCheckList = (id: string) => {
 };
 
 const lastVisit = (session: SessionInterface[]) => {
-  const lastItem = session[session.length - 1].activity.slice(-1);
-  return format("DD.MM.YYYY HH:mm", lastItem[0].begin);
+  return format("DD.MM.YYYY HH:mm", session[0].activity[0].begin);
 };
 
 const timeSpent = (session: SessionInterface[]) => {

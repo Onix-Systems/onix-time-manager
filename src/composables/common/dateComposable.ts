@@ -285,3 +285,14 @@ export const convertTimeHMS = (seconds: number) => {
 export const convertToSeconds = ({ hour = 0, minute = 0, second = 0 }) => {
   return hour * 3600 + minute * 60 + second;
 };
+
+export const sortByDate = (begin: number, end: number, reversed = false) => {
+  const lastItemA = new Date(begin);
+  const lastItemB = new Date(end);
+  if (lastItemA < lastItemB) {
+    return reversed ? -1 : 1;
+  } else if (lastItemA > lastItemB) {
+    return reversed ? 1 : -1;
+  }
+  return 0;
+};
