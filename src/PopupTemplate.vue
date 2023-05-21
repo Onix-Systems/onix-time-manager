@@ -35,7 +35,7 @@ import {
   selectNavItem,
   popupNavigations,
   popupNavigationSelected,
-} from "@/composables/popup/common/popupActions";
+} from "@/composables/popup/popupActions";
 import TrackerComponent from "@/components/popup/TrackerComponent.vue";
 import PermissionsComponent from "@/components/popup/PermissionsComponent.vue";
 import LimitsComponent from "@/components/popup/LimitsComponent.vue";
@@ -47,11 +47,11 @@ import {
 } from "@/composables/common/chartBar";
 import { getHistory } from "@/composables/common/trackerPageActions";
 import { getPermission } from "@/composables/permissionComp";
-import { getLimits } from "@/composables/limitsComp";
+import { updateSettingsData } from "@/composables/settingsComp";
 onMounted(() => {
-  getLimits();
   getHistory();
   getPermission();
+  updateSettingsData();
 });
 </script>
 

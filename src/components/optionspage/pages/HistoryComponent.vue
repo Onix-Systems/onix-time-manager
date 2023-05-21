@@ -17,6 +17,7 @@
               ) By {{ item }}
       .modal(v-if="selectedItems.length > 0")
         .modal--content
+          button.content--button.raised(:class="{'disabled': eachChecked}" @click="selectAllTypes" :disabled="eachChecked") Select All
           .modal--content-cancel
             button.cancel(@click="cancel")
             p Selected {{ selectedItems.length }}
@@ -275,6 +276,15 @@ const toggleChild = (sessions: SessionInterface[], status: boolean) => {
   });
 };
 
+const selectAllTypes = () => {
+  historyList.value.forEach((item) => {
+    toggleChild(item.sessions, false);
+  });
+};
+
+const eachChecked = computed(() => {
+  return historyList.value.every((item) => isChildSelected(item.sessions));
+});
 const toggleCheckList = (id: string) => {
   const index = selectedItems.value.indexOf(id);
   if (index === -1) {
@@ -320,17 +330,22 @@ onMounted(() => {
       top: 0;
       left: 0;
       display: flex;
-      justify-content: space-between;
       align-items: center;
+
       width: 100%;
-      padding: 24px 24px 24px 246px;
+      padding: 24px;
+      column-gap: 44px;
+
       background: #fdfdfd;
       border-bottom: 1px solid #d9d9d9;
 
       &-cancel {
         display: flex;
         align-items: center;
+
+        width: 100%;
       }
+
       p {
         font-style: normal;
         font-weight: 400;
@@ -338,37 +353,51 @@ onMounted(() => {
         line-height: 17px;
         color: var(--txt-light-grey);
       }
-      button.cancel {
-        padding: 0;
-        margin-right: 26px;
-        width: 23px;
-        height: 24px;
-        background: none;
-      }
-      button.cancel::before {
-        display: inline-block;
-        content: "";
-        background-image: url("@/assets/remove.svg");
-        width: 24px;
-        height: 24px;
-        min-width: 24px;
-        min-height: 24px;
-        margin-right: 19px;
-      }
+
       button {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        width: 120px;
-        height: 32px;
-        background: var(--bttn-delete-lightblue);
-        color: var(--txt-dark-grey);
-        border-radius: 6px;
-        font-style: normal;
-        font-weight: 500;
-        font-size: 14px;
-        line-height: 19px;
-        border: none;
+        &.raised {
+          width: 155px;
+          min-width: 155px;
+          height: 32px;
+        }
+
+        &.delete {
+          display: flex;
+          align-items: center;
+          justify-content: center;
+
+          min-width: 120px;
+          height: 32px;
+
+          font-style: normal;
+          font-weight: 500;
+          font-size: 14px;
+          line-height: 19px;
+
+          background: var(--bttn-delete-lightblue);
+          border: none;
+          color: var(--txt-dark-grey);
+          border-radius: 6px;
+        }
+
+        &.cancel {
+          padding: 0;
+          margin-right: 26px;
+          width: 23px;
+          height: 24px;
+          background: none;
+
+          &::before {
+            display: inline-block;
+            content: "";
+            background-image: url("@/assets/remove.svg");
+            width: 24px;
+            height: 24px;
+            min-width: 24px;
+            min-height: 24px;
+            margin-right: 19px;
+          }
+        }
       }
     }
   }

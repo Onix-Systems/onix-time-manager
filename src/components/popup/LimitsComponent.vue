@@ -1,22 +1,33 @@
 <template lang="pug">
-.limits-page--content
+.limits-page--content(
+  :class="{ empty: !limitsData.sitesLimit || !isLengthList }"
+)
   template(v-if="!isLoader(EnumLoaderKeys.popupLimits)")
     .limits-page--content-tracker(v-if="limitsObject.browserLimit")
       h2.title The browser will be block after
       p.subtitle(:class="{ mb: isLengthList }") {{ globalLimit }}
-    .limits-page--content-list(
-      v-if="isLengthList",
-      :class="{ 'with-limit': limitsObject.browserLimit }"
-    )
-      list-items(:items="limitsObject.list", :limits="true", :block="true")
     empty-template.fixed(
-      v-else,
+      v-if="!limitsData.sitesLimit",
+      :class="{ 'with-global': limitsObject.browserLimit }",
+      :image-path="'off-template.svg'",
+      :message="'The list of web time restrictions is disabled. Turn on list for create limits to websites to see them here'"
+    )
+      button.content--button.tab-active.icon(
+        @click="openOptions(MenuItemsEnum.Limits)"
+      ) Go to enable list of limits
+    empty-template.fixed(
+      v-else-if="!isLengthList",
       :image-path="'empty-limits-list.svg'",
       :message="'The list of limits for web time is empty. Create limits to websites to see them here.'"
     )
       button.content--button.tab-active.icon.icon--plus(
         @click="openOptions(MenuItemsEnum.Limits)"
       ) Add limit
+    .limits-page--content-list(
+      v-else,
+      :class="{ 'with-limit': limitsObject.browserLimit }"
+    )
+      list-items(:items="limitsObject.list", :limits="true", :block="true")
   .loader(v-else)
     circul-loader
 </template>
@@ -27,11 +38,7 @@ import { computed, onMounted, onUnmounted, ref } from "vue";
 import ListItems from "@/components/common/ListItems.vue";
 import EmptyTemplate from "@/components/common/EmptyTemplate.vue";
 
-import { openOptions } from "@/composables/popup/common/popupActions";
-import { limitsData, getLimits, isLengthList } from "@/composables/limitsComp";
-import { UserData } from "@/composables/scheduleComp";
-
-import { ObjectInterface } from "@/types/dataInterfaces";
+import { openOptions } from "@/composables/popup/popupActions";
 
 import { MenuItemsEnum } from "@/constants/menuItemsEnum";
 import { validUrlRegex } from "@/composables/common/dateComposable";
@@ -43,49 +50,73 @@ import {
 } from "@/composables/common/loaderActions";
 import { EnumLoaderKeys } from "@/constants/EnumLoaderKeys";
 import CirculLoader from "@/components/common/CirculLoader.vue";
+import { defaultLimits } from "@/composables/limitsComp";
+import { LimitsInterfaces } from "@/types/LimitsInterfaces";
 
 let intervalId = 0;
-const currentUrl = ref("");
+const currentUrl = ref("" as any);
+
+const limitsData = ref({
+  ...defaultLimits,
+} as LimitsInterfaces);
+
+const isLengthList = computed(() => {
+  return (
+    limitsData.value &&
+    limitsData.value.list &&
+    Object.keys(limitsData.value.list).length
+  );
+});
 
 onMounted(() => {
   startLoader(EnumLoaderKeys.popupLimits);
-  getLimits();
-  const browserTime = { ...limitsObject.value.browserTime };
-  const limitTime = browserTime.timeLimit;
-  let timeSpent = browserTime.timeSpent;
-  if (limitTime - timeSpent > 0) {
-    editConvertedDate(limitTime - timeSpent);
-  }
-  chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
-    if (tabs && tabs.length && validUrlRegex.test(`${tabs[0].url}`)) {
-      currentUrl.value = `https://${new URL(String(tabs[0].url)).hostname}/`;
-      intervalId = setInterval(() => {
-        if (limitsObject.value.browserLimit) {
-          const blockAfter = limitTime - timeSpent;
-          if (!blockAfter || blockAfter === -Math.abs(blockAfter)) {
-            clearInterval(intervalId);
-          } else {
-            editConvertedDate(blockAfter);
-            timeSpent += 1;
-          }
-        }
-        const sitesKeys = Object.keys(limitsObject.value.list);
-        if (limitsObject.value && sitesKeys.length) {
-          if (sitesKeys.includes(currentUrl.value)) {
-            const site = limitsObject.value.list[currentUrl.value].siteLimit;
-            const blockAfter = site.timeLimit - site.timeSpent;
+  chrome.storage.local.get("limits").then((res) => {
+    const { limits } = res;
+    if (limits) {
+      limitsData.value = limits;
+    }
+    const browserTime = { ...limitsObject.value.browserTime };
+    const limitTime = browserTime.timeLimit;
+    let timeSpent = browserTime.timeSpent;
+    if (limitTime - timeSpent > 0) {
+      editConvertedDate(limitTime - timeSpent);
+    }
+    chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
+      if (tabs && tabs.length && validUrlRegex.test(`${tabs[0].url}`)) {
+        currentUrl.value = `https://${new URL(String(tabs[0].url)).hostname}/`;
+        let stop = false;
+        intervalId = setInterval(() => {
+          if (limitsObject.value.browserLimit && !stop) {
+            const blockAfter = limitTime - timeSpent;
+
             if (!blockAfter || blockAfter === -Math.abs(blockAfter)) {
+              editConvertedDate(blockAfter);
               clearInterval(intervalId);
-            } else {
-              site.timeSpent += 1;
+              stop = true;
+            } else if (blockAfter) {
+              editConvertedDate(blockAfter);
+              timeSpent += 1;
             }
           }
-        }
-      }, 1000);
-      finishLoader(EnumLoaderKeys.popupLimits);
-    } else {
-      finishLoader(EnumLoaderKeys.popupLimits);
-    }
+          const sitesKeys = Object.keys(limitsObject.value.list);
+          if (limitsObject.value && sitesKeys.length && !stop) {
+            if (sitesKeys.includes(currentUrl.value)) {
+              const site = limitsObject.value.list[currentUrl.value].siteLimit;
+              const blockAfter = site.timeLimit - site.timeSpent;
+              if (!blockAfter || blockAfter === -Math.abs(blockAfter)) {
+                clearInterval(intervalId);
+                stop = true;
+              } else if (blockAfter) {
+                site.timeSpent += 1;
+              }
+            }
+          }
+        }, 1000);
+        finishLoader(EnumLoaderKeys.popupLimits);
+      } else {
+        finishLoader(EnumLoaderKeys.popupLimits);
+      }
+    });
   });
 });
 
@@ -142,6 +173,16 @@ const globalLimit = computed(() => {
   flex-direction: column;
   height: 100%;
   padding-bottom: 12px;
+
+  &.empty {
+    padding: 0 12px;
+    &::v-deep(.empty-section.fixed.with-global) {
+      h2 {
+        margin-top: 0;
+        margin-bottom: 22px;
+      }
+    }
+  }
 
   h2 {
     margin: 32px 0 59px;

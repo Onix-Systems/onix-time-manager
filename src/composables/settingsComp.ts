@@ -5,13 +5,10 @@ export const showContent = ref(false);
 const initialData: any = {
   password: false,
   code: "",
+  permission: true,
   getNotification: false,
   notification:
     "The limit time of using this site is ending. If you want to change the limit time, change it on the setting page",
-  tracking: false,
-  limitsMassageTime: { hour: 0, minute: 5, second: 0 },
-  trackingActivityTime: { hour: 0, minute: 5, second: 0 },
-  limits: true,
 };
 
 export const bytesInUse = ref("");
@@ -36,9 +33,6 @@ export const settingsData = ref({ ...initialData });
 
 export const updateSettings = (name: string, status: any) => {
   settingsData.value[name] = status;
-  if (!settingsData.value.password) {
-    settingsData.value.limits = true;
-  }
   setSettings();
 };
 

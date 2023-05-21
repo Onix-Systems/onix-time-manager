@@ -1,13 +1,13 @@
 <template lang="pug">
 .permissions
   empty-template.fixed(
-    v-if="isOff",
+    v-if="isOff || !settingsData.permission",
     :image-path="'off-template.svg'",
     :message="'The list option is disabled. You can use all sites without limits.'"
   )
     button.content--button.tab-active(
-      @click="openOptions(MenuItemsEnum.Permissions)"
-    ) Change rules
+      @click="openOptions(settingsData.permission ? MenuItemsEnum.Permissions : MenuItemsEnum.Settings)"
+    ) {{ settingsData.permission ? "Change rules" : "Go to enable permissions" }}
   empty-template.fixed(
     v-else-if="showEmptyTemplate",
     :image-path="'empty-permission-list.svg'",
@@ -21,15 +21,15 @@
       span {{ isBlackList ? "Blacklist" : "Whitelist" }} mode.
       template(v-if="isWhiteList") You can only visit sites that are on this list
       template(v-else) You cannot visit any of the websites on this list.
-    .limits-page--content
-      list-items(:items="isBlackList ? blackList : whiteList as any")
+    .permissions-page--content
+      list-items(:items="isBlackList ? blackList : whiteList")
 </template>
 
 <script setup lang="ts">
 import ListItems from "@/components/common/ListItems.vue";
 import EmptyTemplate from "@/components/common/EmptyTemplate.vue";
 
-import { openOptions } from "@/composables/popup/common/popupActions";
+import { openOptions } from "@/composables/popup/popupActions";
 import {
   isWhiteList,
   showEmptyTemplate,
@@ -40,23 +40,25 @@ import {
 } from "@/composables/permissionComp";
 
 import { MenuItemsEnum } from "@/constants/menuItemsEnum";
+import { settingsData } from "@/composables/settingsComp";
 </script>
 
 <style scoped lang="scss">
 .permissions {
   position: relative;
-  padding: 0 12px;
+  height: 100%;
+  padding: 0;
 
   &-page {
     &--content {
+      padding: 0 12px;
       overflow: auto;
-      min-height: 387px;
+      height: 380px;
     }
 
     &--items {
       h2 {
-        width: 100%;
-        padding-top: 24px;
+        padding: 24px 12px 0 12px;
         margin: 0 auto 24px;
 
         font-family: var(--font-nunito);

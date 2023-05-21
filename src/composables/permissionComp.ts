@@ -32,11 +32,6 @@ export const blackList = computed(() => {
   return permissionData.value.list.blacklist;
 });
 
-export const findIndexByDomain = (domain: string, white = false) => {
-  const list = white ? whiteList.value : blackList.value;
-  return Object.keys(list).findIndex((f) => f === domain);
-};
-
 export const showEmptyTemplate = computed(() => {
   return (
     (isWhiteList.value && !Object.keys(whiteList.value).length) ||

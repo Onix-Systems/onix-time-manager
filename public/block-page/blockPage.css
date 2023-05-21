@@ -20,7 +20,6 @@
 .content--title {
   font-family: 'Nunito', sans-serif;
   font-style: normal;
-
   font-weight: 600;
   font-size: 80px;
   line-height: 109px;
@@ -54,12 +53,12 @@
 
   font-family: 'Nunito', sans-serif;
   font-style: normal;
-  font-weight: 400;
+  font-weight: 600;
   font-size: 24px;
-  line-height: 29px;
+  line-height: 33px;
   text-align: center;
 
-  color: #A9A9A9;
+  color: #6C6D80;
 }
 
 .content--text span {
@@ -74,12 +73,11 @@
   height: 48px;
   font-family: 'Nunito', sans-serif;
   font-style: normal;
-  font-weight: 500;
+  font-weight: 600;
   font-size: 16px;
-  line-height: 19px;
-  text-decoration: none;
-  color: #F2F2F2;
-  background: #386AF1;
+  line-height: 22px;
+  color: #FFFFFF;
+  background: #3347BE;
   border-radius: 6px;
 }
 
@@ -89,5 +87,5 @@ a, a:active, a:visited, a:hover {
 }
 
 .content--text span {
-  color: #7E7E7E;
+  color: #0A0C2C;
 }

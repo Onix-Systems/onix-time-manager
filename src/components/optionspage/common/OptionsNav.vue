@@ -15,9 +15,16 @@
 import { activeTabIndex, editTabIndex } from "@/composables/optionsActions";
 import { computed } from "vue";
 import { MenuItemsEnum } from "@/constants/menuItemsEnum";
-import { openOptions } from "@/composables/popup/common/popupActions";
+import { openOptions } from "@/composables/popup/popupActions";
+import { settingsData } from "@/composables/settingsComp";
 const data = computed(() => {
-  return Object.keys(MenuItemsEnum);
+  return Object.keys(MenuItemsEnum).filter((item) => {
+    if (settingsData.value.permission) {
+      return item;
+    } else if (item !== MenuItemsEnum.Permissions) {
+      return item;
+    }
+  });
 });
 
 const setTabIndex = (item: MenuItemsEnum) => {

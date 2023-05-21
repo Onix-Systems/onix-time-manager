@@ -5,7 +5,9 @@
       .option--header--title {{ MenuItemsEnum.Redirect }}
       .option--header--subtitle {{ "Set up redirect for the blocked sites" }}
     .option--header-right
-      button.option--header-btn(@click="openModal(EnumModalKeys.Edit)") Add redirect
+      button.content--button.raised.icon.icon--plus(
+        @click="openModal(EnumModalKeys.Edit)"
+      ) Add redirect
   .limits-page--content(v-if="data.length")
     list-items(
       :items="data",
@@ -126,38 +128,6 @@ onMounted(() => {
       font-size: 14px;
       line-height: 17px;
       color: #a9a9a9;
-    }
-  }
-  &--button {
-    box-sizing: border-box;
-    cursor: pointer;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-
-    width: 170px;
-    height: 36px;
-
-    font-style: normal;
-    font-weight: 500;
-    font-size: 15px;
-    color: #a9a9a9;
-
-    background: transparent;
-    border: 1px solid #a9a9a9;
-    border-radius: 6px;
-
-    &::before {
-      content: "";
-      display: block;
-
-      width: 10px;
-      height: 10px;
-      margin-right: 13px;
-
-      background-image: url("@/assets/icons/plus.svg");
-      background-size: contain;
-      background-repeat: no-repeat;
     }
   }
   &--content {
