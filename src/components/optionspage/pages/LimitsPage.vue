@@ -33,16 +33,27 @@
         ) {{ isOpenSchedule ? "Save" : "Edit" }}
     .limits--block.mb
       .limits--block-left
-        .limits--block--title {{ "List of limits" }}
-        .limits--block--subtitle {{ "Set up daily limits for sites" }}
-      .limits--block-right
+        .limits--block-column
+          .limits--block--title {{ "List of limits" }}
+          .limits--block--subtitle {{ "Set up daily limits for sites" }}
         button.content--button.raised.icon.icon--plus(
-          @click="openModal(EnumModalKeys.Edit)"
-        ) Add time limit
+          :class="{ disabled: !limitsData.sitesLimit }",
+          @click="limitsData.sitesLimit ? openModal(EnumModalKeys.Edit) : ''"
+        )
+      .limits--block-right
+        switcher-component(
+          :isChecked="limitsData.sitesLimit",
+          @update:isChecked="disableLimitsList()"
+        )
     empty-template.desktop(
-      v-if="!isLengthList",
+      v-if="!limitsData.sitesLimit",
+      :image-path="'off-template.svg'",
+      :message="'The list of web time restrictions is disabled. Turn on list for create limits to websites to see them here'"
+    )
+    empty-template.desktop(
+      v-else-if="!isLengthList",
       :image-path="'empty-limits-list.svg'",
-      :message="'The list of limits for web time is empty. Create limits to websites to see them here.'"
+      :message="'The list of limits for web time is disabled. Create limits to websites to see them here.'"
     )
     .limits-page--content(v-else)
       list-items(
@@ -55,6 +66,7 @@
       )
 new-limits-modal(
   v-if="isOpen(EnumModalKeys.Edit)",
+  :limits-data="limitsData",
   :initial-data="editData",
   :edit-index="currentKey",
   @onClosed="closeEditModal"
@@ -76,28 +88,49 @@ import NewLimitsModal from "@/modals/NewLimitsModal.vue";
 import SwitcherComponent from "@/components/common/SwitcherComponent.vue";
 import ListItems from "@/components/common/ListItems.vue";
 
-import {
-  limitsData,
-  getLimits,
-  isLengthList,
-  editLimits,
-  saveGlobalLimit,
-} from "@/composables/limitsComp";
 import { closeModal, isOpen, openModal } from "@/composables/modalActions";
 
 import { EnumModalKeys } from "@/constants/EnumModalKeys";
 import EmptyTemplate from "@/components/common/EmptyTemplate.vue";
 import TimeModalLimits from "@/modals/TimeModalLimits.vue";
 import { convertTimeHMS } from "@/composables/common/dateComposable";
+import { defaultLimits } from "@/composables/limitsComp";
+import { LimitsInterfaces, LimitSiteInterface } from "@/types/LimitsInterfaces";
 
-const editData = ref({});
-const currentKey = ref("");
-const isOpenTimeLimit = ref(false);
+onMounted(() => {
+  chrome.storage.local.get(["limits"], (result) => {
+    if (result && result.limits) {
+      limitsData.value = result.limits;
+    } else {
+      setLimits();
+    }
+  });
+});
+
+const editData = ref({} as LimitSiteInterface | object);
+const currentKey = ref("" as any);
+const isOpenTimeLimit = ref(false as boolean);
+
+const limitsData = ref({
+  ...defaultLimits,
+} as LimitsInterfaces);
+
+const isLengthList = computed(() => {
+  return (
+    limitsData.value &&
+    limitsData.value.list &&
+    Object.keys(limitsData.value.list).length
+  );
+});
 
 const closeEditModal = () => {
-  getLimits();
-  resetEdit();
-  closeModal(EnumModalKeys.Edit);
+  chrome.storage.local.get(["limits"], (result) => {
+    if (result && result.limits) {
+      limitsData.value = result.limits;
+      resetEdit();
+      closeModal(EnumModalKeys.Edit);
+    }
+  });
 };
 
 const resetEdit = () => {
@@ -116,7 +149,11 @@ const convertTimeToHM = computed(() => {
 });
 
 const editItem = (key: string) => {
-  editData.value = { ...limitsData.value.list[key] };
+  const limitsList: LimitSiteInterface[] = { ...limitsData.value.list };
+  editData.value =
+    Object.values(limitsList).find(
+      (item: LimitSiteInterface) => item.domain === key
+    ) || {};
   currentKey.value = key;
   openModal(EnumModalKeys.Edit);
 };
@@ -125,13 +162,18 @@ const deleteItem = (key: string) => {
   openModal(EnumModalKeys.Delete);
 };
 
+const setLimits = () => {
+  chrome.storage.local.set({ limits: limitsData.value });
+};
+
 const deleteAction = () => {
   chrome.storage.local.get("limits").then((res) => {
-    const data = { ...res.limits };
-    delete data.list[currentKey.value];
-    chrome.storage.local.set({ limits: data }).then(() => {
-      getLimits();
-    });
+    const { limits } = res;
+    if (limits) {
+      limitsData.value = limits;
+    }
+    delete limitsData.value.list[currentKey.value];
+    setLimits();
   });
 };
 
@@ -171,12 +213,25 @@ const disableBrowser = () => {
     isOpenSchedule.value = false;
     isOpenTimeLimit.value = false;
   }
-  editLimits("browserLimit", !limitsData.value.browserLimit);
+  limitsData.value.browserLimit = !limitsData.value.browserLimit;
+  setLimits();
 };
 
-onMounted(() => {
-  getLimits();
-});
+const disableLimitsList = () => {
+  limitsData.value.sitesLimit = !limitsData.value.sitesLimit;
+  setLimits();
+};
+
+const saveGlobalLimit = (time: number) => {
+  chrome.storage.local.get("limits").then((res) => {
+    const { limits } = res;
+    if (limits) {
+      limitsData.value = limits;
+    }
+    limitsData.value.browserTime.timeLimit = time;
+    setLimits();
+  });
+};
 </script>
 
 <style scoped lang="scss">
@@ -187,6 +242,21 @@ onMounted(() => {
     margin-top: 24px;
     &.mb {
       margin-bottom: 23px;
+      .limits--block-left {
+        display: flex;
+        align-items: center;
+        .content--button.raised.icon.icon--plus {
+          align-items: center;
+          width: 32px;
+          padding: 0;
+          margin-left: 7px;
+          outline: none;
+          border-radius: 50%;
+          &::before {
+            margin: 0;
+          }
+        }
+      }
     }
     &--title {
       font-style: normal;

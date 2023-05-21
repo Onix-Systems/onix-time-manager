@@ -30,7 +30,7 @@
     )
     .limits-page--content(v-else)
       list-items(
-        :items="isBlackList ? blackList : whiteList as any",
+        :items="isBlackList ? blackList : whiteList",
         :delete-mode="true",
         :edit-mode="true",
         @onEdit="openItemAction($event, true)",

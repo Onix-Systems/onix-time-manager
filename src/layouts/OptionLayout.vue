@@ -7,7 +7,9 @@ section.option-page(
     .option-page--content
       template(v-if="MenuItemsEnum.Tracking === activeTabIndex")
         tracking-page
-      template(v-if="MenuItemsEnum.Permissions === activeTabIndex")
+      template(
+        v-if="MenuItemsEnum.Permissions === activeTabIndex && settingsData.permission"
+      )
         permission-page
       template(v-if="MenuItemsEnum.Limits === activeTabIndex")
         limits-page

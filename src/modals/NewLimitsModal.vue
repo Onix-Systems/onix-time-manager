@@ -56,9 +56,15 @@ import {
   validUrlRegex,
 } from "@/composables/common/dateComposable";
 import { isValidUrl } from "@/composables/common/common";
+import { LimitsInterfaces } from "@/types/LimitsInterfaces";
+import { defaultLimits } from "@/composables/limitsComp";
 
 const emit = defineEmits(["onClosed"]);
 const props = defineProps({
+  limitsData: {
+    type: Object as () => LimitsInterfaces,
+    default: defaultLimits,
+  },
   initialData: {
     default: {},
   },
@@ -92,68 +98,61 @@ const urlGroup = ref({
 const submit = () => {
   errors.value.domain = isValidUrl(urlGroup.value.domain);
   const copyGroup = { ...urlGroup.value };
-  if (
-    urlGroup.value.hours ||
-    urlGroup.value.minutes ||
-    urlGroup.value.seconds
-  ) {
-    errors.value.errorTime = true;
-    if (errors.value.domain) {
-      chrome.storage.local.get("limits").then((res) => {
-        if (
-          initialData.value.hours !== urlGroup.value.hours &&
-          initialData.value.minutes !== urlGroup.value.minutes &&
-          initialData.value.seconds !== urlGroup.value.seconds
-        ) {
-          errors.value.errorTime = true;
-          if (res.limits.list && Object.keys(res.limits.list).length) {
-            errors.value.domainSame = !Object.values(res.limits.list).find(
-              (item: any) => {
-                return (
-                  item.domain ===
-                  `https://${new URL(urlGroup.value.domain).hostname}/`
-                );
-              }
+  errors.value.errorTime =
+    !!urlGroup.value.hours ||
+    !!urlGroup.value.minutes ||
+    !!urlGroup.value.seconds;
+  if (errors.value.domain) {
+    chrome.storage.local.get("limits").then((res) => {
+      if (
+        res.limits.list &&
+        Object.keys(res.limits.list).length &&
+        !isEdit.value
+      ) {
+        errors.value.domainSame = !Object.values(res.limits.list).find(
+          (item: any) => {
+            return (
+              item.domain ===
+              `https://${new URL(urlGroup.value.domain).hostname}/`
             );
           }
+        );
+      }
+      if (errors.value.domainSame && errors.value.errorTime) {
+        let data = props.limitsData;
+        if (res && res.limits) {
+          data = res.limits;
+        }
+        copyGroup.domain = `https://${
+          new URL(urlGroup.value.domain).hostname
+        }/`;
+        const hour = Number(copyGroup.hours);
+        const minute = Number(copyGroup.minutes);
+        const second = Number(copyGroup.seconds);
+        const timeItem = { hour, minute, second };
+        const item = {
+          domain: copyGroup.domain,
+          siteLimit: {
+            date: parseDate(new Date().getTime()),
+            timeLimit: convertToSeconds(timeItem),
+            timeSpent: 0,
+          },
+        };
+        if (!isEdit.value) {
+          data.list[copyGroup.domain as any] = item;
+          chrome.storage.local.set({ limits: data }).then(() => {
+            close();
+          });
         } else {
-          errors.value.errorTime = false;
+          delete data.list[props.editIndex as any];
+          data.list[copyGroup.domain as any] = item;
+          chrome.storage.local.set({ limits: data }).then(() => {
+            close();
+          });
         }
-        if (errors.value.domainSame) {
-          let data = res.limits;
-          copyGroup.domain = `https://${
-            new URL(urlGroup.value.domain).hostname
-          }/`;
-          const hour = Number(copyGroup.hours);
-          const minute = Number(copyGroup.minutes);
-          const second = Number(copyGroup.seconds);
-          const timeItem = { hour, minute, second };
-          const item = {
-            domain: copyGroup.domain,
-            siteLimit: {
-              date: parseDate(new Date().getTime()),
-              timeLimit: convertToSeconds(timeItem),
-              timeSpent: 0,
-            },
-          };
-          if (!isEdit.value) {
-            Object.assign(data.list, {
-              [copyGroup.domain]: item,
-            });
-            chrome.storage.local.set({ limits: data }).then(() => {
-              close();
-            });
-          } else {
-            data.list[props.editIndex] = item;
-            chrome.storage.local.set({ limits: data }).then(() => {
-              close();
-            });
-          }
-        }
-      });
-    }
-  } else {
-    errors.value.errorTime = false;
+        errors.value.errorTime = false;
+      }
+    });
   }
 };
 
@@ -166,7 +165,7 @@ onMounted(() => {
     initial = {
       domain: "",
       siteLimit: {
-        date: 0,
+        date: "",
         timeLimit: 0,
         timeSpent: 0,
       },

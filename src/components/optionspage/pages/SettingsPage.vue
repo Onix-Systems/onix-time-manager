@@ -21,8 +21,8 @@
           span.subtitle Turn on or turn off the lists of web sites with permission to access
       .option
         switcher-component(
-          :isChecked="permissionData.permission !== 'off'",
-          @update:isChecked="togglePermission()"
+          :isChecked="settingsData.permission",
+          @update:isChecked="updateSettings('permission', !settingsData.permission)"
         )
     .settings-page--section
       .item

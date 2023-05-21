@@ -54,9 +54,9 @@ export const initialTracker = (isShowCurrentSession: boolean) => {
           const site =
             historyStorage.value[currentSessionData.value.currentUrl];
           if (site && site.sessions[currentSessionData.value.currentTab]) {
-            site.sessions[
-              currentSessionData.value.currentTab
-            ][0].activity.forEach((item: any, key: number) => {
+            const activity =
+              site.sessions[currentSessionData.value.currentTab][0].activity;
+            activity.forEach((item: any, key: number) => {
               if (!key && isEdit) {
                 item.end = new Date().getTime();
               } else if (!key && !isEdit) {
@@ -65,13 +65,27 @@ export const initialTracker = (isShowCurrentSession: boolean) => {
               if (item.end) {
                 timeSpent += (item.end - item.begin) / 1000;
               }
+              if (
+                activity.length === key + 1 &&
+                isLoader(EnumLoaderKeys.trackingList)
+              ) {
+                finishLoader(EnumLoaderKeys.trackingList);
+              }
             });
-          }
-          currentSessionData.value.time = timeSpent;
-          if (isLoader(EnumLoaderKeys.trackingList)) {
+            if (
+              activity &&
+              !activity.length &&
+              isLoader(EnumLoaderKeys.trackingList)
+            ) {
+              finishLoader(EnumLoaderKeys.trackingList);
+            }
+          } else if (isLoader(EnumLoaderKeys.trackingList)) {
             finishLoader(EnumLoaderKeys.trackingList);
           }
+          currentSessionData.value.time = timeSpent;
         }, 1000);
+      } else {
+        finishLoader(EnumLoaderKeys.trackingList);
       }
     });
     chrome.runtime.onMessage.addListener(handleRuntimeMessage);
@@ -109,10 +123,7 @@ export const isTotal = computed(() => {
 });
 
 export const filteringData: ObjectInterface = computed(() => {
-  if (
-    Object.keys(historyStorage.value).length &&
-    currentSessionData.value.time
-  ) {
+  if (Object.keys(historyStorage.value).length) {
     const data: SiteInterface | ObjectInterface = Object.keys({
       ...historyStorage.value,
     }).reduce(accumulateSites, {});

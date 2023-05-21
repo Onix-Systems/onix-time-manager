@@ -21,7 +21,7 @@
 
 <script setup lang="ts">
 import { timeForTotal, totalData } from "@/composables/common/chartBar";
-import { openOptions } from "@/composables/popup/common/popupActions";
+import { openOptions } from "@/composables/popup/popupActions";
 import {
   formatDuration,
   isTotal,
