@@ -93,6 +93,7 @@ const deleteAction = () => {
     const array = res.redirect;
     array.splice(currentIndex.value, 1);
     chrome.storage.local.set({ redirect: [...array] }).then(() => {
+      editData.value = {};
       loadData();
     });
   });

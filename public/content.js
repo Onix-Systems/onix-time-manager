@@ -53,7 +53,7 @@ chrome.runtime.onMessage.addListener((request, sender) => {
             parent.style.position = "relative";
             document.body.insertAdjacentElement("afterbegin", parent);
             parent.innerHTML = `
-            ${popupStyles}
+            ${popupStyles()}
             <div class="limit-warning">
               <input class="limit-warning--checkbox" type="checkbox" name="checkbox-checked" checked />
               <div class="limit-warning--section">

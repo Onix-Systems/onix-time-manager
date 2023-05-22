@@ -2,7 +2,7 @@ import { validUrlRegex } from "@/composables/common/dateComposable";
 
 export const isValidUrl = (urlString: string) => {
   try {
-    return Boolean(validUrlRegex.test(urlString));
+    return Boolean(validUrlRegex.test(checkForSecure(urlString)));
   } catch (e) {
     return false;
   }

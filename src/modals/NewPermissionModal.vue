@@ -35,7 +35,7 @@ import {
   whiteList,
 } from "@/composables/permissionComp";
 import { validUrlRegex } from "@/composables/common/dateComposable";
-import { isValidUrl } from "@/composables/common/common";
+import { checkForSecure, isValidUrl } from "@/composables/common/common";
 
 const props = defineProps({
   editIndex: {
@@ -67,7 +67,7 @@ const isUniqueUrl = (urlString: string) => {
   try {
     const list = isBlackList.value ? blackList.value : whiteList.value;
     return Object.keys(list).every(
-      (item) => item !== new URL(urlString).hostname
+      (item) => item !== new URL(checkForSecure(urlString)).hostname
     );
   } catch (e) {
     return false;
@@ -85,12 +85,13 @@ const save = () => {
     if (isEdit.value) {
       delete permissionData.value.list[listKey][props.editIndex];
     }
+    sitePermissionData.value = checkForSecure(sitePermissionData.value);
     permissionData.value.list[listKey] = Object.assign(
       permissionData.value.list[listKey],
       {
         [new URL(sitePermissionData.value).hostname]: `https://${
           new URL(sitePermissionData.value).hostname
-        }/`,
+        }`,
       }
     );
     setPermission();
