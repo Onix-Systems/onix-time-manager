@@ -55,7 +55,7 @@ import {
   parseDate,
   validUrlRegex,
 } from "@/composables/common/dateComposable";
-import { isValidUrl } from "@/composables/common/common";
+import { checkForSecure, isValidUrl } from "@/composables/common/common";
 import { LimitsInterfaces } from "@/types/LimitsInterfaces";
 import { defaultLimits } from "@/composables/limitsComp";
 
@@ -113,19 +113,20 @@ const submit = () => {
           (item: any) => {
             return (
               item.domain ===
-              `https://${new URL(urlGroup.value.domain).hostname}/`
+              `https://${
+                new URL(checkForSecure(urlGroup.value.domain)).hostname
+              }`
             );
           }
         );
       }
       if (errors.value.domainSame && errors.value.errorTime) {
+        urlGroup.value.domain = checkForSecure(urlGroup.value.domain);
         let data = props.limitsData;
         if (res && res.limits) {
           data = res.limits;
         }
-        copyGroup.domain = `https://${
-          new URL(urlGroup.value.domain).hostname
-        }/`;
+        copyGroup.domain = `https://${new URL(urlGroup.value.domain).hostname}`;
         const hour = Number(copyGroup.hours);
         const minute = Number(copyGroup.minutes);
         const second = Number(copyGroup.seconds);

@@ -92,6 +92,7 @@ const deleteAction = () => {
     permissionData.value.type as "whitelist" | "blacklist"
   ][editIndex.value];
   setPermission();
+  editIndex.value = "";
 };
 
 const closePermissionModal = () => {

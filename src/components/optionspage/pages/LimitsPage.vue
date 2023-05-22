@@ -174,6 +174,7 @@ const deleteAction = () => {
     }
     delete limitsData.value.list[currentKey.value];
     setLimits();
+    editData.value = {};
   });
 };
 

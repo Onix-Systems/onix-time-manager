@@ -5,7 +5,7 @@ let currentUrl = "";
 
 let intervalId = 0;
 let siteIsBlocked = false;
-let settings = [];
+let settings = "";
 let showNotification = false;
 let currentInformation = {};
 let isTabCreated = false;
@@ -25,6 +25,9 @@ chrome.runtime.onInstalled.addListener(() => {
   });
   chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     if (changeInfo.status === "complete" && validUrlRegex.test(tab.url)) {
+      if (validUrlRegex.test(tab.url) && !currentUrl) {
+        showNotification = true;
+      }
       clearInterval(intervalId);
       siteIsBlocked = false;
       tabIdCopy = tabId;
@@ -35,6 +38,11 @@ chrome.runtime.onInstalled.addListener(() => {
   });
   chrome.tabs.onCreated.addListener((tab) => {
     clearInterval(intervalId);
+    if (validUrlRegex.test(tab.url)) {
+      showNotification = true;
+    } else {
+      currentUrl = "";
+    }
     isTabCreated = true;
     tabIdCopy = tab.id;
     detectRules();
@@ -80,7 +88,6 @@ const updatePageTime = (tabId, isUpdated) => {
       settings = result.settings;
 
       if (validUrlRegex.test(tab.url)) {
-        showNotification = true;
         const { url } = tab;
         currentUrl = new URL(url).hostname;
         //check Permission
@@ -170,6 +177,7 @@ const updatePageTime = (tabId, isUpdated) => {
                   browserBlockAfter =
                     limits.browserTime.timeLimit - limits.browserTime.timeSpent;
                   if (
+                    settings.getNotification &&
                     showNotification &&
                     browserBlockAfter > 0 &&
                     browserBlockAfter <= 360
@@ -196,7 +204,7 @@ const updatePageTime = (tabId, isUpdated) => {
                 let limit = undefined;
 
                 if (limits.sitesLimit) {
-                  const limitUrl = `https://${currentUrl}/`;
+                  const limitUrl = `https://${currentUrl}`;
                   limit =
                     limits &&
                     limits.list &&
@@ -207,6 +215,7 @@ const updatePageTime = (tabId, isUpdated) => {
                     siteBlockAfter =
                       limit.siteLimit.timeLimit - limit.siteLimit.timeSpent;
                     if (
+                      settings.getNotification &&
                       showNotification &&
                       siteBlockAfter > 0 &&
                       siteBlockAfter <= 360
@@ -300,9 +309,11 @@ const checkForRedirection = (tab) => {
             url: site.redirect,
           },
           () => {
-            createNotification(
-              `You have been redirected from ${site.initial} due to settings, please check on dashboard.`
-            );
+            if (settings && settings.getNotification) {
+              createNotification(
+                `You have been redirected from ${site.initial} due to settings, please check on dashboard.`
+              );
+            }
           }
         );
       }
