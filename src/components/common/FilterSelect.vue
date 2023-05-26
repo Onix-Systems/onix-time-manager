@@ -9,19 +9,12 @@
 
 <script setup lang="ts">
 import { PopupTrackerNavItemsEnum } from "@/constants/popup/popupNavItemsEnum";
-import { watch } from "vue";
+
 import {
-  getHistory,
   selectedNavItem,
   selectNavItem,
 } from "@/composables/common/trackerPageActions";
 const items = Object.values(PopupTrackerNavItemsEnum);
-watch(
-  () => selectedNavItem.value,
-  () => {
-    getHistory();
-  }
-);
 </script>
 
 <style scoped lang="scss">

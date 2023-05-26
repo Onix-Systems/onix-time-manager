@@ -177,34 +177,44 @@ export const timeAmTo24 = (item: string) => {
   }
   return hour;
 };
-export const concatPrefix = (item: number) => {
-  return item.toString().padStart(2, "0");
+export const concatPrefix = (item: string | number) => {
+  if (typeof item === "number") {
+    item = item.toString();
+  }
+  return item.padStart(2, "0");
 };
 
 export const format = (
   mask: string,
   timeInSeconds: number,
-  timeDifference = false
+  timeDifference = false,
+  usePrefix = true
 ) => {
   const date = new Date(timeInSeconds);
   const maskKeys = ["DD", "MM", "YYYY", "HH", "H", "mm", "ss"];
   maskKeys.forEach((separator) => {
     if (mask.includes(separator)) {
-      let joinContent = "";
+      let joinContent: number | string = 0;
       switch (separator) {
         case "YYYY": {
           joinContent = `${date.getFullYear()}`;
           break;
         }
         case "MM": {
-          joinContent = concatPrefix(date.getMonth() + 1);
+          joinContent = date.getMonth() + 1;
+          if (usePrefix) {
+            joinContent = concatPrefix(joinContent);
+          }
           break;
         }
         case "DD": {
           if (timeDifference) {
-            joinContent = Math.floor(timeInSeconds / 86400).toString();
+            joinContent = Math.floor(timeInSeconds / 86400);
           } else {
-            joinContent = concatPrefix(date.getDate());
+            joinContent = date.getDate();
+          }
+          if (usePrefix) {
+            joinContent = concatPrefix(joinContent);
           }
           break;
         }
@@ -214,9 +224,12 @@ export const format = (
               timeInSeconds > 86400
                 ? Math.floor((timeInSeconds - 86400) / 3600)
                 : Math.floor(timeInSeconds / 3600);
-            joinContent = concatPrefix(calculation);
+            joinContent = calculation;
           } else {
-            joinContent = concatPrefix(date.getHours());
+            joinContent = date.getHours();
+          }
+          if (usePrefix) {
+            joinContent = concatPrefix(joinContent);
           }
           break;
         }
@@ -226,9 +239,9 @@ export const format = (
               timeInSeconds > 86400
                 ? Math.floor((timeInSeconds - 86400) / 3600)
                 : Math.floor(timeInSeconds / 3600);
-            joinContent = calculation.toString();
+            joinContent = calculation;
           } else {
-            joinContent = date.getHours().toString();
+            joinContent = date.getHours();
           }
           break;
         }
@@ -238,9 +251,12 @@ export const format = (
               timeInSeconds > 3600
                 ? Math.floor((timeInSeconds - 3600) / 60)
                 : Math.floor(timeInSeconds / 60);
-            joinContent = concatPrefix(calculation);
+            joinContent = calculation;
           } else {
-            joinContent = concatPrefix(date.getMinutes());
+            joinContent = date.getMinutes();
+          }
+          if (usePrefix) {
+            joinContent = concatPrefix(joinContent);
           }
           break;
         }
@@ -249,11 +265,14 @@ export const format = (
             timeInSeconds > 60
               ? timeInSeconds - Math.floor(timeInSeconds / 60) * 60
               : timeInSeconds;
-          joinContent = concatPrefix(calculation);
+          joinContent = calculation;
+          if (usePrefix) {
+            joinContent = concatPrefix(joinContent);
+          }
           break;
         }
       }
-      mask = mask.split(separator).join(joinContent);
+      mask = mask.split(separator).join(joinContent.toString());
     }
   });
   return mask;

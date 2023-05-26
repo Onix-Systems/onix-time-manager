@@ -9,6 +9,9 @@ function formatTime(time) {
   }s`;
 }
 
+chrome.storage.local.get(["settings"], (result) => {
+  console.log(result);
+});
 chrome.runtime.onMessage.addListener((request, sender) => {
   const redirect = "redirect";
   const blockPage = "blockPage";

@@ -14,6 +14,7 @@ import {
   getSevenDays,
   resetCurrentDay,
   sevenDays,
+  sortByDate,
   validUrlRegex,
 } from "@/composables/common/dateComposable";
 import {
@@ -27,7 +28,11 @@ import {
   startLoader,
 } from "@/composables/common/loaderActions";
 import { EnumLoaderKeys } from "@/constants/EnumLoaderKeys";
-import { ActivityInterface } from "@/types/TrackingInterface";
+import {
+  ActivityInterface,
+  HistoryListInterface,
+  SessionInterface,
+} from "@/types/TrackingInterface";
 
 //data
 let intervalId = 0;
@@ -122,7 +127,53 @@ export const isTotal = computed(() => {
   return selectedNavItem.value === PopupTrackerNavItemsEnum.total;
 });
 
+export const createStructure = (pages: {
+  [key: string]: {
+    icon: string;
+    sessions: {
+      [key: string]: SessionInterface[];
+    };
+  };
+}): HistoryListInterface[] => {
+  return Object.keys(pages).map((domain) => {
+    const {
+      icon,
+      sessions,
+    }: {
+      icon: string;
+      sessions: {
+        [key: string]: SessionInterface[];
+      };
+    } = pages[domain];
+    const sessionsValues = Object.values(sessions);
+    const sessionsKeys = Object.keys(sessions);
+    return {
+      domain,
+      icon,
+      sessions: sessionsValues
+        .reduce(
+          (a: SessionInterface[], b: SessionInterface[], index: number) => {
+            return a.concat(
+              b.map((m) => {
+                return {
+                  ...m,
+                  tab_id: sessionsKeys[index],
+                };
+              })
+            );
+          },
+          []
+        )
+        .sort((a: SessionInterface, b: SessionInterface) => {
+          return sortByDate(a.activity[0].begin, b.activity[0].begin);
+        }),
+    };
+  });
+};
+
 export const filteringData: ObjectInterface = computed(() => {
+  console.log("filteringData", historyStorage.value);
+
   if (Object.keys(historyStorage.value).length) {
     const data: SiteInterface | ObjectInterface = Object.keys({
       ...historyStorage.value,
@@ -431,7 +482,14 @@ export const formatDuration = (seconds: number, allTime = false) => {
 
   return "";
 };
-
+export const totalTimeCalculation = (session: SessionInterface[]) => {
+  return session.reduce(
+    (sessionPrev: number, sessionCurrent: SessionInterface) => {
+      return sessionPrev + timeSpentCalculation(sessionCurrent.activity);
+    },
+    0
+  );
+};
 export const timeSpentCalculation = (activity: ActivityInterface[]) => {
   return activity.reduce(
     (activityPrev: number, activityCurrent: ActivityInterface) => {

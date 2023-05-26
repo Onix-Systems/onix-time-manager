@@ -100,23 +100,24 @@ import EmptyTemplate from "@/components/common/EmptyTemplate.vue";
 import DeleteModal from "@/modals/common/DeleteModal.vue";
 
 import { format, sortByDate } from "@/composables/common/dateComposable";
-import { timeSpentCalculation } from "@/composables/common/trackerPageActions";
+import {
+  createStructure,
+  timeSpentCalculation,
+  totalTimeCalculation,
+} from "@/composables/common/trackerPageActions";
 import { closeModal, isOpen, openModal } from "@/composables/modalActions";
 
 import { EnumModalKeys } from "@/constants/EnumModalKeys";
 import { MenuItemsEnum } from "@/constants/menuItemsEnum";
 
-import { SessionInterface } from "@/types/TrackingInterface";
+import {
+  HistoryListInterface,
+  SessionInterface,
+} from "@/types/TrackingInterface";
 enum SortEnum {
   date = "date",
   time = "total time",
   session = "session",
-}
-
-interface HistoryListInterface {
-  domain: string;
-  icon: string;
-  sessions: SessionInterface[];
 }
 
 interface DomainItemInterface {
@@ -137,26 +138,24 @@ const sortBy = (option: SortEnum, props?: { toggleVisibility(): void }) => {
   if (props) {
     props.toggleVisibility();
   }
-  historyList.value = historyList.value.sort(
-    (a: HistoryListInterface, b: HistoryListInterface) => {
-      switch (true) {
-        case option === SortEnum.time: {
-          return (
-            totalTimeCalculation(b.sessions) - totalTimeCalculation(a.sessions)
-          );
-        }
-        case option === SortEnum.session: {
-          return b.sessions.length - a.sessions.length;
-        }
-        default: {
-          return sortByDate(
-            a.sessions[0].activity[0].begin,
-            b.sessions[0].activity[0].begin
-          );
-        }
+  historyList.value.sort((a: HistoryListInterface, b: HistoryListInterface) => {
+    switch (true) {
+      case option === SortEnum.time: {
+        return (
+          totalTimeCalculation(b.sessions) - totalTimeCalculation(a.sessions)
+        );
+      }
+      case option === SortEnum.session: {
+        return b.sessions.length - a.sessions.length;
+      }
+      default: {
+        return sortByDate(
+          a.sessions[0].activity[0].begin,
+          b.sessions[0].activity[0].begin
+        );
       }
     }
-  );
+  });
   sortOption.value = option;
 };
 
@@ -203,7 +202,7 @@ const deleteItem = () => {
       chrome.storage.local.get({ pages: {} }, (result) => {
         if (result.pages) {
           chrome.storage.local.set({ pages: originPages });
-          createStructure(originPages);
+          historyList.value = createStructure(originPages);
           sortBy(SortEnum.date);
           selectedItems.value = [];
           activeRow.value = -1;
@@ -218,43 +217,9 @@ const deleteItem = () => {
 const getHistory = () => {
   chrome.storage.local.get({ pages: {} }, (result: any) => {
     if (Object.keys(result.pages).length) {
-      createStructure(result.pages);
+      historyList.value = createStructure(result.pages);
       sortBy(SortEnum.date);
     }
-  });
-};
-
-const createStructure = (pages: {
-  [key: string]: {
-    icon: string;
-    sessions: {
-      [key: string]: SessionInterface[];
-    };
-  };
-}) => {
-  const keys = Object.keys(pages);
-  historyList.value = keys.map((domain) => {
-    const {
-      icon,
-      sessions,
-    }: {
-      icon: string;
-      sessions: {
-        [key: string]: SessionInterface[];
-      };
-    } = pages[domain];
-    const sessionsKeys = Object.values(sessions);
-    return {
-      domain,
-      icon,
-      sessions: sessionsKeys
-        .reduce((a: SessionInterface[], b: SessionInterface[]) => {
-          return a.concat(b);
-        }, [])
-        .sort((a: SessionInterface, b: SessionInterface) => {
-          return sortByDate(a.activity[0].begin, b.activity[0].begin);
-        }),
-    };
   });
 };
 const isChildSelected = (sessions: SessionInterface[]) => {
@@ -302,15 +267,6 @@ const timeSpent = (session: SessionInterface[]) => {
   const difference = totalTimeCalculation(session);
   const mask = difference > 86400 ? "DDd Hh mmm sss" : "Hh mmm sss";
   return format(mask, difference, true);
-};
-
-const totalTimeCalculation = (session: SessionInterface[]) => {
-  return session.reduce(
-    (sessionPrev: number, sessionCurrent: SessionInterface) => {
-      return sessionPrev + timeSpentCalculation(sessionCurrent.activity);
-    },
-    0
-  );
 };
 
 onMounted(() => {
