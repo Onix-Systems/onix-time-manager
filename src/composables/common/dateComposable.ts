@@ -237,7 +237,7 @@ export const format = (
           if (timeDifference) {
             const calculation =
               timeInSeconds > 86400
-                ? Math.floor((timeInSeconds - 86400) / 3600)
+                ? Math.floor((timeInSeconds % 86400) / 3600)
                 : Math.floor(timeInSeconds / 3600);
             joinContent = calculation;
           } else {
@@ -249,7 +249,7 @@ export const format = (
           if (timeDifference) {
             const calculation =
               timeInSeconds > 3600
-                ? Math.floor((timeInSeconds - 3600) / 60)
+                ? Math.floor((timeInSeconds % 3600) / 60)
                 : Math.floor(timeInSeconds / 60);
             joinContent = calculation;
           } else {

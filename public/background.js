@@ -90,6 +90,12 @@ const updatePageTime = (tabId, isUpdated) => {
       if (validUrlRegex.test(tab.url)) {
         const { url } = tab;
         currentUrl = new URL(url).hostname;
+        chrome.storage.local.set({
+          tabInfo: {
+            hostName: new URL(url).hostname,
+            tabId: tab.id,
+          },
+        });
         //check Permission
         if (settings && settings.permission) {
           chrome.storage.local.get("permission").then((res) => {

@@ -1,5 +1,32 @@
 const baseUrl = window.location.href.split("/").slice(0, 3).join("/");
+let timeout;
+document.addEventListener("mouseover", () => {
+  clearTimeout(timeout);
 
+  timeout = setTimeout(() => {
+    chrome.storage.local.get(["tabInfo"], ({ tabInfo }) => {
+      if (window.location.hostname === tabInfo.hostName) {
+        chrome.storage.local.get({ pages: {} }, (result) => {
+          let { pages } = result;
+
+          if (pages[tabInfo.hostName]) {
+            const sessions = pages[tabInfo.hostName].sessions;
+            if (
+              sessions[tabInfo.tabId] &&
+              sessions[tabInfo.tabId][0].activity.length
+            ) {
+              console.log("stop tracking", tabInfo.tabId, tabInfo.hostName);
+              pages[tabInfo.hostName].sessions[
+                tabInfo.tabId
+              ][0].activity[0].end = new Date().getTime();
+              chrome.storage.local.set({ pages });
+            }
+          }
+        });
+      }
+    });
+  }, 120 * 1000);
+});
 function formatTime(time) {
   const hours = Math.floor(time / 3600);
   const minutes = Math.floor((time - hours * 3600) / 60);
@@ -8,10 +35,6 @@ function formatTime(time) {
     seconds < 10 ? "0" + seconds : seconds
   }s`;
 }
-
-chrome.storage.local.get(["settings"], (result) => {
-  console.log(result);
-});
 chrome.runtime.onMessage.addListener((request, sender) => {
   const redirect = "redirect";
   const blockPage = "blockPage";

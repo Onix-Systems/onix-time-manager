@@ -115,6 +115,9 @@ const sessionMask = (count: number) => {
   return mask.join(" ");
 };
 const filterByPeriod = (data: HistoryListInterface[]) => {
+  chrome.storage.local.get(["tabInfo"], ({ tabInfo }) => {
+    console.log(tabInfo, data);
+  });
   if (selectedNavItem.value === PopupTrackerNavItemsEnum.total) {
     return data;
   } else {
