@@ -83,50 +83,49 @@ export const changeDate = (direction: number) => {
 };
 
 export const getTimeTotal = (number: number, timeInSeconds: number) => {
-  if (!timeInSeconds) {
-    return "";
-  }
-  let result = "";
-  const days = Math.floor(timeForTotal.value / SECONDS_PER_DAY);
-  const hours = Math.floor(
-    (timeForTotal.value - days * SECONDS_PER_DAY) / SECONDS_PER_HOUR
-  );
-  const minutes = Math.floor(
-    (timeForTotal.value - days * SECONDS_PER_DAY - hours * SECONDS_PER_HOUR) /
-      SECONDS_PER_MINUTE
-  );
+  if (timeInSeconds) {
+    let result = "";
+    const days = Math.floor(timeForTotal.value / SECONDS_PER_DAY);
+    const hours = Math.floor(
+      (timeForTotal.value - days * SECONDS_PER_DAY) / SECONDS_PER_HOUR
+    );
+    const minutes = Math.floor(
+      (timeForTotal.value - days * SECONDS_PER_DAY - hours * SECONDS_PER_HOUR) /
+        SECONDS_PER_MINUTE
+    );
 
-  switch (number) {
-    case 1: {
-      result = days ? `${days} <span>day${days !== 1 ? "s" : ""}</span>` : "";
-      break;
+    switch (number) {
+      case 1: {
+        result = days ? `${days} <span>day${days !== 1 ? "s" : ""}</span>` : "";
+        break;
+      }
+      case 2: {
+        result = hours
+          ? `${hours} <span>hour${hours !== 1 ? "s" : ""}</span>`
+          : "";
+        break;
+      }
+      case 3: {
+        result = `${minutes} <span>minute${minutes !== 1 ? "s" : ""}</span>`;
+        break;
+      }
+      default:
+        break;
     }
-    case 2: {
-      result = hours
-        ? `${hours} <span>hour${hours !== 1 ? "s" : ""}</span>`
-        : "";
-      break;
-    }
-    case 3: {
-      result = `${minutes} <span>minute${minutes !== 1 ? "s" : ""}</span>`;
-      break;
-    }
-    default:
-      break;
+    return result;
   }
-
-  return result;
+  return "0 seconds";
 };
 
-enum DiffMeasurements {
+export enum DiffMeasurements {
   seconds = "seconds",
   minutes = "minutes",
   hours = "hours",
   days = "days",
 }
 export const dateDiff = (
-  a: number,
-  b: number,
+  a: number | Date,
+  b: number | Date,
   measurements: DiffMeasurements = DiffMeasurements.seconds
 ) => {
   const begin = new Date(a);
@@ -191,7 +190,19 @@ export const format = (
   usePrefix = true
 ) => {
   const date = new Date(timeInSeconds);
-  const maskKeys = ["DD", "MM", "YYYY", "HH", "H", "mm", "ss"];
+  const maskKeys = [
+    "days",
+    "DD",
+    "MM",
+    "YYYY",
+    "hours",
+    "HH",
+    "H",
+    "minutes",
+    "mm",
+    "seconds",
+    "ss",
+  ];
   maskKeys.forEach((separator) => {
     if (mask.includes(separator)) {
       let joinContent: number | string = 0;
@@ -207,6 +218,7 @@ export const format = (
           }
           break;
         }
+        case "days":
         case "DD": {
           if (timeDifference) {
             joinContent = Math.floor(timeInSeconds / 86400);
@@ -218,12 +230,15 @@ export const format = (
           }
           break;
         }
+        case "H":
+        case "hours":
         case "HH": {
           if (timeDifference) {
-            const calculation =
-              timeInSeconds > 86400
-                ? Math.floor((timeInSeconds - 86400) / 3600)
-                : Math.floor(timeInSeconds / 3600);
+            let seconds = timeInSeconds;
+            if (timeInSeconds > 86400) {
+              seconds -= 86400 * Math.floor(timeInSeconds / 86400);
+            }
+            const calculation = Math.floor(seconds / 3600);
             joinContent = calculation;
           } else {
             joinContent = date.getHours();
@@ -233,24 +248,14 @@ export const format = (
           }
           break;
         }
-        case "H": {
-          if (timeDifference) {
-            const calculation =
-              timeInSeconds > 86400
-                ? Math.floor((timeInSeconds % 86400) / 3600)
-                : Math.floor(timeInSeconds / 3600);
-            joinContent = calculation;
-          } else {
-            joinContent = date.getHours();
-          }
-          break;
-        }
+        case "minutes":
         case "mm": {
           if (timeDifference) {
-            const calculation =
-              timeInSeconds > 3600
-                ? Math.floor((timeInSeconds % 3600) / 60)
-                : Math.floor(timeInSeconds / 60);
+            let seconds = timeInSeconds;
+            if (timeInSeconds > 3600) {
+              seconds -= 3600 * Math.floor(timeInSeconds / 3600);
+            }
+            const calculation = Math.floor(seconds / 60);
             joinContent = calculation;
           } else {
             joinContent = date.getMinutes();
@@ -260,6 +265,7 @@ export const format = (
           }
           break;
         }
+        case "seconds":
         case "ss": {
           const calculation =
             timeInSeconds > 60

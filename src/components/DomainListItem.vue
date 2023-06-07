@@ -89,7 +89,7 @@ const sessionMask = (count: number) => {
         margin-right: 6px;
 
         border-radius: 50%;
-        background-color: var(--white);
+        background-color: var(--bttn-active-lightblue);
         background-repeat: no-repeat;
         background-size: 16px;
         background-position: center;

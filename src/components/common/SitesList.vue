@@ -1,48 +1,65 @@
 <template lang="pug">
 .sites(
   v-if="!isLoader(EnumLoaderKeys.trackingList)",
-  :class="{ sites__selected: currentSessionData.currentUrl && isShowCurrentSession }"
+  :class="{ sites__selected: showPadding }"
 )
-  .sites--item(
-    v-for="item in historyList",
-    :class="{ 'current-session': item.domain === currentSessionData.currentUrl }",
-    @click="selectSite(item)"
-  )
-    domain-list-item(
-      :item="item",
-      show-sessions="true",
-      :current-time="current(item)",
-      :total-time="totalTime"
+  template(v-for="item in historyList")
+    .sites--item(
+      v-if="view === TrackerViews.list",
+      :class="{ 'current-session': item.domain === selectedHostName }",
+      @click="selectSite(item)"
     )
-    .sites--item-activity
-      .item-block
-        .item-block--title {{ "Current Session" }}
-        .item-block--info {{ format(sessionMask(current(item)), current(item), true, false) }}
-      .item-block
-        .item-block--title {{ "Longest Session" }}
-        .item-block--info {{ format(sessionMask(longest(item)), longest(item), true, false) }}
-      .item-block
-        .item-block--title {{ "Sessions" }}
-        .item-block--info {{ item.sessions.length }}
+      domain-list-item(
+        :item="item",
+        show-sessions="true",
+        :current-time="current(item)",
+        :total-time="totalTime"
+      )
+      .sites--item-activity
+        .item-block
+          .item-block--title {{ "Current Session" }}
+          .item-block--info {{ format(sessionMask(current(item)), current(item), true, false) }}
+        .item-block
+          .item-block--title {{ "Longest Session" }}
+          .item-block--info {{ format(sessionMask(longest(item)), longest(item), true, false) }}
+        .item-block
+          .item-block--title {{ "Sessions" }}
+          .item-block--info {{ item.sessions.length }}
+      .tracker--sites-bar
+    site-info(v-else-if="item.domain === hostTabSelected.domain", :item="item")
 .loader(v-else)
   circul-loader
 </template>
 
 <script setup lang="ts">
-import { computed, defineProps, onBeforeUnmount, ref, watch } from "vue";
+import {
+  computed,
+  defineProps,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  watch,
+} from "vue";
 
 import CirculLoader from "@/components/common/CirculLoader.vue";
 import DomainListItem from "@/components/DomainListItem.vue";
+import SiteInfo from "@/components/popup/SiteInfo.vue";
 
 import {
+  counter,
   createStructure,
-  currentSessionData,
+  current,
+  hostTabSelected,
+  selectedHostName,
   selectedNavItem,
+  selectedTabId,
+  sessionMask,
   timeSpentCalculation,
   totalTimeCalculation,
+  TrackerViews,
+  view,
 } from "@/composables/common/trackerPageActions";
 import { isLoader } from "@/composables/common/loaderActions";
-import { selectSite } from "@/composables/common/chartBar";
 import { format } from "@/composables/common/dateComposable";
 
 import { EnumLoaderKeys } from "@/constants/EnumLoaderKeys";
@@ -58,7 +75,6 @@ const props = defineProps({
 });
 
 const historyList = ref<HistoryListInterface[]>([]);
-const counter = ref(0);
 const interval = setInterval(() => {
   counter.value++;
 }, 1000);
@@ -66,15 +82,15 @@ const interval = setInterval(() => {
 watch(
   () => selectedNavItem.value,
   () => {
-    counter.value = 0;
     getData();
   }
 );
 
 const getData = () => {
-  chrome.storage.local.get({ pages: {} }, (result) => {
-    if (result.pages) {
-      const structuredArray = createStructure(result.pages);
+  console.log("getData");
+  chrome.storage.local.get({ pagesOR: {} }, (result) => {
+    if (result.pagesOR) {
+      const structuredArray = createStructure(result.pagesOR);
       const filteredArray = filterByPeriod(structuredArray);
       historyList.value = filteredArray;
       sortByTime();
@@ -82,8 +98,13 @@ const getData = () => {
   });
 };
 
-getData();
-
+const showPadding = computed(() => {
+  return (
+    !exceptionsCheck.value &&
+    props.isShowCurrentSession &&
+    view.value === TrackerViews.list
+  );
+});
 const totalTime = computed(
   () =>
     historyList.value.reduce(
@@ -92,32 +113,17 @@ const totalTime = computed(
     ) + counter.value
 );
 
+const exceptionsCheck = computed(() => {
+  const exceptions = ["extensions", "newtab"];
+  return exceptions.includes(selectedHostName.value);
+});
+
 const sortByTime = () => {
   historyList.value.sort((a, b) => {
     return totalTimeCalculation(b.sessions) - totalTimeCalculation(a.sessions);
   });
 };
-const sessionMask = (count: number) => {
-  const mask = ["sss"];
-  if (count > 60) {
-    mask.unshift("mmm");
-  }
-  if (count > 3600) {
-    mask.unshift("Hh");
-  }
-
-  if (!(count % 60)) {
-    mask.splice(mask.length - 1, 1);
-  }
-  if (!(count % 3600)) {
-    mask.splice(mask.length - 1, 1);
-  }
-  return mask.join(" ");
-};
 const filterByPeriod = (data: HistoryListInterface[]) => {
-  chrome.storage.local.get(["tabInfo"], ({ tabInfo }) => {
-    console.log(tabInfo, data);
-  });
   if (selectedNavItem.value === PopupTrackerNavItemsEnum.total) {
     return data;
   } else {
@@ -129,13 +135,13 @@ const filterByPeriod = (data: HistoryListInterface[]) => {
               const condition = (date: number) => {
                 return new Date().getDate() === new Date(date).getDate();
               };
-              return condition(activity.begin) && condition(activity.end!);
+              return condition(activity.begin);
             }
             case PopupTrackerNavItemsEnum.month: {
               const condition = (date: number) => {
                 return new Date().getMonth() === new Date(date).getMonth();
               };
-              return condition(activity.begin) && condition(activity.end!);
+              return condition(activity.begin);
             }
             default: {
               const day = new Date().getDay();
@@ -144,7 +150,7 @@ const filterByPeriod = (data: HistoryListInterface[]) => {
               const condition = (date: number) => {
                 return new Date(date).getDate() - monday.getDate() <= 7;
               };
-              return condition(activity.begin) && condition(activity.end!);
+              return condition(activity.begin);
             }
           }
         }).length;
@@ -152,19 +158,23 @@ const filterByPeriod = (data: HistoryListInterface[]) => {
     });
   }
 };
-const current = (item: HistoryListInterface) => {
-  if (item.domain === currentSessionData.value.currentUrl) {
-    const findElement = item.sessions.find(
-      (f) => +f.tab_id === +currentSessionData.value.currentTab
-    );
-    let result = 0;
-    if (findElement) {
-      result = timeSpentCalculation(findElement.activity);
+
+const getHostData = () => {
+  chrome.storage.local.get("tabInfo").then((res) => {
+    console.log(res);
+    if (res && res.tabInfo && res.tabInfo.hostName) {
+      selectedHostName.value = res.tabInfo.hostName;
+      selectedTabId.value = res.tabInfo.id;
+    } else {
+      selectedHostName.value = "";
+      selectedTabId.value = 0;
     }
-    return result + counter.value;
-  }
-  return 0;
+    if (exceptionsCheck.value) {
+      clearInterval(interval);
+    }
+  });
 };
+
 const longest = (item: HistoryListInterface) => {
   const sessions = [...item.sessions];
   const timeSpent = timeSpentCalculation(
@@ -176,6 +186,16 @@ const longest = (item: HistoryListInterface) => {
 
   return current(item) > timeSpent ? current(item) : timeSpent;
 };
+
+const selectSite = (item: HistoryListInterface) => {
+  hostTabSelected.value.domain = item.domain;
+  hostTabSelected.value.icon = item.icon;
+  view.value = TrackerViews.details;
+};
+onMounted(() => {
+  getData();
+  getHostData();
+});
 
 onBeforeUnmount(() => {
   clearInterval(interval);
@@ -236,7 +256,7 @@ onBeforeUnmount(() => {
         flex-direction: column;
 
         width: 100%;
-        padding: 7px 12px;
+        padding: 7px 10px;
 
         background: var(--white);
         border-radius: 6px;
@@ -250,7 +270,7 @@ onBeforeUnmount(() => {
         }
 
         &--info {
-          font-size: 18px;
+          font-size: 16px;
           font-weight: 600;
           line-height: 25px;
 

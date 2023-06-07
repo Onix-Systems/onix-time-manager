@@ -10,6 +10,216 @@ let showNotification = false;
 let currentInformation = {};
 let isTabCreated = false;
 
+const getTabData = (tabId) => chrome.tabs.get(tabId);
+const getStorageData = (scope) => chrome.storage.local.get([scope]);
+
+const noActivityCheck = (date) => {
+  const begin = new Date(date);
+  const end = new Date();
+  let divider = 60000;
+
+  const utc1 = Date.UTC(
+    begin.getFullYear(),
+    begin.getMonth(),
+    begin.getDate(),
+    begin.getHours(),
+    begin.getMinutes(),
+    begin.getSeconds()
+  );
+  const utc2 = Date.UTC(
+    end.getFullYear(),
+    end.getMonth(),
+    end.getDate(),
+    end.getHours(),
+    end.getMinutes(),
+    end.getSeconds()
+  );
+  const diff = Math.floor((utc2 - utc1) / divider);
+  return diff < 10;
+};
+
+const setEndDate = (res, sessionId) => {
+  console.log("setEndDate", sessionId);
+  return new Promise((resolve) => {
+    let pages = res.pagesOR;
+    const keys = Object.keys(pages);
+    keys.forEach((hostName, index) => {
+      const sessionsKeys = Object.keys(pages[hostName].sessions);
+      if (sessionsKeys.includes(sessionId.toString())) {
+        const findIndex = pages[hostName].sessions[sessionId].findIndex((f) => {
+          return f.activity.some((s) => !s.end);
+        });
+        if (findIndex !== -1) {
+          getStorageData("tabInfo").then((res) => {
+            if (res && res.tabInfo) {
+              const activityIndex = pages[hostName].sessions[sessionId][
+                findIndex
+              ].activity.findIndex((value) => !value.end);
+              if (noActivityCheck(res.tabInfo.updateAt)) {
+                pages[hostName].sessions[sessionId][findIndex].activity[
+                  activityIndex
+                ].end = new Date().getTime();
+              } else {
+                pages[hostName].sessions[sessionId][findIndex].activity.splice(
+                  activityIndex,
+                  1
+                );
+              }
+              chrome.storage.local.set({ pagesOR: pages });
+              console.log("setEndDate set pages", pages);
+              resolve(true);
+            }
+          });
+        }
+      }
+      if (index + 1 === keys.length) {
+        resolve(true);
+      }
+    });
+  });
+};
+const setBegin = (tab, onActive = false) => {
+  console.log("setBegin", tab);
+  if (chrome && chrome.tabs && (tab || tab.tabId)) {
+    getStorageData("tabInfo").then((res) => {
+      new Promise((resolve) => {
+        if (res && res.tabInfo) {
+          getStorageData("pagesOR").then((result) => {
+            if (result && result.pagesOR) {
+              setEndDate(result, res.tabInfo.id).then(() => {
+                resolve(true);
+              });
+            } else {
+              resolve(true);
+            }
+          });
+        } else {
+          resolve(true);
+        }
+      }).then(() => {
+        const tabId = tab.tabId ? tab.tabId : tab;
+        getTabData(tabId).then(({ id, windowId, url, favIconUrl }) => {
+          const hostName = url ? new URL(url).hostname : url;
+          console.log(
+            "chrome.storage.local.set fot tab id:" + tabId + "next",
+            id,
+            windowId,
+            url,
+            favIconUrl
+          );
+          chrome.storage.local.set({
+            tabInfo: {
+              hostName,
+              id,
+              windowId,
+              updateAt: new Date().getTime(),
+            },
+          });
+          const keys = ["newtab", "extensions"];
+          if (hostName && keys.every((e) => !hostName.includes(e))) {
+            getStorageData("pagesOR").then((res) => {
+              const createDomainStructure = () => {
+                return {
+                  icon: favIconUrl,
+                  sessions: {},
+                };
+              };
+
+              const createActivityStructure = () => {
+                return { begin: new Date().getTime() };
+              };
+
+              const createSessionStructure = () => {
+                return {
+                  id: id + new Date().getTime(),
+                  path: url,
+                  activity: [createActivityStructure()],
+                };
+              };
+
+              const createEmptyDomain = () => {
+                pages[hostName] = createDomainStructure();
+                pages[hostName].sessions[id] = [];
+                pages[hostName].sessions[id].push(createSessionStructure());
+              };
+              let pages = {};
+              if (res && res.pagesOR) {
+                pages = res.pagesOR;
+              }
+              if (pages[hostName]) {
+                if (pages[hostName].sessions[id]) {
+                  const findIndex = pages[hostName].sessions[id].findIndex(
+                    (f) => {
+                      return f.activity.some((s) => !s.end);
+                    }
+                  );
+                  if (findIndex !== -1) {
+                    const activityIndex = pages[hostName].sessions[id][
+                      findIndex
+                    ].activity.findIndex((value) => !value.end);
+                    pages[hostName].sessions[id][findIndex].activity[
+                      activityIndex
+                    ].end = new Date().getTime();
+                  }
+                  if (onActive) {
+                    pages[hostName].sessions[id][0].activity.unshift(
+                      createActivityStructure()
+                    );
+                  } else {
+                    pages[hostName].sessions[id].unshift(
+                      createSessionStructure()
+                    );
+                  }
+                } else {
+                  pages[hostName].sessions[id] = [];
+                  pages[hostName].sessions[id].push(createSessionStructure());
+                }
+              } else {
+                createEmptyDomain();
+              }
+              chrome.storage.local.set({ pagesOR: pages });
+              console.log("setBegin set pages", pages);
+            });
+          }
+        });
+      });
+    });
+  }
+};
+
+chrome.tabs.onActivated.addListener((tab) => {
+  console.log("onActivated", tab);
+  setBegin(tab, true);
+});
+let time = 0;
+chrome.tabs.onUpdated.addListener((tab) => {
+  console.log("onUpdated", tab);
+  if (time) {
+    const dif = time.getTime() - new Date().getTime();
+    const secondsCount = dif / 1000;
+    const secondsBetweenDates = Math.abs(secondsCount);
+    if (secondsBetweenDates > 1) {
+      time = new Date();
+      setBegin(tab);
+    }
+  } else {
+    time = new Date();
+    setBegin(tab);
+  }
+});
+chrome.tabs.onRemoved.addListener((sessionId) => {
+  console.log("onRemoved", sessionId);
+  getStorageData("pagesOR").then((res) => {
+    if (res && res.pagesOR) {
+      setEndDate(res, sessionId).then();
+    }
+  });
+});
+
+chrome.windows.onRemoved.addListener((sessionId) => {
+  console.log("chrome windows onRemoved", sessionId);
+});
+
 chrome.runtime.onInstalled.addListener(() => {
   chrome.tabs.onActivated.addListener((tab) => {
     if (!isTabCreated || !tabIdCopy) {
@@ -90,12 +300,6 @@ const updatePageTime = (tabId, isUpdated) => {
       if (validUrlRegex.test(tab.url)) {
         const { url } = tab;
         currentUrl = new URL(url).hostname;
-        chrome.storage.local.set({
-          tabInfo: {
-            hostName: new URL(url).hostname,
-            tabId: tab.id,
-          },
-        });
         //check Permission
         if (settings && settings.permission) {
           chrome.storage.local.get("permission").then((res) => {

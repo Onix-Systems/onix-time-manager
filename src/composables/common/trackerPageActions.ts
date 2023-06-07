@@ -34,71 +34,89 @@ import {
   SessionInterface,
 } from "@/types/TrackingInterface";
 
-//data
-let intervalId = 0;
+const intervalId = 0;
 let isEdit = true;
 
+export enum TrackerViews {
+  list = "list",
+  details = "details",
+}
+const defaultHostData = {
+  icon: "",
+  domain: "",
+};
+export const view = ref<TrackerViews>(TrackerViews.list);
+export const hostTabSelected = ref(defaultHostData);
+export const onBackClicked = () => {
+  hostTabSelected.value = defaultHostData;
+  view.value = TrackerViews.list;
+};
+
+export const selectedHostName = ref("");
+export const selectedTabId = ref(0);
+export const counter = ref(0);
+
 export const initialTracker = (isShowCurrentSession: boolean) => {
-  onMounted(() => {
-    getHistory();
-    selectNavItem(PopupTrackerNavItemsEnum.day);
-    chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
-      if (
-        isShowCurrentSession &&
-        tabs &&
-        tabs.length &&
-        validUrlRegex.test(`${tabs[0].url}`)
-      ) {
-        startLoader(EnumLoaderKeys.trackingList);
-        currentSessionData.value.currentUrl = new URL(
-          String(tabs[0].url)
-        ).hostname;
-        currentSessionData.value.currentTab = tabs[0].id;
-        intervalId = setInterval(() => {
-          let timeSpent = 0;
-          const site =
-            historyStorage.value[currentSessionData.value.currentUrl];
-          if (site && site.sessions[currentSessionData.value.currentTab]) {
-            const activity =
-              site.sessions[currentSessionData.value.currentTab][0].activity;
-            activity.forEach((item: any, key: number) => {
-              if (!key && isEdit) {
-                item.end = new Date().getTime();
-              } else if (!key && !isEdit) {
-                item.end = item.begin;
-              }
-              if (item.end) {
-                timeSpent += (item.end - item.begin) / 1000;
-              }
-              if (
-                activity.length === key + 1 &&
-                isLoader(EnumLoaderKeys.trackingList)
-              ) {
-                finishLoader(EnumLoaderKeys.trackingList);
-              }
-            });
-            if (
-              activity &&
-              !activity.length &&
-              isLoader(EnumLoaderKeys.trackingList)
-            ) {
-              finishLoader(EnumLoaderKeys.trackingList);
-            }
-          } else if (isLoader(EnumLoaderKeys.trackingList)) {
-            finishLoader(EnumLoaderKeys.trackingList);
-          }
-          currentSessionData.value.time = timeSpent;
-        }, 1000);
-      } else {
-        finishLoader(EnumLoaderKeys.trackingList);
-      }
-    });
-    chrome.runtime.onMessage.addListener(handleRuntimeMessage);
-  });
-  onUnmounted(() => {
-    chrome.runtime.onMessage.removeListener(handleRuntimeMessage);
-    clearInterval(intervalId);
-  });
+  // onMounted(() => {
+  //   getHistory();
+  //   selectNavItem(PopupTrackerNavItemsEnum.day);
+  //   chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
+  //     if (
+  //       isShowCurrentSession &&
+  //       tabs &&
+  //       tabs.length &&
+  //       validUrlRegex.test(`${tabs[0].url}`)
+  //     ) {
+  //       startLoader(EnumLoaderKeys.trackingList);
+  //       currentSessionData.value.currentUrl = new URL(
+  //         String(tabs[0].url)
+  //       ).hostname;
+  //       currentSessionData.value.currentTab = tabs[0].id;
+  //       intervalId = setInterval(() => {
+  //         let timeSpent = 0;
+  //         const site =
+  //           historyStorage.value[currentSessionData.value.currentUrl];
+  //         if (site && site.sessions[currentSessionData.value.currentTab]) {
+  //           const activity =
+  //             site.sessions[currentSessionData.value.currentTab][0].activity;
+  //           activity.forEach((item: any, key: number) => {
+  //             if (!key && isEdit) {
+  //               item.end = new Date().getTime();
+  //             } else if (!key && !isEdit) {
+  //               item.end = item.begin;
+  //             }
+  //             if (item.end) {
+  //               timeSpent += (item.end - item.begin) / 1000;
+  //             }
+  //             if (
+  //               activity.length === key + 1 &&
+  //               isLoader(EnumLoaderKeys.trackingList)
+  //             ) {
+  //               finishLoader(EnumLoaderKeys.trackingList);
+  //             }
+  //           });
+  //           if (
+  //             activity &&
+  //             !activity.length &&
+  //             isLoader(EnumLoaderKeys.trackingList)
+  //           ) {
+  //             finishLoader(EnumLoaderKeys.trackingList);
+  //           }
+  //         } else if (isLoader(EnumLoaderKeys.trackingList)) {
+  //           finishLoader(EnumLoaderKeys.trackingList);
+  //         }
+  //         currentSessionData.value.time = timeSpent;
+  //       }, 1000);
+  //     } else {
+  //       finishLoader(EnumLoaderKeys.trackingList);
+  //     }
+  //   });
+  //   chrome.runtime.onMessage.addListener(handleRuntimeMessage);
+  // });
+  // onUnmounted(() => {
+  //   chrome.runtime.onMessage.removeListener(handleRuntimeMessage);
+  //   clearInterval(intervalId);
+  // });
 };
 
 const handleRuntimeMessage = (request: any, sender: any) => {
@@ -109,6 +127,55 @@ const handleRuntimeMessage = (request: any, sender: any) => {
     if (isLoader(EnumLoaderKeys.trackingList)) {
       finishLoader(EnumLoaderKeys.trackingList);
     }
+  }
+};
+
+export const current = (item: HistoryListInterface) => {
+  if (item && item.domain === selectedHostName.value) {
+    const findElement = item.sessions.find(
+      (f) => +f.tab_id === +selectedTabId.value
+    );
+    let result = 0;
+    if (findElement) {
+      result = timeSpentCalculation(findElement.activity);
+    }
+    return result + counter.value;
+  }
+  return 0;
+};
+
+export const sessionMask = (count: number, shorted = false) => {
+  if (count) {
+    const mask = ["sss"];
+    if (count > 59) {
+      mask.unshift("mmm");
+    }
+    if (count > 3599) {
+      if (shorted) {
+        mask.splice(mask.length - 1, 1);
+      }
+      mask.unshift("Hh");
+    }
+
+    if (count > 86399) {
+      if (shorted) {
+        mask.splice(mask.length - 1, 1);
+      }
+      mask.unshift("DD");
+    }
+
+    if (!(count % 60)) {
+      mask.splice(mask.length - 1, 1);
+    }
+    if (!(count % 3600)) {
+      mask.splice(mask.length - 1, 1);
+    }
+    if (!(count % 86400)) {
+      mask.splice(mask.length - 1, 1);
+    }
+    return mask.join(" ");
+  } else {
+    return "sss";
   }
 };
 
@@ -172,8 +239,6 @@ export const createStructure = (pages: {
 };
 
 export const filteringData: ObjectInterface = computed(() => {
-  console.log("filteringData", historyStorage.value);
-
   if (Object.keys(historyStorage.value).length) {
     const data: SiteInterface | ObjectInterface = Object.keys({
       ...historyStorage.value,

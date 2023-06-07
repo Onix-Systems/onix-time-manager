@@ -1,13 +1,13 @@
 <template lang="pug">
 .popup
   header.popup--header
-    .popup--header-title(v-if="!isSelectedSite") {{ "BrowserTime" }}
+    .popup--header-title(v-if="!hostTabSelected.domain") {{ "BrowserTime" }}
     .popup--header-actions(v-else)
-      button.popup--back(@click="selectSite({})")
+      button.popup--back(@click="onBackClicked")
       .popup--site-icon(
-        :style="{ backgroundImage: `url(${selectedSite.icon})` }"
+        :style="{ backgroundImage: `url(${hostTabSelected.icon})` }"
       )
-      .popup--site-name {{ selectedSite.domain }}
+      .popup--site-name {{ hostTabSelected.domain }}
     button.popup--header-settings(@click="openOptions()")
   section.popup--content
     template(v-if="popupNavigationSelected === PopupNavItemsEnum.tracker")
@@ -36,6 +36,11 @@ import {
   popupNavigations,
   popupNavigationSelected,
 } from "@/composables/popup/popupActions";
+import {
+  hostSelected,
+  hostTabSelected,
+  onBackClicked,
+} from "@/composables/common/trackerPageActions";
 import TrackerComponent from "@/components/popup/TrackerComponent.vue";
 import PermissionsComponent from "@/components/popup/PermissionsComponent.vue";
 import LimitsComponent from "@/components/popup/LimitsComponent.vue";

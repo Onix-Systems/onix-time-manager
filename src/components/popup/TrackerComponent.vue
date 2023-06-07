@@ -7,26 +7,14 @@
     :class="{ loading: isLoader(EnumLoaderKeys.trackingList) }"
   )
     sites-list
-  .tracker--sites-bar(v-show="isSelectedSite")
-    site-info
 </template>
 
 <script setup lang="ts">
-import {
-  getHistory,
-  initialTracker,
-  selectNavItem,
-} from "@/composables/common/trackerPageActions";
-import { onMounted } from "vue";
-import { getSiteData, isSelectedSite } from "@/composables/common/chartBar";
+import { isSelectedSite } from "@/composables/common/chartBar";
 import FilterSelect from "@/components/common/FilterSelect.vue";
-import SiteInfo from "@/components/popup/SiteInfo.vue";
-import { PopupTrackerNavItemsEnum } from "@/constants/popup/popupNavItemsEnum";
 import SitesList from "@/components/common/SitesList.vue";
 import { isLoader } from "@/composables/common/loaderActions";
 import { EnumLoaderKeys } from "@/constants/EnumLoaderKeys";
-
-initialTracker(true);
 </script>
 
 <style scoped lang="scss">

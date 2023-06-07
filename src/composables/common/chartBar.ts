@@ -1,6 +1,7 @@
 import { computed, ref } from "vue";
 import {
   checkDataInStorage,
+  current,
   filteringData,
   formatDuration,
   historyStorage,
@@ -10,7 +11,9 @@ import {
 import { PopupTrackerNavItemsEnum } from "@/constants/popup/popupNavItemsEnum";
 import {
   currentData,
+  dateDiff,
   dayData,
+  DiffMeasurements,
   getSevenDays,
   resetCurrentDay,
   sevenDays,
@@ -21,6 +24,11 @@ import {
   SiteInterface,
   TooltipItem,
 } from "@/types/dataInterfaces";
+import {
+  ActivityInterface,
+  HistoryListInterface,
+  SessionInterface,
+} from "@/types/TrackingInterface";
 //data
 
 export const selectedSite = ref({} as ObjectInterface);
@@ -126,35 +134,50 @@ export const selectSite = (item: SiteInterface | ObjectInterface) => {
   resetCurrentDay();
 };
 
-export const setDayOptions = (data: any) => {
-  totalData.value = {};
-  totalDataValues();
-  if (isSelectedSite.value) {
-    const site = data.find((item: SiteInterface) => {
-      return item.domain === selectedSite.value.domain;
-    });
-    if (site) {
-      for (let i = 0; i < 24; i++) {
-        const timeSpent = site.dayActivity[i] || 0;
-        if (timeSpent) {
-          totalData.value.timeSpent += timeSpent;
+export const setDayOptions = (sessions: SessionInterface[]) => {
+  if (sessions && sessions.length) {
+    const activities = sessions.reduce(
+      (a: ActivityInterface[], b: SessionInterface) => {
+        return a.concat(b.activity.filter((f) => f.end));
+      },
+      []
+    );
+    for (let i = 0; i < 24; i++) {
+      let sum = 0;
+      const originalDate = new Date(currentData.value);
+      activities.forEach((f) => {
+        const beginHourDiff = dateDiff(
+          f.begin,
+          new Date(originalDate).setHours(i),
+          DiffMeasurements.hours
+        );
+        const endHourDiff = dateDiff(
+          f.end!,
+          new Date(originalDate).setHours(i),
+          DiffMeasurements.hours
+        );
+        if (!beginHourDiff) {
+          if (!endHourDiff) {
+            sum += dateDiff(f.begin, f.end!, DiffMeasurements.minutes);
+          } else {
+            sum += dateDiff(
+              f.begin,
+              new Date(originalDate).setHours(i),
+              DiffMeasurements.minutes
+            );
+          }
+        } else {
+          if (!endHourDiff) {
+            sum += dateDiff(
+              new Date(originalDate).setHours(i - 1),
+              f.end!,
+              DiffMeasurements.minutes
+            );
+          }
         }
-        timeData.value[i] = timeSpent / 60;
-      }
+      });
+      timeData.value[i] = sum;
     }
-  } else {
-    data.forEach((item: ObjectInterface) => {
-      for (let i = 0; i < 24; i++) {
-        const timeSpent = item.dayActivity[i] || 0;
-        if (!timeData.value[i]) {
-          timeData.value[i] = 0;
-        }
-        if (timeSpent) {
-          totalData.value.timeSpent += timeSpent;
-        }
-        timeData.value[i] += timeSpent / 60;
-      }
-    });
   }
   for (let i = 0; i < 24; i++) {
     names.value.push(i);
@@ -193,43 +216,56 @@ const totalDataValues = () => {
   }
 };
 
-export const setWeekOptions = (data: any) => {
+export const setWeekOptions = (sessions: SessionInterface[]) => {
   names.value = ["M", "T", "W", "T", "F", "S", "S"];
   totalData.value = {};
-  totalDataValues();
-  for (let index = 0; index < 7; index++) {
-    if (isSelectedSite.value) {
-      const site = data.find((item: SiteInterface) => {
-        return item.domain === selectedSite.value.domain;
+  if (sessions && sessions.length) {
+    const activities = sessions.reduce(
+      (a: ActivityInterface[], b: SessionInterface) => {
+        return a.concat(b.activity.filter((f) => f.end));
+      },
+      []
+    );
+    const originalDate = new Date(currentData.value);
+    const currentDate = originalDate.getDate();
+
+    for (let i = 0; i < 7; i++) {
+      const weekday = new Date(originalDate).setDate(currentDate + i);
+      let sum = 0;
+      activities.forEach((f) => {
+        const beginHourDiff = dateDiff(f.begin, weekday, DiffMeasurements.days);
+        const endHourDiff = dateDiff(f.end!, weekday, DiffMeasurements.days);
+        if (!beginHourDiff) {
+          if (!endHourDiff) {
+            sum += dateDiff(f.begin, f.end!, DiffMeasurements.minutes);
+          } else {
+            sum += dateDiff(f.begin, weekday, DiffMeasurements.minutes);
+          }
+        } else {
+          if (!endHourDiff) {
+            sum += dateDiff(
+              new Date(originalDate).setDate(currentDate + (i - 1)),
+              f.end!,
+              DiffMeasurements.minutes
+            );
+          }
+        }
       });
-      if (site) {
-        const timeSpent = site.weekActivity[index] || 0;
-        if (timeSpent) {
-          totalData.value.timeSpent += timeSpent;
-        }
-        timeData.value[index] = timeSpent / 60;
-      }
-    } else {
-      data.forEach((item: any) => {
-        const timeSpent = item.weekActivity[index] || 0;
-        if (timeSpent) {
-          totalData.value.timeSpent += timeSpent;
-        }
-        if (!timeData.value[index]) {
-          timeData.value[index] = 0;
-        }
-        timeData.value[index] += timeSpent / 60;
-      });
+      timeData.value[i] = sum;
     }
   }
   Object.assign(optionsData.value.plugins.tooltip.callbacks, {
     title: (tooltipItem: TooltipItem[]) => {
-      const monthNumber: number =
-        sevenDays.value[tooltipItem[0].dataIndex].month;
-      const monthName = new Date(
-        Date.UTC(2000, monthNumber - 1, 1)
-      ).toLocaleString("default", { month: "long" });
-      return `${sevenDays.value[tooltipItem[0].dataIndex].day} ${monthName}`;
+      const weeks = [
+        "Monday",
+        "Tuesday",
+        "Wednesday",
+        "Thursday",
+        "Friday",
+        "Saturday",
+        "Sunday",
+      ];
+      return `${weeks[tooltipItem[0].dataIndex]}`;
     },
     label: (tooltipItem: TooltipItem) => {
       return formatDuration(tooltipItem.raw * 60);
