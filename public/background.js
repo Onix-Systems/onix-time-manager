@@ -99,9 +99,9 @@ const setBegin = (tab, onActive = false) => {
       }).then(() => {
         const tabId = tab.tabId ? tab.tabId : tab;
         getTabData(tabId).then(({ id, windowId, url, favIconUrl }) => {
-          const urlData = new URL(url);
+          const urlData = url ? new URL(url) : url;
           let hostName = url;
-          if (urlData.protocol !== "chrome-extension:") {
+          if (url && urlData.protocol !== "chrome-extension:") {
             hostName = urlData.hostname;
           } else {
             hostName = "extensions";
@@ -189,6 +189,7 @@ const setBegin = (tab, onActive = false) => {
 chrome.tabs.onActivated.addListener((tab) => {
   console.log("onActivated", tab);
   setBegin(tab, true);
+  detectRules();
 });
 let time = 0;
 chrome.tabs.onUpdated.addListener((tab) => {
@@ -205,6 +206,11 @@ chrome.tabs.onUpdated.addListener((tab) => {
     time = new Date();
     setBegin(tab);
   }
+  detectRules();
+});
+
+chrome.tabs.onCreated.addListener(() => {
+  detectRules();
 });
 chrome.tabs.onRemoved.addListener((sessionId) => {
   console.log("onRemoved", sessionId);
@@ -214,7 +220,6 @@ chrome.tabs.onRemoved.addListener((sessionId) => {
     }
   });
 });
-
 chrome.windows.onRemoved.addListener((sessionId) => {
   console.log("chrome windows onRemoved", sessionId);
 });
