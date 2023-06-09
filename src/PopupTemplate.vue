@@ -1,7 +1,7 @@
 <template lang="pug">
 .popup
   header.popup--header
-    .popup--header-title(v-if="!hostTabSelected.domain") {{ "BrowserTime" }}
+    .popup--header-title(v-if="view === TrackerViews.list") {{ "BrowserTime" }}
     .popup--header-actions(v-else)
       button.popup--back(@click="onBackClicked")
       .popup--site-icon(
@@ -11,7 +11,7 @@
     button.popup--header-settings(@click="openOptions()")
   section.popup--content
     template(v-if="popupNavigationSelected === PopupNavItemsEnum.tracker")
-      tracker-component
+      tracker-data(:popup-view="true")
     template(
       v-else-if="popupNavigationSelected === PopupNavItemsEnum.permissions"
     )
@@ -24,40 +24,68 @@
     button.popup--footer-item(
       v-for="item in popupNavigations",
       :class="[{ active: popupNavigationSelected === item }, item]",
-      @click="selectNavItem(item)"
+      @click="selectNavItem(item as PopupNavItemsEnum)"
     ) {{ item }}
 </template>
 
 <script lang="ts" setup>
-import { onMounted } from "vue";
+import { onBeforeUnmount, onMounted, watch } from "vue";
+
+import TrackerData from "@/components/common/TrackerData.vue";
+
+import {
+  TrackerViews,
+  view,
+  hostTabSelected,
+  onBackClicked,
+  initInterval,
+  destroyInterval,
+  setToday,
+  selectedNavItem,
+  isDay,
+  currentData,
+  loadData,
+  isDetails,
+} from "@/composables/popupTrackerActions";
+
 import {
   openOptions,
   selectNavItem,
   popupNavigations,
   popupNavigationSelected,
 } from "@/composables/popup/popupActions";
-import {
-  hostSelected,
-  hostTabSelected,
-  onBackClicked,
-} from "@/composables/common/trackerPageActions";
-import TrackerComponent from "@/components/popup/TrackerComponent.vue";
 import PermissionsComponent from "@/components/popup/PermissionsComponent.vue";
 import LimitsComponent from "@/components/popup/LimitsComponent.vue";
 import { PopupNavItemsEnum } from "@/constants/popup/popupNavItemsEnum";
-import {
-  isSelectedSite,
-  selectedSite,
-  selectSite,
-} from "@/composables/common/chartBar";
-import { getHistory } from "@/composables/common/trackerPageActions";
+
 import { getPermission } from "@/composables/permissionComp";
 import { updateSettingsData } from "@/composables/settingsComp";
+
 onMounted(() => {
-  getHistory();
+  setToday();
+  initInterval();
+  loadData(isDetails.value);
   getPermission();
   updateSettingsData();
 });
+onBeforeUnmount(() => {
+  destroyInterval();
+});
+watch(
+  () => selectedNavItem.value,
+  () => {
+    if (isDay.value) {
+      setToday();
+    }
+    loadData(isDetails.value);
+  }
+);
+watch(
+  () => currentData.value,
+  () => {
+    loadData(isDetails.value);
+  }
+);
 </script>
 
 <style lang="scss">

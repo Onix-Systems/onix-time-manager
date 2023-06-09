@@ -18,12 +18,15 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineProps, onMounted, ref, watch } from "vue";
+import { computed, defineProps, onMounted, ref } from "vue";
 
 import { openOptions } from "@/composables/popup/popupActions";
 import {
   counter,
+  currentData,
+  hostTabSelected,
   isTotal,
+  selectedHostName,
   selectedNavItem,
   sessionMask,
   totalTimeCalculation,
@@ -31,7 +34,6 @@ import {
 import ChartBar from "@/components/common/ChartBar.vue";
 import CalendarSlider from "@/components/common/CalendarSlider.vue";
 import {
-  currentData,
   format,
   SECONDS_PER_DAY,
   SECONDS_PER_HOUR,
@@ -39,59 +41,42 @@ import {
 } from "@/composables/common/dateComposable";
 import { MenuItemsEnum } from "@/constants/menuItemsEnum";
 import { PopupTrackerNavItemsEnum } from "@/constants/popup/popupNavItemsEnum";
-import {
-  HistoryListInterface,
-  SessionInterface,
-} from "@/types/TrackingInterface";
 import { getSiteData } from "@/composables/common/chartBar";
 
-const filteredSessions = ref<SessionInterface[]>([]);
-const props = defineProps({
-  item: {
-    type: Object as () => HistoryListInterface,
-    required: true,
-  },
-});
-
-watch(
-  () => currentData.value,
-  () => {
-    filteredSessions.value = filteredByPeriod();
-    getSiteData(filteredSessions.value);
-  }
-);
-
+const usage = ref("");
 const totalTime = computed(() => {
   if (selectedNavItem.value === PopupTrackerNavItemsEnum.total) {
-    return totalTimeCalculation(filteredSessions.value) + counter.value;
+    return (
+      totalTimeCalculation(hostTabSelected.value.item.sessions) + counter.value
+    );
   } else {
-    if (filteredSessions.value.length) {
-      const sum = totalTimeCalculation(filteredSessions.value);
-      let currentRange = false;
-      switch (selectedNavItem.value) {
-        case PopupTrackerNavItemsEnum.day: {
-          currentRange = new Date().getDate() === currentData.value.getDate();
-          break;
-        }
-        case PopupTrackerNavItemsEnum.month: {
-          currentRange = new Date().getMonth() === currentData.value.getMonth();
-          break;
-        }
-        default: {
-          const day = new Date().getDay();
-          const diff = new Date().getDate() - day + (!day ? -6 : 1);
-          const monday = new Date(new Date().setDate(diff));
-          currentRange = currentData.value.getDate() - monday.getDate() <= 7;
-          break;
-        }
+    const sum = totalTimeCalculation(hostTabSelected.value.item.sessions);
+    let currentRange = false;
+    switch (selectedNavItem.value) {
+      case PopupTrackerNavItemsEnum.day: {
+        currentRange = new Date().getDate() === currentData.value.getDate();
+        break;
       }
-      if (currentRange) {
-        return sum + counter.value;
+      case PopupTrackerNavItemsEnum.month: {
+        currentRange = new Date().getMonth() === currentData.value.getMonth();
+        break;
       }
-      return sum;
+      default: {
+        const day = new Date().getDay();
+        const diff = new Date().getDate() - day + (!day ? -6 : 1);
+        const monday = new Date(new Date().setDate(diff));
+        currentRange = currentData.value.getDate() - monday.getDate() <= 7;
+        break;
+      }
     }
+    if (
+      currentRange &&
+      selectedHostName.value === hostTabSelected.value.domain
+    ) {
+      return sum + counter.value;
+    }
+    return sum;
   }
-  return 0;
 });
 
 const usageMask = computed(() => {
@@ -118,47 +103,6 @@ const usageMask = computed(() => {
   } else {
     return ["seconds"];
   }
-});
-
-const filteredByPeriod = (): SessionInterface[] => {
-  if (selectedNavItem.value === PopupTrackerNavItemsEnum.total) {
-    return [...props.item.sessions];
-  } else {
-    return [...props.item.sessions].filter((session) => {
-      return session.activity.filter((activity) => {
-        switch (selectedNavItem.value) {
-          case PopupTrackerNavItemsEnum.day: {
-            const condition = (date: number) => {
-              return currentData.value.getDate() === new Date(date).getDate();
-            };
-            return condition(activity.begin);
-          }
-          case PopupTrackerNavItemsEnum.month: {
-            const condition = (date: number) => {
-              return currentData.value.getMonth() === new Date(date).getMonth();
-            };
-            return condition(activity.begin);
-          }
-          default: {
-            // const monday = new Date(currentData.value);
-            // const sa;
-            const day = currentData.value.getDay();
-            const diff = currentData.value.getDate() - day + (!day ? -6 : 1);
-            const monday = new Date(currentData.value.setDate(diff));
-            const condition = (date: number) => {
-              return new Date(date).getDate() - monday.getDate() <= 7;
-            };
-            return condition(activity.begin);
-          }
-        }
-      }).length;
-    });
-  }
-};
-
-onMounted(() => {
-  filteredSessions.value = filteredByPeriod();
-  getSiteData(filteredSessions.value);
 });
 </script>
 

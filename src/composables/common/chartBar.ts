@@ -1,34 +1,25 @@
 import { computed, ref } from "vue";
 import {
-  checkDataInStorage,
-  current,
   filteringData,
   formatDuration,
-  historyStorage,
-  selectedNavItem,
   totalTimeSpent,
 } from "@/composables/common/trackerPageActions";
 import { PopupTrackerNavItemsEnum } from "@/constants/popup/popupNavItemsEnum";
 import {
-  currentData,
   dateDiff,
-  dayData,
   DiffMeasurements,
-  getSevenDays,
   resetCurrentDay,
-  sevenDays,
 } from "@/composables/common/dateComposable";
 import {
-  DateInterface,
   ObjectInterface,
   SiteInterface,
   TooltipItem,
 } from "@/types/dataInterfaces";
+import { ActivityInterface, SessionInterface } from "@/types/TrackingInterface";
 import {
-  ActivityInterface,
-  HistoryListInterface,
-  SessionInterface,
-} from "@/types/TrackingInterface";
+  currentData,
+  selectedNavItem,
+} from "@/composables/popupTrackerActions";
 //data
 
 export const selectedSite = ref({} as ObjectInterface);
@@ -89,7 +80,7 @@ export const timeData = ref([] as number[]);
 export const optionsData = ref({ ...defaultChart } as ObjectInterface);
 export const totalData = ref({} as ObjectInterface);
 
-export const getSiteData = (data: any) => {
+export const getSiteData = (data: SessionInterface[]) => {
   names.value = [];
   timeData.value = [];
   optionsData.value = { ...defaultChart };
@@ -135,51 +126,43 @@ export const selectSite = (item: SiteInterface | ObjectInterface) => {
 };
 
 export const setDayOptions = (sessions: SessionInterface[]) => {
-  if (sessions && sessions.length) {
-    const activities = sessions.reduce(
-      (a: ActivityInterface[], b: SessionInterface) => {
-        return a.concat(b.activity.filter((f) => f.end));
-      },
-      []
-    );
-    for (let i = 0; i < 24; i++) {
-      let sum = 0;
-      const originalDate = new Date(currentData.value);
-      activities.forEach((f) => {
-        const beginHourDiff = dateDiff(
-          f.begin,
-          new Date(originalDate).setHours(i),
-          DiffMeasurements.hours
-        );
-        const endHourDiff = dateDiff(
-          f.end!,
-          new Date(originalDate).setHours(i),
-          DiffMeasurements.hours
-        );
-        if (!beginHourDiff) {
-          if (!endHourDiff) {
-            sum += dateDiff(f.begin, f.end!, DiffMeasurements.minutes);
-          } else {
-            sum += dateDiff(
-              f.begin,
-              new Date(originalDate).setHours(i),
-              DiffMeasurements.minutes
-            );
-          }
-        } else {
-          if (!endHourDiff) {
-            sum += dateDiff(
-              new Date(originalDate).setHours(i - 1),
-              f.end!,
-              DiffMeasurements.minutes
-            );
-          }
-        }
-      });
-      timeData.value[i] = sum;
-    }
-  }
+  const activities: ActivityInterface[] = getActivities(sessions);
+
   for (let i = 0; i < 24; i++) {
+    let sum = 0;
+    const originalDate = new Date(currentData.value);
+    activities.forEach((f) => {
+      const beginHourDiff = dateDiff(
+        f.begin,
+        new Date(originalDate).setHours(i),
+        DiffMeasurements.hours
+      );
+      const endHourDiff = dateDiff(
+        f.end!,
+        new Date(originalDate).setHours(i),
+        DiffMeasurements.hours
+      );
+      if (!beginHourDiff) {
+        if (!endHourDiff) {
+          sum += dateDiff(f.begin, f.end!, DiffMeasurements.minutes);
+        } else {
+          sum += dateDiff(
+            f.begin,
+            new Date(originalDate).setHours(i),
+            DiffMeasurements.minutes
+          );
+        }
+      } else {
+        if (!endHourDiff) {
+          sum += dateDiff(
+            new Date(originalDate).setHours(i - 1),
+            f.end!,
+            DiffMeasurements.minutes
+          );
+        }
+      }
+    });
+    timeData.value[i] = sum;
     names.value.push(i);
   }
   Object.assign(optionsData.value.plugins.tooltip.callbacks, {
@@ -216,43 +199,42 @@ const totalDataValues = () => {
   }
 };
 
+const getActivities = (sessions: SessionInterface[]) => {
+  return sessions.reduce((a: ActivityInterface[], b: SessionInterface) => {
+    return a.concat(b.activity.filter((f) => f.end));
+  }, []);
+};
 export const setWeekOptions = (sessions: SessionInterface[]) => {
   names.value = ["M", "T", "W", "T", "F", "S", "S"];
   totalData.value = {};
-  if (sessions && sessions.length) {
-    const activities = sessions.reduce(
-      (a: ActivityInterface[], b: SessionInterface) => {
-        return a.concat(b.activity.filter((f) => f.end));
-      },
-      []
-    );
-    const originalDate = new Date(currentData.value);
-    const currentDate = originalDate.getDate();
+  const activities: ActivityInterface[] = getActivities(sessions);
 
-    for (let i = 0; i < 7; i++) {
-      const weekday = new Date(originalDate).setDate(currentDate + i);
-      let sum = 0;
-      activities.forEach((f) => {
-        const beginHourDiff = dateDiff(f.begin, weekday, DiffMeasurements.days);
-        const endHourDiff = dateDiff(f.end!, weekday, DiffMeasurements.days);
-        if (!beginHourDiff) {
-          if (!endHourDiff) {
-            sum += dateDiff(f.begin, f.end!, DiffMeasurements.minutes);
-          } else {
-            sum += dateDiff(f.begin, weekday, DiffMeasurements.minutes);
-          }
+  const originalDate = new Date(currentData.value);
+  const currentDate = originalDate.getDate();
+
+  for (let i = 0; i < 7; i++) {
+    const weekday = new Date(originalDate).setDate(currentDate + i);
+    let sum = 0;
+    activities.forEach((f) => {
+      const beginHourDiff = dateDiff(f.begin, weekday, DiffMeasurements.days);
+      const endHourDiff = dateDiff(f.end!, weekday, DiffMeasurements.days);
+      if (!beginHourDiff) {
+        if (!endHourDiff) {
+          sum += dateDiff(f.begin, f.end!, DiffMeasurements.minutes);
         } else {
-          if (!endHourDiff) {
-            sum += dateDiff(
-              new Date(originalDate).setDate(currentDate + (i - 1)),
-              f.end!,
-              DiffMeasurements.minutes
-            );
-          }
+          sum += dateDiff(f.begin, weekday, DiffMeasurements.minutes);
         }
-      });
-      timeData.value[i] = sum;
-    }
+      } else {
+        if (!endHourDiff) {
+          sum += dateDiff(
+            new Date(originalDate).setDate(currentDate + (i - 1)),
+            f.end!,
+            DiffMeasurements.minutes
+          );
+        }
+      }
+    });
+    timeData.value[i] = sum;
   }
   Object.assign(optionsData.value.plugins.tooltip.callbacks, {
     title: (tooltipItem: TooltipItem[]) => {
@@ -294,7 +276,7 @@ export const setWeekOptions = (sessions: SessionInterface[]) => {
   }
 };
 
-export const setMonthOptions = (data: any) => {
+export const setMonthOptions = (sessions: SessionInterface[]) => {
   const monthCount = new Date(
     currentData.value.getFullYear(),
     currentData.value.getMonth() + 1,
@@ -302,32 +284,33 @@ export const setMonthOptions = (data: any) => {
   ).getDate();
   totalData.value = {};
   totalDataValues();
+  const activities: ActivityInterface[] = getActivities(sessions);
+
   for (let i = 1; i < monthCount + 1; i++) {
     names.value.push(i);
-    if (isSelectedSite.value) {
-      const site = data.find((item: SiteInterface) => {
-        return item.domain === selectedSite.value.domain;
-      });
-      if (site) {
-        const timeSpent = site.monthActivity[i] || 0;
-        if (timeSpent) {
-          totalData.value.timeSpent += timeSpent;
+    const currentDate = new Date(currentData.value).setDate(i);
+    let sum = 0;
+    activities.forEach((f) => {
+      const beginHourDiff = dateDiff(
+        f.begin,
+        currentDate,
+        DiffMeasurements.days
+      );
+      const endHourDiff = dateDiff(f.end!, currentDate, DiffMeasurements.days);
+      if (!beginHourDiff) {
+        if (!endHourDiff) {
+          sum += dateDiff(f.begin, f.end!, DiffMeasurements.minutes);
+        } else {
+          sum += dateDiff(f.begin, currentDate, DiffMeasurements.minutes);
         }
-        timeData.value[i - 1] = timeSpent / 60;
+      } else {
+        if (!endHourDiff) {
+          sum += dateDiff(currentDate, f.end!, DiffMeasurements.minutes);
+        }
       }
-    } else {
-      data.forEach((item: any) => {
-        const timeSpent = item.monthActivity[i] || 0;
+    });
 
-        if (timeSpent) {
-          totalData.value.timeSpent += timeSpent;
-        }
-        if (!timeData.value[i - 1]) {
-          timeData.value[i - 1] = 0;
-        }
-        timeData.value[i - 1] += timeSpent / 60;
-      });
-    }
+    timeData.value[i - 1] = sum;
   }
   Object.assign(optionsData.value.plugins.tooltip.callbacks, {
     title: (tooltipItem: TooltipItem[]) => {

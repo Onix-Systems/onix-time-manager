@@ -1,23 +1,25 @@
 <template lang="pug">
 .calendar
-  button.prev(v-if="!isTotal", @click="changeDate(-1)")
-  .date {{ currentDate }}
-  button.next(v-if="!isTotal", @click="changeDate(1)")
+  template(v-if="isTotal")
+    .date {{ currentDate }}
+  template(v-else)
+    button.prev(@click="changeDate(-1)")
+    .date {{ currentDate }}
+    button.next(@click="changeDate(1)")
 </template>
 
 <script setup lang="ts">
-import {
-  historyStorage,
-  isTotal,
-  selectedNavItem,
-  sinceData,
-} from "@/composables/common/trackerPageActions";
+import { computed } from "vue";
+
 import {
   currentData,
-  changeDate,
-  parseDate,
-} from "@/composables/common/dateComposable";
-import { computed } from "vue";
+  orderedSession,
+  historyList,
+  isTotal,
+  selectedNavItem,
+} from "@/composables/popupTrackerActions";
+import { format } from "@/composables/common/dateComposable";
+
 import { PopupTrackerNavItemsEnum } from "@/constants/popup/popupNavItemsEnum";
 
 const currentDate = computed(() => {
@@ -38,15 +40,35 @@ const currentDate = computed(() => {
       data = `${month} ${currentData.value.getFullYear()}`;
       break;
     case PopupTrackerNavItemsEnum.total:
-      data = `Since ${
-        sinceData.value
-          ? parseDate(sinceData.value)
-          : parseDate(new Date().toString())
-      }`;
+      data = `Since ${format(
+        "DD.MM.YYYY",
+        orderedSession(historyList.value)
+          ? orderedSession(historyList.value)
+          : new Date().getTime()
+      )}`;
       break;
   }
   return data;
 });
+
+const changeDate = (direction: number) => {
+  const newDate = new Date(currentData.value);
+  switch (selectedNavItem.value) {
+    case PopupTrackerNavItemsEnum.day: {
+      newDate.setDate(currentData.value.getDate() + direction);
+      break;
+    }
+    case PopupTrackerNavItemsEnum.week: {
+      newDate.setDate(currentData.value.getDate() + direction * 7);
+      break;
+    }
+    case PopupTrackerNavItemsEnum.month: {
+      newDate.setMonth(currentData.value.getMonth() + direction);
+      break;
+    }
+  }
+  currentData.value = newDate;
+};
 </script>
 
 <style scoped lang="scss">

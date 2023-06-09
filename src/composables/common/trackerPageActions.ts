@@ -1,60 +1,32 @@
-import {
-  computed,
-  onBeforeUnmount,
-  onMounted,
-  onUnmounted,
-  ref,
-  watch,
-} from "vue";
+import { computed, ref, watch } from "vue";
 import { PopupTrackerNavItemsEnum } from "@/constants/popup/popupNavItemsEnum";
 import { getSiteData } from "@/composables/common/chartBar";
 import {
-  currentData,
   dateDiff,
   getSevenDays,
   resetCurrentDay,
   sevenDays,
   sortByDate,
-  validUrlRegex,
 } from "@/composables/common/dateComposable";
 import {
   DateInterface,
   ObjectInterface,
   SiteInterface,
 } from "@/types/dataInterfaces";
-import {
-  finishLoader,
-  isLoader,
-  startLoader,
-} from "@/composables/common/loaderActions";
+import { finishLoader, isLoader } from "@/composables/common/loaderActions";
 import { EnumLoaderKeys } from "@/constants/EnumLoaderKeys";
 import {
   ActivityInterface,
   HistoryListInterface,
   SessionInterface,
 } from "@/types/TrackingInterface";
+import {
+  currentData,
+  selectedNavItem,
+} from "@/composables/popupTrackerActions";
 
 const intervalId = 0;
 let isEdit = true;
-
-export enum TrackerViews {
-  list = "list",
-  details = "details",
-}
-const defaultHostData = {
-  icon: "",
-  domain: "",
-};
-export const view = ref<TrackerViews>(TrackerViews.list);
-export const hostTabSelected = ref(defaultHostData);
-export const onBackClicked = () => {
-  hostTabSelected.value = defaultHostData;
-  view.value = TrackerViews.list;
-};
-
-export const selectedHostName = ref("");
-export const selectedTabId = ref(0);
-export const counter = ref(0);
 
 export const initialTracker = (isShowCurrentSession: boolean) => {
   // onMounted(() => {
@@ -130,78 +102,32 @@ const handleRuntimeMessage = (request: any, sender: any) => {
   }
 };
 
-export const current = (item: HistoryListInterface) => {
-  if (item && item.domain === selectedHostName.value) {
-    const findElement = item.sessions.find(
-      (f) => +f.tab_id === +selectedTabId.value
-    );
-    let result = 0;
-    if (findElement) {
-      result = timeSpentCalculation(findElement.activity);
-    }
-    return result + counter.value;
-  }
-  return 0;
-};
-
-export const sessionMask = (count: number, shorted = false) => {
-  if (count) {
-    const mask = ["sss"];
-    if (count > 59) {
-      mask.unshift("mmm");
-    }
-    if (count > 3599) {
-      if (shorted) {
-        mask.splice(mask.length - 1, 1);
-      }
-      mask.unshift("Hh");
-    }
-
-    if (count > 86399) {
-      if (shorted) {
-        mask.splice(mask.length - 1, 1);
-      }
-      mask.unshift("DD");
-    }
-
-    if (!(count % 60)) {
-      mask.splice(mask.length - 1, 1);
-    }
-    if (!(count % 3600)) {
-      mask.splice(mask.length - 1, 1);
-    }
-    if (!(count % 86400)) {
-      mask.splice(mask.length - 1, 1);
-    }
-    return mask.join(" ");
-  } else {
-    return "sss";
-  }
-};
-
 export const currentSessionData = ref({
   currentTab: "",
   currentUrl: "",
   time: 1,
 } as ObjectInterface);
 
-export const selectedNavItem = ref(
-  PopupTrackerNavItemsEnum.day as PopupTrackerNavItemsEnum
-);
 export const historyStorage = ref({} as ObjectInterface);
 
-export const isTotal = computed(() => {
-  return selectedNavItem.value === PopupTrackerNavItemsEnum.total;
-});
+export const getMonday = (d: Date) => {
+  d = new Date(d);
+  const day = d.getDay(),
+    diff = d.getDate() - day + (day == 0 ? -6 : 1);
+  return new Date(d.setDate(diff));
+};
 
-export const createStructure = (pages: {
-  [key: string]: {
-    icon: string;
-    sessions: {
-      [key: string]: SessionInterface[];
+export const createStructure = (
+  pages: {
+    [key: string]: {
+      icon: string;
+      sessions: {
+        [key: string]: SessionInterface[];
+      };
     };
-  };
-}): HistoryListInterface[] => {
+  },
+  filter = false
+): HistoryListInterface[] => {
   return Object.keys(pages).map((domain) => {
     const {
       icon,
@@ -222,15 +148,62 @@ export const createStructure = (pages: {
           (a: SessionInterface[], b: SessionInterface[], index: number) => {
             return a.concat(
               b.map((m) => {
+                let filteredActivity = m.activity;
+                if (
+                  filter &&
+                  selectedNavItem.value !== PopupTrackerNavItemsEnum.total
+                ) {
+                  filteredActivity = m.activity.filter((activity) => {
+                    switch (selectedNavItem.value) {
+                      case PopupTrackerNavItemsEnum.day: {
+                        const condition = (date: number) => {
+                          return (
+                            new Date(currentData.value).getDate() ===
+                            new Date(date).getDate()
+                          );
+                        };
+                        return condition(activity.begin);
+                      }
+                      case PopupTrackerNavItemsEnum.week: {
+                        const originalDate = getMonday(new Date());
+                        const currentDate = originalDate.getDate();
+                        let pass = false;
+                        for (let i = 0; i < 7; i++) {
+                          const weekday = new Date(originalDate).setDate(
+                            currentDate + i
+                          );
+                          if (
+                            new Date(weekday).getDate() ===
+                            new Date(activity.begin).getDate()
+                          ) {
+                            pass = true;
+                          }
+                        }
+                        return pass;
+                      }
+                      case PopupTrackerNavItemsEnum.month: {
+                        const condition = (date: number) => {
+                          return (
+                            new Date(currentData.value).getMonth() ===
+                            new Date(date).getMonth()
+                          );
+                        };
+                        return condition(activity.begin);
+                      }
+                    }
+                  });
+                }
                 return {
                   ...m,
                   tab_id: sessionsKeys[index],
+                  activity: filteredActivity,
                 };
               })
             );
           },
           []
         )
+        .filter((f) => f.activity.length)
         .sort((a: SessionInterface, b: SessionInterface) => {
           return sortByDate(a.activity[0].begin, b.activity[0].begin);
         }),

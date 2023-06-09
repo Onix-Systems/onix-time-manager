@@ -1,8 +1,7 @@
-import { selectedNavItem } from "@/composables/common/trackerPageActions";
-import { PopupTrackerNavItemsEnum } from "@/constants/popup/popupNavItemsEnum";
 import { computed, ref } from "vue";
 import { DateInterface } from "@/types/dataInterfaces";
 import { timeForTotal } from "@/composables/common/chartBar";
+import { currentData } from "@/composables/popupTrackerActions";
 
 export const SECONDS_PER_DAY = 86400;
 export const SECONDS_PER_HOUR = 3600;
@@ -12,9 +11,7 @@ export const validUrlRegex = /^(http|https):\/\//i;
 export const st = ["first", "second", "third"];
 
 export const today = new Date();
-export const currentData = ref(
-  new Date(today.getFullYear(), today.getMonth(), today.getDate())
-);
+
 export const dayOfWeek = computed(() => (currentData.value.getDay() + 6) % 7);
 export const monday = computed(() => {
   return new Date(
@@ -61,25 +58,6 @@ export const getSevenDays = () => {
       day: date(i).getDate(),
     });
   }
-};
-
-export const changeDate = (direction: number) => {
-  const newDate = new Date(currentData.value);
-  switch (selectedNavItem.value) {
-    case PopupTrackerNavItemsEnum.day: {
-      newDate.setDate(currentData.value.getDate() + direction);
-      break;
-    }
-    case PopupTrackerNavItemsEnum.week: {
-      newDate.setDate(currentData.value.getDate() + direction * 7);
-      break;
-    }
-    case PopupTrackerNavItemsEnum.month: {
-      newDate.setMonth(currentData.value.getMonth() + direction);
-      break;
-    }
-  }
-  currentData.value = newDate;
 };
 
 export const getTimeTotal = (number: number, timeInSeconds: number) => {
@@ -282,6 +260,32 @@ export const format = (
     }
   });
   return mask;
+};
+
+export const sessionMask = (count: number, shorted = false) => {
+  if (count) {
+    const mask = ["sss"];
+    if (count > 59) {
+      mask.unshift("mmm");
+    }
+    if (count > 3599) {
+      if (shorted) {
+        mask.splice(mask.length - 1, 1);
+      }
+      mask.unshift("Hh");
+    }
+
+    if (count > 86399) {
+      if (shorted) {
+        mask.splice(mask.length - 1, 1);
+      }
+      mask.unshift("DD");
+    }
+
+    return mask.join(" ");
+  } else {
+    return "sss";
+  }
 };
 
 export const parseDate = (dateString: number | string) => {

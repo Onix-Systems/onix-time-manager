@@ -16,9 +16,10 @@
 
 <style scoped lang="scss">
 .profile-main-loader {
-  width: 100%;
-  height: 100%;
+  width: 50px;
+  height: 50px;
   z-index: 1 !important;
+
   .loader {
     position: relative;
     margin: 0 auto;
@@ -29,10 +30,9 @@
       display: block;
       padding-top: 100%;
     }
+
     .circular-loader {
       height: 100%;
-      -webkit-animation: rotate 2.3s linear infinite;
-      animation: rotate 2.3s linear infinite;
       -webkit-transform-origin: center center;
       -ms-transform-origin: center center;
       transform-origin: center center;
@@ -41,6 +41,7 @@
       top: 0;
       left: 0;
       margin: auto;
+
       .loader-path {
         stroke-dasharray: 150, 200;
         stroke-dashoffset: -10;
@@ -48,6 +49,7 @@
           color 6s ease-in-out infinite;
         animation: dash 1.5s ease-in-out infinite, color 6s ease-in-out infinite;
         stroke-linecap: round;
+        transform: scale(1.5);
       }
     }
   }

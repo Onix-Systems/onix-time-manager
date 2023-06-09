@@ -1,5 +1,6 @@
-import { currentData, parseDate } from "@/composables/common/dateComposable";
+import { parseDate } from "@/composables/common/dateComposable";
 import { LimitsInterfaces } from "@/types/LimitsInterfaces";
+import { currentData } from "@/composables/popupTrackerActions";
 
 export const defaultLimits = {
   browserLimit: false,
