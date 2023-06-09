@@ -506,6 +506,7 @@ const detectRules = () => {
   chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
     if (tabs.length) {
       checkForRedirection(tabs[0]);
+      checkForPermission(tabs[0].url);
     }
   });
 };
@@ -530,6 +531,34 @@ const checkForRedirection = (tab) => {
             }
           }
         );
+      }
+    }
+  });
+};
+
+const checkForPermission = (tabUrl) => {
+  chrome.storage.local.get("permission").then((res) => {
+    if (res && res.permission) {
+      const type = res.permission.type;
+      if (type !== "off") {
+        const list = res.permission.list[type];
+        const keys = Object.keys(list);
+        if (keys.length && tabUrl.includes("https://")) {
+          const includes = keys.includes(new URL(tabUrl).hostname);
+          if (includes) {
+            if (type === "blacklist") {
+              createMessage({
+                message: "blockPage",
+              });
+              siteIsBlocked = true;
+            }
+          } else if (type === "whitelist") {
+            createMessage({
+              message: "blockPage",
+            });
+            siteIsBlocked = true;
+          }
+        }
       }
     }
   });
