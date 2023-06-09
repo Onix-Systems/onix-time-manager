@@ -99,14 +99,13 @@ const setBegin = (tab, onActive = false) => {
       }).then(() => {
         const tabId = tab.tabId ? tab.tabId : tab;
         getTabData(tabId).then(({ id, windowId, url, favIconUrl }) => {
-          const hostName = url ? new URL(url).hostname : url;
-          console.log(
-            "chrome.storage.local.set fot tab id:" + tabId + "next",
-            id,
-            windowId,
-            url,
-            favIconUrl
-          );
+          const urlData = new URL(url);
+          let hostName = url;
+          if (urlData.protocol !== "chrome-extension:") {
+            hostName = urlData.hostname;
+          } else {
+            hostName = "extensions";
+          }
           chrome.storage.local.set({
             tabInfo: {
               hostName,

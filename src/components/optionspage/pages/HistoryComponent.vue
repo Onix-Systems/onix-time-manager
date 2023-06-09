@@ -172,16 +172,16 @@ const cancel = () => {
 };
 
 const deleteItem = () => {
-  chrome.storage.local.get({ pages: {} }, (result) => {
-    if (result.pages) {
+  chrome.storage.local.get({ pagesOR: {} }, (result) => {
+    if (result.pagesOR) {
       const originPages: HistoryStorageInterface = {};
-      const domainKeys = Object.keys(result.pages);
+      const domainKeys = Object.keys(result.pagesOR);
       domainKeys.forEach((domainKey) => {
         const sessionsObj: { [key: string]: SessionInterface[] } = {};
-        const sessionsKeys = Object.keys(result.pages[domainKey].sessions);
+        const sessionsKeys = Object.keys(result.pagesOR[domainKey].sessions);
         sessionsKeys.forEach((sessionKey) => {
           const sessions: SessionInterface[] = [];
-          result.pages[domainKey].sessions[sessionKey].forEach(
+          result.pagesOR[domainKey].sessions[sessionKey].forEach(
             (session: SessionInterface) => {
               if (!selectedItems.value.includes(session.id)) {
                 sessions.push({ ...session });
@@ -194,14 +194,14 @@ const deleteItem = () => {
         });
         if (Object.keys(sessionsObj).length) {
           originPages[domainKey] = {
-            icon: result.pages[domainKey].icon,
+            icon: result.pagesOR[domainKey].icon,
             sessions: sessionsObj,
           };
         }
       });
-      chrome.storage.local.get({ pages: {} }, (result) => {
-        if (result.pages) {
-          chrome.storage.local.set({ pages: originPages });
+      chrome.storage.local.get({ pagesOR: {} }, (result) => {
+        if (result.pagesOR) {
+          chrome.storage.local.set({ pagesOR: originPages });
           historyList.value = createStructure(originPages);
           sortBy(SortEnum.date);
           selectedItems.value = [];
@@ -215,9 +215,9 @@ const deleteItem = () => {
 };
 
 const getHistory = () => {
-  chrome.storage.local.get({ pages: {} }, (result: any) => {
-    if (Object.keys(result.pages).length) {
-      historyList.value = createStructure(result.pages);
+  chrome.storage.local.get({ pagesOR: {} }, (result: any) => {
+    if (Object.keys(result.pagesOR).length) {
+      historyList.value = createStructure(result.pagesOR);
       sortBy(SortEnum.date);
     }
   });
@@ -260,7 +260,10 @@ const toggleCheckList = (id: string) => {
 };
 
 const lastVisit = (session: SessionInterface[]) => {
-  return format("DD.MM.YYYY HH:mm", session[0].activity[0].begin);
+  if (session.length) {
+    return format("DD.MM.YYYY HH:mm", session[0].activity[0].begin);
+  }
+  return "";
 };
 
 const timeSpent = (session: SessionInterface[]) => {
