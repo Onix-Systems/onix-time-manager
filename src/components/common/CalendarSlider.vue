@@ -17,6 +17,8 @@ import {
   historyList,
   isTotal,
   selectedNavItem,
+  isDetails,
+  hostItem,
 } from "@/composables/popupTrackerActions";
 import { format } from "@/composables/common/dateComposable";
 
@@ -42,9 +44,9 @@ const currentDate = computed(() => {
     case PopupTrackerNavItemsEnum.total:
       data = `Since ${format(
         "DD.MM.YYYY",
-        orderedSession(historyList.value)
-          ? orderedSession(historyList.value)
-          : new Date().getTime()
+        isDetails.value
+          ? orderedSession([hostItem.value])
+          : orderedSession(historyList.value)
       )}`;
       break;
   }

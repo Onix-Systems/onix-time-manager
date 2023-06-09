@@ -128,7 +128,7 @@ export const selectSite = (item: SiteInterface | ObjectInterface) => {
 export const setDayOptions = (sessions: SessionInterface[]) => {
   const activities: ActivityInterface[] = getActivities(sessions);
 
-  for (let i = 0; i < 24; i++) {
+  for (let i = 1; i < 25; i++) {
     let sum = 0;
     const originalDate = new Date(currentData.value);
     activities.forEach((f) => {
@@ -162,8 +162,8 @@ export const setDayOptions = (sessions: SessionInterface[]) => {
         }
       }
     });
-    timeData.value[i] = sum;
-    names.value.push(i);
+    timeData.value[i - 1] = sum;
+    names.value.push(i - 1);
   }
   Object.assign(optionsData.value.plugins.tooltip.callbacks, {
     title: (tooltipItem: TooltipItem[]) => {
@@ -209,11 +209,12 @@ export const setWeekOptions = (sessions: SessionInterface[]) => {
   totalData.value = {};
   const activities: ActivityInterface[] = getActivities(sessions);
 
-  const originalDate = new Date(currentData.value);
-  const currentDate = originalDate.getDate();
-
+  const monday = currentData.value.setDate(
+    currentData.value.getDate() - currentData.value.getDay() + 1
+  );
+  const mondayDate = new Date(monday).getDate();
   for (let i = 0; i < 7; i++) {
-    const weekday = new Date(originalDate).setDate(currentDate + i);
+    const weekday = new Date(monday).setDate(mondayDate + i + 1);
     let sum = 0;
     activities.forEach((f) => {
       const beginHourDiff = dateDiff(f.begin, weekday, DiffMeasurements.days);
@@ -226,11 +227,7 @@ export const setWeekOptions = (sessions: SessionInterface[]) => {
         }
       } else {
         if (!endHourDiff) {
-          sum += dateDiff(
-            new Date(originalDate).setDate(currentDate + (i - 1)),
-            f.end!,
-            DiffMeasurements.minutes
-          );
+          sum += dateDiff(weekday, f.end!, DiffMeasurements.minutes);
         }
       }
     });
@@ -286,9 +283,8 @@ export const setMonthOptions = (sessions: SessionInterface[]) => {
   totalDataValues();
   const activities: ActivityInterface[] = getActivities(sessions);
 
-  for (let i = 1; i < monthCount + 1; i++) {
-    names.value.push(i);
-    const currentDate = new Date(currentData.value).setDate(i);
+  for (let i = 0; i < monthCount + 1; i++) {
+    const currentDate = new Date(currentData.value).setDate(i + 1);
     let sum = 0;
     activities.forEach((f) => {
       const beginHourDiff = dateDiff(
@@ -297,6 +293,12 @@ export const setMonthOptions = (sessions: SessionInterface[]) => {
         DiffMeasurements.days
       );
       const endHourDiff = dateDiff(f.end!, currentDate, DiffMeasurements.days);
+      console.log(
+        beginHourDiff,
+        endHourDiff,
+        new Date(currentDate),
+        "index: " + i
+      );
       if (!beginHourDiff) {
         if (!endHourDiff) {
           sum += dateDiff(f.begin, f.end!, DiffMeasurements.minutes);
@@ -310,7 +312,8 @@ export const setMonthOptions = (sessions: SessionInterface[]) => {
       }
     });
 
-    timeData.value[i - 1] = sum;
+    timeData.value[i] = sum;
+    names.value.push(i);
   }
   Object.assign(optionsData.value.plugins.tooltip.callbacks, {
     title: (tooltipItem: TooltipItem[]) => {

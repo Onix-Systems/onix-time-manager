@@ -141,7 +141,7 @@ export const dateDiff = (
     end.getMinutes(),
     end.getSeconds()
   );
-  return Math.floor((utc2 - utc1) / divider);
+  return Math.abs(Math.floor((utc2 - utc1) / divider));
 };
 
 export const timeAmTo24 = (item: string) => {
@@ -269,17 +269,17 @@ export const sessionMask = (count: number, shorted = false) => {
       mask.unshift("mmm");
     }
     if (count > 3599) {
+      mask.unshift("Hh");
       if (shorted) {
         mask.splice(mask.length - 1, 1);
       }
-      mask.unshift("Hh");
     }
 
     if (count > 86399) {
+      mask.unshift("DDd");
       if (shorted) {
         mask.splice(mask.length - 1, 1);
       }
-      mask.unshift("DD");
     }
 
     return mask.join(" ");

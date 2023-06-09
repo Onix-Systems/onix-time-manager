@@ -120,26 +120,27 @@ export const currentSession = (item: HistoryListInterface, popup = true) => {
 };
 export const longestSession = (item: HistoryListInterface) => {
   const sessionsList = [...item.sessions];
-  const timeSpent = timeSpentCalculation(
-    sessionsList.sort(
-      (a, b) =>
-        timeSpentCalculation(b.activity) - timeSpentCalculation(a.activity)
-    )[0].activity
-  );
-
-  return currentSession(item) > timeSpent ? currentSession(item) : timeSpent;
+  if (sessionsList.length) {
+    const timeSpent = timeSpentCalculation(
+      sessionsList.sort(
+        (a, b) =>
+          timeSpentCalculation(b.activity) - timeSpentCalculation(a.activity)
+      )[0].activity
+    );
+    return currentSession(item) > timeSpent ? currentSession(item) : timeSpent;
+  }
+  return 0;
 };
 export const orderedSession = (data: HistoryListInterface[], first = true) => {
   if (data.length) {
-    const session = [...data];
-    session.sort((a, b) =>
-      sortByDate(
-        a.sessions[0].activity[0].begin,
-        b.sessions[0].activity[0].begin
-      )
-    );
-    const lastSession = session[0];
-    const activity = lastSession.sessions[0].activity;
+    const activity = [...data].reduce((a: ActivityInterface[], b) => {
+      return a.concat(
+        b.sessions.reduce((c: ActivityInterface[], d) => {
+          return c.concat(d.activity);
+        }, [])
+      );
+    }, []);
+    activity.sort((a, b) => sortByDate(a.begin, b.begin));
     if (first) {
       return activity.slice(-1)[0].begin;
     } else {
@@ -150,7 +151,7 @@ export const orderedSession = (data: HistoryListInterface[], first = true) => {
 };
 export const activityOrder = (data: HistoryListInterface[], first = true) => {
   if (data.length) {
-    const activity = data.reduce((a: ActivityInterface[], b) => {
+    const activity = [...data].reduce((a: ActivityInterface[], b) => {
       return a.concat(
         b.sessions.reduce((c: ActivityInterface[], d) => {
           return c.concat(d.activity);
@@ -160,7 +161,20 @@ export const activityOrder = (data: HistoryListInterface[], first = true) => {
     activity.sort((a, b) => sortByDate(a.begin, b.begin));
     const firstDate = new Date(activity[0].begin).getDate();
     const lastDate = new Date(activity[activity.length - 1].begin).getDate();
+    console.log(firstDate, lastDate);
     if (firstDate === lastDate) {
+      return new Date().getTime();
+    } else {
+      // const startDate = new Date(activity[0].begin);
+      // do {
+      //
+      //   while (startDate) {
+      //
+      //   }
+      // }
+      // for (let i = firstDate; i <= lastDate; i++) {
+      //   console.log(i);
+      // }
       return new Date().getTime();
     }
   }

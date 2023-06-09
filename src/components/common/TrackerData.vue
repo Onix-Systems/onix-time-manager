@@ -80,10 +80,24 @@
                 .tracking--site-title.total Most inactive day
                 .tracking--site-count.total {{format("DD.MM.YYYY", activityOrder([hostItem], false))}}
     template(v-else)
-      .site-info
-        chart-bar
-      .tracker--sites-list
-          sites-list(:is-show-current-session="false")
+      template(v-if="isList")
+        .site-info
+          chart-bar
+        .tracker--sites-list
+            sites-list(:is-show-current-session="false")
+      template(v-else)
+        .tracking--site-info.board-between
+          .tracking--site-board
+            .tracking--site-title.total Usage
+            .tracking--site-count.total {{ format(sessionMask(totalSessionTime(), true), totalSessionTime(), true, false) }}
+          .tracking--site-board
+            .tracking--site-title.total Sessions
+            .tracking--site-count.total {{ sessionCount(hostItem.sessions) }}
+          .tracking--site-board
+            .tracking--site-title.total Longest Session
+            .tracking--site-count.total {{format(sessionMask(longestSession(hostItem), true), longestSession(hostItem), true, false)}}
+        .site-info
+           chart-bar
 </template>
 
 <script setup lang="ts">
@@ -110,6 +124,7 @@ import {
   longestSession,
   orderedSession,
   activityOrder,
+  sessionCount,
 } from "@/composables/popupTrackerActions";
 import { format, sessionMask } from "@/composables/common/dateComposable";
 import { openOptions } from "@/composables/popup/popupActions";
@@ -421,11 +436,20 @@ const items = Object.values(PopupTrackerNavItemsEnum);
 
   &.dashboard {
     .sites {
+      overflow: hidden;
+
       max-width: 540px;
       height: 100%;
-      overflow: hidden;
+      padding-bottom: 60px;
     }
 
+    .tracking--site-info {
+      &.board-between {
+        .tracking--site-board {
+          width: calc(33% - 8px);
+        }
+      }
+    }
     .site-info {
       padding-bottom: 60px;
 
