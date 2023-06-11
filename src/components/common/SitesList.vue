@@ -9,12 +9,12 @@
       :item="item",
       show-sessions="true",
       :current-time="currentSession(item)",
-      :total-time="totalTime(showPadding)"
+      :total-time="totalTime(true)"
     )
     .sites--item-activity
       .item-block
         .item-block--title Current Session
-        .item-block--info {{ format(sessionMask(currentSession(item)), currentSession(item), true, false) }}
+        .item-block--info(v-if="currentSession(item)") {{ format(sessionMask(currentSession(item)), currentSession(item), true, false) }}
       .item-block
         .item-block--title Longest Session
         .item-block--info {{ format(sessionMask(longestSession(item)), longestSession(item), true, false) }}

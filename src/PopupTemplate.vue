@@ -29,7 +29,7 @@
 </template>
 
 <script lang="ts" setup>
-import { onBeforeUnmount, onMounted, watch } from "vue";
+import { onMounted, onUnmounted, watch } from "vue";
 
 import TrackerData from "@/components/common/TrackerData.vue";
 
@@ -38,8 +38,6 @@ import {
   view,
   hostTabSelected,
   onBackClicked,
-  initInterval,
-  destroyInterval,
   setToday,
   selectedNavItem,
   isDay,
@@ -60,16 +58,16 @@ import { PopupNavItemsEnum } from "@/constants/popup/popupNavItemsEnum";
 
 import { getPermission } from "@/composables/permissionComp";
 import { updateSettingsData } from "@/composables/settingsComp";
+import { destroyTrackerInterval } from "@/composables/common/timeCounter";
 
 onMounted(() => {
   setToday();
-  initInterval();
   loadData(isDetails.value);
   getPermission();
   updateSettingsData();
 });
-onBeforeUnmount(() => {
-  destroyInterval();
+onUnmounted(() => {
+  destroyTrackerInterval();
 });
 watch(
   () => selectedNavItem.value,

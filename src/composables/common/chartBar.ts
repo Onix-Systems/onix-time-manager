@@ -293,12 +293,6 @@ export const setMonthOptions = (sessions: SessionInterface[]) => {
         DiffMeasurements.days
       );
       const endHourDiff = dateDiff(f.end!, currentDate, DiffMeasurements.days);
-      console.log(
-        beginHourDiff,
-        endHourDiff,
-        new Date(currentDate),
-        "index: " + i
-      );
       if (!beginHourDiff) {
         if (!endHourDiff) {
           sum += dateDiff(f.begin, f.end!, DiffMeasurements.minutes);

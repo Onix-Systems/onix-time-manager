@@ -1,5 +1,5 @@
 <template lang="pug">
-.loader(v-if="showLoader")
+.loader(v-if="showLoader || showTimeLoader")
     circul-loader
 .tracker(v-else)
   template(v-if="popupView")
@@ -125,11 +125,13 @@ import {
   orderedSession,
   activityOrder,
   sessionCount,
+  currentSession,
 } from "@/composables/popupTrackerActions";
 import { format, sessionMask } from "@/composables/common/dateComposable";
 import { openOptions } from "@/composables/popup/popupActions";
 
 import { MenuItemsEnum } from "@/constants/menuItemsEnum";
+import { showTimeLoader } from "@/composables/common/timeCounter";
 
 const props = defineProps({
   popupView: Boolean,

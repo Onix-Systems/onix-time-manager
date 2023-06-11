@@ -17,19 +17,13 @@ import {
   SessionInterface,
 } from "@/types/TrackingInterface";
 import { getSiteData } from "@/composables/common/chartBar";
+import {
+  destroyTrackerInterval,
+  initTrackerInterval,
+  trackerCounter,
+} from "@/composables/common/timeCounter";
 
 export const showLoader = ref(true);
-export let interval = 0;
-export const counter = ref(0);
-export const initInterval = () => {
-  interval = setInterval(() => {
-    counter.value++;
-  }, 1000);
-};
-export const destroyInterval = () => {
-  clearInterval(interval);
-};
-
 export enum TrackerViews {
   list = "list",
   details = "details",
@@ -105,17 +99,21 @@ export const exceptionsCheck = computed(() => {
 export const historyList = ref<HistoryListInterface[]>([]);
 export const sessionCount = (sessions: SessionInterface[]) => sessions.length;
 export const currentSession = (item: HistoryListInterface, popup = true) => {
-  if (popup && item?.domain === selectedHostName.value) {
-    const findElement = item.sessions.find(
-      (f) => +f.tab_id === +selectedTabId.value
-    );
-    let result = 0;
-    if (findElement) {
-      result = timeSpentCalculation(findElement.activity);
+  if (trackerCounter.value) {
+    if (popup && item?.domain === selectedHostName.value) {
+      const findElement = item.sessions.find(
+        (f) => +f.tab_id === +selectedTabId.value
+      );
+      let result = 0;
+      if (findElement) {
+        result = timeSpentCalculation(findElement.activity);
+      }
+      return result + trackerCounter.value;
+    } else {
+      return 0;
     }
-    return result + counter.value;
   } else {
-    return timeSpentCalculation(item.sessions[0].activity);
+    return 0;
   }
 };
 export const longestSession = (item: HistoryListInterface) => {
@@ -223,6 +221,8 @@ export const loadData = (loadCharts = false) => {
         }
       }
     }
+    destroyTrackerInterval();
+    initTrackerInterval();
   });
 };
 export const totalTime = (useCounter = false) => {
@@ -231,15 +231,17 @@ export const totalTime = (useCounter = false) => {
     0
   );
   if (useCounter) {
-    total += counter.value;
+    total += trackerCounter.value;
   }
+  console.log("total", total);
   return total;
 };
+
 export const totalSessionTime = (useCounter = false) => {
   let total = totalTimeCalculation(hostItem.value.sessions);
   if (total) {
     if (useCounter) {
-      total += counter.value;
+      total += trackerCounter.value;
     }
     return total;
   }

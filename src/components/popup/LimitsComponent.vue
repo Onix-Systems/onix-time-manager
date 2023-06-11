@@ -2,7 +2,7 @@
 .limits-page--content(
   :class="{ empty: !limitsData.sitesLimit || !isLengthList }"
 )
-  template(v-if="!isLoader(EnumLoaderKeys.popupLimits)")
+  template(v-if="!showLoader && !showTimeLoader")
     .limits-page--content-tracker(v-if="limitsObject.browserLimit")
       h2.title The browser will be block after
       p.subtitle(:class="{ mb: isLengthList }") {{ globalLimit }}
@@ -33,7 +33,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref } from "vue";
+import { computed, onBeforeUnmount, onMounted, onUnmounted, ref } from "vue";
 
 import ListItems from "@/components/common/ListItems.vue";
 import EmptyTemplate from "@/components/common/EmptyTemplate.vue";
@@ -41,21 +41,27 @@ import EmptyTemplate from "@/components/common/EmptyTemplate.vue";
 import { openOptions } from "@/composables/popup/popupActions";
 
 import { MenuItemsEnum } from "@/constants/menuItemsEnum";
-import { validUrlRegex } from "@/composables/common/dateComposable";
-import {
-  finishLoader,
-  isLoader,
-  loaderKeys,
-  startLoader,
-} from "@/composables/common/loaderActions";
+import { format, validUrlRegex } from "@/composables/common/dateComposable";
+import { finishLoader, startLoader } from "@/composables/common/loaderActions";
 import { EnumLoaderKeys } from "@/constants/EnumLoaderKeys";
 import CirculLoader from "@/components/common/CirculLoader.vue";
 import { defaultLimits } from "@/composables/limitsComp";
 import { LimitsInterfaces } from "@/types/LimitsInterfaces";
+import {
+  createStructure,
+  totalTimeCalculation,
+} from "@/composables/common/trackerPageActions";
+import { SessionInterface } from "@/types/TrackingInterface";
+import { showLoader } from "@/composables/popupTrackerActions";
+import {
+  showTimeLoader,
+  trackerCounter,
+} from "@/composables/common/timeCounter";
 
 let intervalId = 0;
 const currentUrl = ref("" as any);
-
+const timeLimit = ref(0);
+const historyTotalTime = ref(0);
 const limitsData = ref({
   ...defaultLimits,
 } as LimitsInterfaces);
@@ -77,6 +83,7 @@ onMounted(() => {
     }
     const browserTime = { ...limitsObject.value.browserTime };
     const limitTime = browserTime.timeLimit;
+    timeLimit.value = browserTime.timeLimit;
     let timeSpent = browserTime.timeSpent;
     if (limitTime - timeSpent > 0) {
       editConvertedDate(limitTime - timeSpent);
@@ -136,13 +143,27 @@ const editConvertedDate = (time: any) => {
 
 const convertedDate = ref({ hour: 0, minute: 0, seconds: 0, totalTime: 0 });
 
+chrome.storage.local.get({ pagesOR: {} }, (result) => {
+  if (result.pagesOR) {
+    let structuredArray = createStructure(result.pagesOR, true, true);
+    structuredArray = structuredArray.filter((f) => f.sessions.length);
+
+    if (structuredArray.length) {
+      historyTotalTime.value = totalTimeCalculation(
+        structuredArray.reduce((a: SessionInterface[], b) => {
+          return a.concat(b.sessions);
+        }, [])
+      );
+    }
+  }
+});
+
 const globalLimit = computed(() => {
-  return `${String(convertedDate.value.hour).padStart(2, "0")}h ${String(
-    convertedDate.value.minute
-  ).padStart(2, "0")}m ${String(convertedDate.value.seconds).padStart(
-    2,
-    "0"
-  )}s`;
+  return format(
+    timeLimit.value > 3600 ? "HHh mmm sss" : "mmm sss",
+    timeLimit.value - historyTotalTime.value - trackerCounter.value,
+    true
+  );
 });
 </script>
 

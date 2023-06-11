@@ -9,7 +9,7 @@
         .percent-section--line
           .percent-section--line-percent(:style="{ width: `${getPercent}%` }")
         .percent-section--percent {{ getPercent + "%" }}
-        .percent-section--time {{ format(sessionMask(totalTimeCalculation(item.sessions) + currentTime), totalTimeCalculation(item.sessions) + currentTime, true, false) }}
+        .percent-section--time {{ format(sessionMask(totalSessionTime), totalSessionTime, true, false) }}
     .sessions(v-if="showSessions") {{ `${item.sessions.length} sessions` }}
 </template>
 
@@ -20,6 +20,8 @@ import { totalTimeCalculation } from "@/composables/common/trackerPageActions";
 import { format } from "@/composables/common/dateComposable";
 
 import { HistoryListInterface } from "@/types/TrackingInterface";
+import { selectedHostName } from "@/composables/popupTrackerActions";
+import { trackerCounter } from "@/composables/common/timeCounter";
 
 const props = defineProps({
   item: {
@@ -42,14 +44,18 @@ const props = defineProps({
 
 const getPercent = computed(() => {
   if (props.item && props.totalTime) {
-    return (
-      ((totalTimeCalculation(props.item.sessions) + props.currentTime) /
-        props.totalTime) *
-      100
-    ).toFixed(2);
+    return ((totalSessionTime.value / props.totalTime) * 100).toFixed(2);
   } else {
     return 0;
   }
+});
+
+const totalSessionTime = computed(() => {
+  let timer = 0;
+  if (props.item.domain === selectedHostName.value) {
+    timer = trackerCounter.value;
+  }
+  return totalTimeCalculation(props.item.sessions) + timer;
 });
 
 const sessionMask = (count: number) => {

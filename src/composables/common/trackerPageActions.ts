@@ -126,7 +126,8 @@ export const createStructure = (
       };
     };
   },
-  filter = false
+  filter = false,
+  getToday = false
 ): HistoryListInterface[] => {
   return Object.keys(pages).map((domain) => {
     const {
@@ -149,49 +150,56 @@ export const createStructure = (
             return a.concat(
               b.map((m) => {
                 let filteredActivity = m.activity;
-                if (
-                  filter &&
-                  selectedNavItem.value !== PopupTrackerNavItemsEnum.total
-                ) {
-                  filteredActivity = m.activity.filter((activity) => {
-                    switch (selectedNavItem.value) {
-                      case PopupTrackerNavItemsEnum.day: {
-                        const condition = (date: number) => {
-                          return (
-                            new Date(currentData.value).getDate() ===
-                            new Date(date).getDate()
-                          );
-                        };
-                        return condition(activity.begin);
-                      }
-                      case PopupTrackerNavItemsEnum.week: {
-                        const originalDate = getMonday(new Date());
-                        const currentDate = originalDate.getDate();
-                        let pass = false;
-                        for (let i = 0; i < 7; i++) {
-                          const weekday = new Date(originalDate).setDate(
-                            currentDate + i
-                          );
-                          if (
-                            new Date(weekday).getDate() ===
-                            new Date(activity.begin).getDate()
-                          ) {
-                            pass = true;
-                          }
+                if (filter) {
+                  if (getToday) {
+                    filteredActivity = m.activity.filter(
+                      (activity) =>
+                        new Date().getDate() ===
+                        new Date(activity.begin).getDate()
+                    );
+                  } else if (
+                    selectedNavItem.value !== PopupTrackerNavItemsEnum.total
+                  ) {
+                    filteredActivity = m.activity.filter((activity) => {
+                      switch (selectedNavItem.value) {
+                        case PopupTrackerNavItemsEnum.day: {
+                          const condition = (date: number) => {
+                            return (
+                              new Date(currentData.value).getDate() ===
+                              new Date(date).getDate()
+                            );
+                          };
+                          return condition(activity.begin);
                         }
-                        return pass;
+                        case PopupTrackerNavItemsEnum.week: {
+                          const originalDate = getMonday(new Date());
+                          const currentDate = originalDate.getDate();
+                          let pass = false;
+                          for (let i = 0; i < 7; i++) {
+                            const weekday = new Date(originalDate).setDate(
+                              currentDate + i
+                            );
+                            if (
+                              new Date(weekday).getDate() ===
+                              new Date(activity.begin).getDate()
+                            ) {
+                              pass = true;
+                            }
+                          }
+                          return pass;
+                        }
+                        case PopupTrackerNavItemsEnum.month: {
+                          const condition = (date: number) => {
+                            return (
+                              new Date(currentData.value).getMonth() ===
+                              new Date(date).getMonth()
+                            );
+                          };
+                          return condition(activity.begin);
+                        }
                       }
-                      case PopupTrackerNavItemsEnum.month: {
-                        const condition = (date: number) => {
-                          return (
-                            new Date(currentData.value).getMonth() ===
-                            new Date(date).getMonth()
-                          );
-                        };
-                        return condition(activity.begin);
-                      }
-                    }
-                  });
+                    });
+                  }
                 }
                 return {
                   ...m,
