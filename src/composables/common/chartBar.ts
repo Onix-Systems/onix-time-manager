@@ -144,25 +144,20 @@ export const setDayOptions = (sessions: SessionInterface[]) => {
       );
       if (!beginHourDiff) {
         if (!endHourDiff) {
-          sum += dateDiff(f.begin, f.end!, DiffMeasurements.minutes);
+          sum += dateDiff(f.begin, f.end!);
         } else {
-          sum += dateDiff(
-            f.begin,
-            new Date(originalDate).setHours(i),
-            DiffMeasurements.minutes
-          );
+          const beginDate = new Date(f.begin);
+          sum += (60 - beginDate.getMinutes()) * 60;
         }
+      } else if (!endHourDiff) {
+        const endDate = new Date(f.end!);
+        sum += endDate.getMinutes() * 60;
       } else {
-        if (!endHourDiff) {
-          sum += dateDiff(
-            new Date(originalDate).setHours(i - 1),
-            f.end!,
-            DiffMeasurements.minutes
-          );
-        }
+        // do later
       }
     });
-    timeData.value[i - 1] = sum;
+
+    timeData.value[i - 1] = Math.floor(sum / 60);
     names.value.push(i - 1);
   }
   Object.assign(optionsData.value.plugins.tooltip.callbacks, {
@@ -221,17 +216,19 @@ export const setWeekOptions = (sessions: SessionInterface[]) => {
       const endHourDiff = dateDiff(f.end!, weekday, DiffMeasurements.days);
       if (!beginHourDiff) {
         if (!endHourDiff) {
-          sum += dateDiff(f.begin, f.end!, DiffMeasurements.minutes);
+          sum += dateDiff(f.begin, f.end!);
         } else {
-          sum += dateDiff(f.begin, weekday, DiffMeasurements.minutes);
+          const beginDate = new Date(f.begin);
+          sum += (60 - beginDate.getMinutes()) * 60;
         }
+      } else if (!endHourDiff) {
+        const endDate = new Date(f.end!);
+        sum += endDate.getMinutes() * 60;
       } else {
-        if (!endHourDiff) {
-          sum += dateDiff(weekday, f.end!, DiffMeasurements.minutes);
-        }
+        // do later
       }
     });
-    timeData.value[i] = sum;
+    timeData.value[i] = Math.floor(sum / 60);
   }
   Object.assign(optionsData.value.plugins.tooltip.callbacks, {
     title: (tooltipItem: TooltipItem[]) => {
@@ -295,18 +292,20 @@ export const setMonthOptions = (sessions: SessionInterface[]) => {
       const endHourDiff = dateDiff(f.end!, currentDate, DiffMeasurements.days);
       if (!beginHourDiff) {
         if (!endHourDiff) {
-          sum += dateDiff(f.begin, f.end!, DiffMeasurements.minutes);
+          sum += dateDiff(f.begin, f.end!);
         } else {
-          sum += dateDiff(f.begin, currentDate, DiffMeasurements.minutes);
+          const beginDate = new Date(f.begin);
+          sum += (60 - beginDate.getMinutes()) * 60;
         }
+      } else if (!endHourDiff) {
+        const endDate = new Date(f.end!);
+        sum += endDate.getMinutes() * 60;
       } else {
-        if (!endHourDiff) {
-          sum += dateDiff(currentDate, f.end!, DiffMeasurements.minutes);
-        }
+        // do later
       }
     });
 
-    timeData.value[i] = sum;
+    timeData.value[i] = Math.floor(sum / 60);
     names.value.push(i);
   }
   Object.assign(optionsData.value.plugins.tooltip.callbacks, {

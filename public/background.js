@@ -238,8 +238,8 @@ const checkForUrl = (tab) => {
         hostName = "extensions";
       }
       const keys = ["newtab", "extensions"];
+      destroyTrackerInterval();
       if (keys.every((e) => hostName !== e)) {
-        destroyTrackerInterval();
         initTrackerInterval();
         console.log("checkForUrl start initTrackerInterval");
       }
@@ -288,9 +288,31 @@ chrome.tabs.onCreated.addListener((tab) => {
   console.log("onCreated", tab);
   isTabCreated = true;
   tabIdCopy = tab.id;
+  const tabId = tab.tabId ? tab.tabId : tab;
+  if (tab.pendingUrl) {
+    const { pendingUrl } = tab;
+    const urlData = pendingUrl ? new URL(pendingUrl) : pendingUrl;
+    let hostName = pendingUrl;
+    if (pendingUrl && urlData.protocol !== "chrome-extension:") {
+      hostName = urlData.hostname;
+    } else {
+      hostName = "extensions";
+    }
+    const keys = ["newtab", "extensions"];
+    destroyTrackerInterval();
+    if (keys.every((e) => hostName !== e)) {
+    } else {
+      chrome.storage.local.set({
+        tabInfo: {
+          hostName: "extensions",
+          id: tab.id,
+          windowId: tab.windowId,
+          updateAt: new Date().getTime(),
+        },
+      });
+    }
+  }
   detectRules();
-  destroyTrackerInterval();
-  initTrackerInterval();
 });
 chrome.tabs.onRemoved.addListener((sessionId) => {
   if (tabIdCopy === sessionId) {

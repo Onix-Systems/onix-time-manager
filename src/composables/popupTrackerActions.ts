@@ -182,6 +182,7 @@ export const getData = (useFilter = true) =>
   new Promise((resolve) => {
     chrome.storage.local.get({ pagesOR: {} }, (result) => {
       if (result.pagesOR) {
+        console.log(result.pagesOR);
         const structuredArray = createStructure(result.pagesOR, useFilter);
         historyList.value = structuredArray.filter((f) => f.sessions.length);
         historyList.value.sort(
@@ -208,6 +209,10 @@ export const loadData = (loadCharts = false) => {
         } else {
           hostItem.value.sessions = [];
         }
+        console.log(
+          "hostTabSelected.value.domain: " + hostTabSelected.value.domain,
+          hostItem.value.sessions
+        );
         getSiteData(hostItem.value.sessions);
       } else {
         const sessions = historyList.value.reduce(
@@ -215,6 +220,7 @@ export const loadData = (loadCharts = false) => {
           []
         );
         if (sessions.length) {
+          console.log("else", sessions);
           getSiteData(sessions);
         } else {
           getSiteData([]);
