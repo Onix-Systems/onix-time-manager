@@ -27,7 +27,12 @@
       v-else,
       :class="{ 'with-limit': limitsObject.browserLimit }"
     )
-      list-items(:items="limitsObject.list", :limits="true", :block="true")
+      list-items(
+        :items="limitsObject.list",
+        :limits="true",
+        :block="true",
+        :calculation="true"
+      )
   .loader(v-else)
     circul-loader
 </template>
@@ -52,7 +57,10 @@ import {
   totalTimeCalculation,
 } from "@/composables/common/trackerPageActions";
 import { SessionInterface } from "@/types/TrackingInterface";
-import { showLoader } from "@/composables/popupTrackerActions";
+import {
+  generalTimeSpent,
+  showLoader,
+} from "@/composables/popupTrackerActions";
 import {
   showTimeLoader,
   trackerCounter,
@@ -61,7 +69,6 @@ import {
 let intervalId = 0;
 const currentUrl = ref("" as any);
 const timeLimit = ref(0);
-const historyTotalTime = ref(0);
 const limitsData = ref({
   ...defaultLimits,
 } as LimitsInterfaces);
@@ -143,25 +150,10 @@ const editConvertedDate = (time: any) => {
 
 const convertedDate = ref({ hour: 0, minute: 0, seconds: 0, totalTime: 0 });
 
-chrome.storage.local.get({ pagesOR: {} }, (result) => {
-  if (result.pagesOR) {
-    let structuredArray = createStructure(result.pagesOR, true, true);
-    structuredArray = structuredArray.filter((f) => f.sessions.length);
-
-    if (structuredArray.length) {
-      historyTotalTime.value = totalTimeCalculation(
-        structuredArray.reduce((a: SessionInterface[], b) => {
-          return a.concat(b.sessions);
-        }, [])
-      );
-    }
-  }
-});
-
 const globalLimit = computed(() => {
   return format(
     timeLimit.value > 3600 ? "HHh mmm sss" : "mmm sss",
-    timeLimit.value - historyTotalTime.value - trackerCounter.value,
+    timeLimit.value - generalTimeSpent.value - trackerCounter.value,
     true
   );
 });

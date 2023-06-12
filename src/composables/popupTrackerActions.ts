@@ -58,6 +58,22 @@ export const isDay = computed(
   () => selectedNavItem.value === PopupTrackerNavItemsEnum.day
 );
 
+export const generalTimeSpent = ref(0);
+export const generalListSpent = ref<{ [key: string]: number }>({});
+export const getLimitsData = () =>
+  new Promise((resolve) => {
+    chrome.storage.local.get("timeSpent").then((res) => {
+      if (res.timeSpent) {
+        const { general, list } = res.timeSpent;
+        generalTimeSpent.value = general;
+        generalListSpent.value = list;
+        resolve(true);
+      } else {
+        resolve(true);
+      }
+    });
+  });
+
 const defaultHostData = {
   icon: "",
   domain: "",
@@ -182,13 +198,13 @@ export const getData = (useFilter = true) =>
   new Promise((resolve) => {
     chrome.storage.local.get({ pagesOR: {} }, (result) => {
       if (result.pagesOR) {
-        console.log(result.pagesOR);
         const structuredArray = createStructure(result.pagesOR, useFilter);
         historyList.value = structuredArray.filter((f) => f.sessions.length);
         historyList.value.sort(
           (a, b) =>
             totalTimeCalculation(b.sessions) - totalTimeCalculation(a.sessions)
         );
+        console.log("historyList", historyList.value);
         resolve(true);
       } else {
         resolve(true);
@@ -197,7 +213,7 @@ export const getData = (useFilter = true) =>
   });
 export const loadData = (loadCharts = false) => {
   showLoader.value = true;
-  Promise.all([getData(), getHostData()]).then(() => {
+  Promise.all([getData(), getHostData(), getLimitsData()]).then(() => {
     showLoader.value = false;
     if (loadCharts) {
       if (hostTabSelected.value.domain) {
@@ -239,7 +255,6 @@ export const totalTime = (useCounter = false) => {
   if (useCounter) {
     total += trackerCounter.value;
   }
-  console.log("total", total);
   return total;
 };
 

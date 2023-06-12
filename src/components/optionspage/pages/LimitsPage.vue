@@ -26,11 +26,6 @@
           @cancel="isOpenTimeLimit = false",
           @saveLimits="saveLocalGlobalLimit($event)"
         )
-      .schedule-right
-        button.content--button.raised(
-          :class="{ edit: !isOpenSchedule, disabled: !limitsData.browserLimit }",
-          @click="openSchedule()"
-        ) {{ isOpenSchedule ? "Save" : "Edit" }}
     .limits--block.mb
       .limits--block-left
         .limits--block-column
@@ -173,13 +168,25 @@ const deleteAction = () => {
       limitsData.value = limits;
     }
     delete limitsData.value.list[currentKey.value];
+    chrome.storage.local.get("timeSpent").then((res) => {
+      const timeSpent = {
+        general: 0,
+        list: {} as { [key: string]: number },
+      };
+      if (res.timeSpent) {
+        timeSpent.general = res.timeSpent.general;
+        timeSpent.list = res.timeSpent.list;
+        delete timeSpent.list[currentKey.value];
+        chrome.storage.local.set({ timeSpent });
+      }
+    });
     setLimits();
     editData.value = {};
   });
 };
 
 const openTimeLimit = () => {
-  if (limitsData.value.browserLimit && isOpenSchedule.value) {
+  if (limitsData.value.browserLimit) {
     isOpenTimeLimit.value = !isOpenTimeLimit.value;
   }
 };
@@ -189,12 +196,6 @@ const isOpenSchedule = ref(false);
 const openSchedule = () => {
   if (limitsData.value.browserLimit) {
     if (isOpenSchedule.value) {
-      saveGlobalLimit(
-        localLimit.value
-          ? localLimit.value
-          : limitsData.value.browserTime.timeLimit
-      );
-      localLimit.value = 0;
       isOpenTimeLimit.value = false;
     }
     isOpenSchedule.value = !isOpenSchedule.value;
@@ -206,6 +207,21 @@ const localLimit = ref(0);
 const saveLocalGlobalLimit = (time: number) => {
   isOpenTimeLimit.value = false;
   localLimit.value = time;
+  saveGlobalLimit(
+    localLimit.value ? localLimit.value : limitsData.value.browserTime.timeLimit
+  );
+  chrome.storage.local.get("timeSpent").then((res) => {
+    const timeSpent = {
+      general: 0,
+      list: {},
+    };
+    if (res.timeSpent) {
+      timeSpent.list = res.timeSpent.list;
+      chrome.storage.local.set({ timeSpent });
+    }
+    chrome.storage.local.set({ timeSpent });
+  });
+  localLimit.value = 0;
 };
 
 const disableBrowser = () => {

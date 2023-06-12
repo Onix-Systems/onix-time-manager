@@ -151,6 +151,19 @@ const submit = () => {
             close();
           });
         }
+        chrome.storage.local.get("timeSpent").then((res) => {
+          const timeSpent = {
+            general: 0,
+            list: {} as { [key: string]: number },
+          };
+          if (res.timeSpent) {
+            timeSpent.general = res.timeSpent.general;
+            timeSpent.list = res.timeSpent.list;
+            timeSpent.list[copyGroup.domain] = 0;
+            chrome.storage.local.set({ timeSpent });
+          }
+          chrome.storage.local.set({ timeSpent });
+        });
         errors.value.errorTime = false;
       }
     });

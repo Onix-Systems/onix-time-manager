@@ -268,11 +268,19 @@ export const sessionMask = (count: number, shorted = false) => {
     if (count > 59) {
       mask.unshift("mmm");
     }
+    if (count === 60) {
+      return "mmm";
+    }
+
     if (count > 3599) {
       mask.unshift("Hh");
       if (shorted) {
         mask.splice(mask.length - 1, 1);
       }
+    }
+
+    if (count === 3600) {
+      return "Hh";
     }
 
     if (count > 86399) {

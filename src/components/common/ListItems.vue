@@ -8,7 +8,8 @@
       )
     .item--info(:class="{ limits, redirect }")
       p.bold
-        template(v-if="limits") {{ time(value.siteLimit, block) }}
+        template(v-if="calculation") {{ localLimit(value) }}
+        template(v-else-if="limits") {{ time(value.siteLimit, block) }}
         template(v-if="redirect") {{ `Redirection to ${value.redirect}` }}
       p(v-if="redirect") From {{ value.initial }}
       p(v-else) {{ limits ? value.domain : value }}
@@ -21,8 +22,13 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, defineEmits } from "vue";
-import { convertTimeHMS } from "@/composables/common/dateComposable";
+import { defineProps, defineEmits, computed } from "vue";
+import { convertTimeHMS, format } from "@/composables/common/dateComposable";
+import { trackerCounter } from "@/composables/common/timeCounter";
+import {
+  generalListSpent,
+  selectedHostName,
+} from "@/composables/popupTrackerActions";
 const props = defineProps({
   items: {
     type: Array,
@@ -45,6 +51,10 @@ const props = defineProps({
     default: false,
   },
   limits: {
+    type: Boolean,
+    default: false,
+  },
+  calculation: {
     type: Boolean,
     default: false,
   },
@@ -76,6 +86,30 @@ const time = (blockItem: any, block: boolean) => {
   }
 };
 
+const localLimit = ({
+  siteLimit,
+  domain,
+}: {
+  siteLimit: { timeLimit: number };
+  domain: string;
+}) => {
+  const useCounter = domain.includes(selectedHostName.value);
+  const limitSpent = generalListSpent.value[domain];
+
+  const spent =
+    siteLimit.timeLimit - limitSpent - (useCounter ? trackerCounter.value : 0);
+  if (spent > 0) {
+    return `Block after ${format(
+      siteLimit.timeLimit > 3600 ? "HHh mmm sss" : "mmm sss",
+      siteLimit.timeLimit -
+        limitSpent -
+        (useCounter ? trackerCounter.value : 0),
+      true
+    )}`;
+  } else {
+    return "Blocked";
+  }
+};
 const imgPath = (value: { domain?: string; initial?: string } & string) => {
   if (props.limits) {
     return value.domain;
