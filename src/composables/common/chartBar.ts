@@ -125,6 +125,41 @@ export const selectSite = (item: SiteInterface | ObjectInterface) => {
   resetCurrentDay();
 };
 
+const scaleY = (day: boolean) => {
+  let extraIndex = 0;
+  const biggest = [...timeData.value].sort((a, b) => b - a)[0];
+  optionsData.value.scales.y.min = 0;
+
+  const getExtra = () => {
+    [600, 1200, 1800, 2400, 3000, 3600].find((f, index) => {
+      if (biggest < f) {
+        extraIndex = 10 * (index + 1);
+        return true;
+      }
+    });
+  };
+  if (day || biggest < 3600) {
+    getExtra();
+    optionsData.value.scales.y.ticks = {
+      stepSize: 10,
+      color: "#A9A9A9",
+      callback: (value: number) => {
+        return `${Math.floor(value / 60)}m`;
+      },
+    };
+    optionsData.value.scales.y.max = 60 * extraIndex;
+  } else {
+    optionsData.value.scales.y.ticks = {
+      stepSize: 3600,
+      color: "#A9A9A9",
+      callback: (value: number) => {
+        return `${Math.floor(value / 3600)}h`;
+      },
+    };
+    optionsData.value.scales.y.max = null;
+  }
+};
+
 export const setDayOptions = (sessions: SessionInterface[]) => {
   const activities: ActivityInterface[] = getActivities(sessions);
 
@@ -157,19 +192,9 @@ export const setDayOptions = (sessions: SessionInterface[]) => {
       }
     });
 
-    timeData.value[i - 1] = Math.floor(sum / 60);
+    timeData.value[i - 1] = sum;
     names.value.push(i - 1);
   }
-  Object.assign(optionsData.value.plugins.tooltip.callbacks, {
-    title: (tooltipItem: TooltipItem[]) => {
-      return `${tooltipItem[0].dataIndex} ${
-        tooltipItem[0].dataIndex <= 12 ? "AM" : "PM"
-      }`;
-    },
-    label: (tooltipItem: TooltipItem) => {
-      return formatDuration(tooltipItem.raw * 60);
-    },
-  });
   Object.assign(optionsData.value.scales.x.ticks, {
     callback: (value: string | number, index: number) => {
       if (selectedNavItem.value === PopupTrackerNavItemsEnum.day) {
@@ -177,15 +202,22 @@ export const setDayOptions = (sessions: SessionInterface[]) => {
       }
     },
   });
-  optionsData.value.scales.y.ticks = {
-    stepSize: 10,
-    color: "#A9A9A9",
-    callback: (value: number | string) => {
-      return `${value}m`;
+  Object.assign(optionsData.value.plugins.tooltip.callbacks, {
+    title: (tooltipItem: TooltipItem[]) => {
+      return `${tooltipItem[0].dataIndex} ${
+        tooltipItem[0].dataIndex <= 12 ? "AM" : "PM"
+      }`;
     },
-  };
-  optionsData.value.scales.y.min = 0;
-  optionsData.value.scales.y.max = 60;
+    label: (tooltipItem: TooltipItem) => {
+      let seconds = "";
+      if (tooltipItem.raw % 60) {
+        seconds += ` ${tooltipItem.raw % 60}s`;
+      }
+
+      return `${Math.floor(tooltipItem.raw / 60)}m${seconds}`;
+    },
+  });
+  scaleY(true);
 };
 
 const totalDataValues = () => {
@@ -228,7 +260,7 @@ export const setWeekOptions = (sessions: SessionInterface[]) => {
         // do later
       }
     });
-    timeData.value[i] = Math.floor(sum / 60);
+    timeData.value[i] = sum;
   }
   Object.assign(optionsData.value.plugins.tooltip.callbacks, {
     title: (tooltipItem: TooltipItem[]) => {
@@ -244,7 +276,7 @@ export const setWeekOptions = (sessions: SessionInterface[]) => {
       return `${weeks[tooltipItem[0].dataIndex]}`;
     },
     label: (tooltipItem: TooltipItem) => {
-      return formatDuration(tooltipItem.raw * 60);
+      return formatDuration(tooltipItem.raw);
     },
   });
   Object.assign(optionsData.value.scales.x.ticks, {
@@ -254,20 +286,7 @@ export const setWeekOptions = (sessions: SessionInterface[]) => {
       }
     },
   });
-  optionsData.value.scales.y.ticks = {
-    stepSize: 60,
-    color: "#A9A9A9",
-    callback: (value: number) => {
-      return `${value / 60}h`;
-    },
-  };
-  optionsData.value.scales.y.min = 0;
-  optionsData.value.scales.y.max = null;
-  const nonNullValues = timeData.value.filter((item) => item !== null);
-  const maxItem = Math.max(...nonNullValues);
-  if (maxItem < 60) {
-    optionsData.value.scales.y.max = 60;
-  }
+  scaleY(false);
 };
 
 export const setMonthOptions = (sessions: SessionInterface[]) => {
@@ -305,7 +324,7 @@ export const setMonthOptions = (sessions: SessionInterface[]) => {
       }
     });
 
-    timeData.value[i] = Math.floor(sum / 60);
+    timeData.value[i] = sum;
     names.value.push(i);
   }
   Object.assign(optionsData.value.plugins.tooltip.callbacks, {
@@ -317,7 +336,7 @@ export const setMonthOptions = (sessions: SessionInterface[]) => {
       return `${names.value[tooltipItem[0].dataIndex]} ${monthName}`;
     },
     label: (tooltipItem: TooltipItem) => {
-      return formatDuration(tooltipItem.raw * 60);
+      return formatDuration(tooltipItem.raw);
     },
   });
   Object.assign(optionsData.value.scales.x.ticks, {
@@ -327,18 +346,5 @@ export const setMonthOptions = (sessions: SessionInterface[]) => {
       }
     },
   });
-  optionsData.value.scales.y.ticks = {
-    stepSize: 60,
-    color: "#A9A9A9",
-    callback: (value: number) => {
-      return `${Math.ceil(value / 60)}h`;
-    },
-  };
-  optionsData.value.scales.y.min = 0;
-  optionsData.value.scales.y.max = null;
-  const nonNullValues = timeData.value.filter((item) => item !== null);
-  const maxItem = Math.max(...nonNullValues);
-  if (maxItem < 60) {
-    optionsData.value.scales.y.max = 60;
-  }
+  scaleY(false);
 };

@@ -175,7 +175,6 @@ export const activityOrder = (data: HistoryListInterface[], first = true) => {
     activity.sort((a, b) => sortByDate(a.begin, b.begin));
     const firstDate = new Date(activity[0].begin).getDate();
     const lastDate = new Date(activity[activity.length - 1].begin).getDate();
-    console.log(firstDate, lastDate);
     if (firstDate === lastDate) {
       return new Date().getTime();
     } else {
@@ -204,7 +203,6 @@ export const getData = (useFilter = true) =>
           (a, b) =>
             totalTimeCalculation(b.sessions) - totalTimeCalculation(a.sessions)
         );
-        console.log("historyList", historyList.value);
         resolve(true);
       } else {
         resolve(true);
@@ -225,10 +223,6 @@ export const loadData = (loadCharts = false) => {
         } else {
           hostItem.value.sessions = [];
         }
-        console.log(
-          "hostTabSelected.value.domain: " + hostTabSelected.value.domain,
-          hostItem.value.sessions
-        );
         getSiteData(hostItem.value.sessions);
       } else {
         const sessions = historyList.value.reduce(
@@ -236,7 +230,6 @@ export const loadData = (loadCharts = false) => {
           []
         );
         if (sessions.length) {
-          console.log("else", sessions);
           getSiteData(sessions);
         } else {
           getSiteData([]);

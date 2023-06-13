@@ -393,7 +393,6 @@ const checkForUrl = (tab) => {
 chrome.tabs.onActivated.addListener((tab) => {
   if (!isTabCreated || !tabIdCopy) {
     tabIdCopy = tab.tabId;
-    console.log("onActivated", tab);
     setBegin(tab, true).then(() => {
       checkForUrl(tab);
       updateLimitData();
