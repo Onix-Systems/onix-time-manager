@@ -149,7 +149,6 @@ const saveGeneralLimit = () => {
               return a;
             }
           }, {});
-          console.log("Promise", result);
           const { browserTime, list, browserLimit, sitesLimit, hostName } =
             result;
           if (!browserLimit || !browserTime.timeLimit) {
@@ -167,7 +166,6 @@ const saveGeneralLimit = () => {
             list: limits,
           };
           chrome.storage.local.set({ timeSpent }).finally(() => {
-            console.log("timeSpent saved", timeSpent);
             resolve(true);
           });
         });
@@ -205,13 +203,17 @@ const setEndDate = (res, sessionId) => {
                     activityIndex
                   ].begin
                 );
-
-                pages[hostName].sessions[sessionId][findIndex].activity[
-                  activityIndex
-                ].end = begin.setSeconds(begin.getSeconds() + counter);
+                if (counter) {
+                  pages[hostName].sessions[sessionId][findIndex].activity[
+                    activityIndex
+                  ].end = begin.setSeconds(begin.getSeconds() + counter);
+                } else {
+                  pages[hostName].sessions[sessionId][findIndex].activity[
+                    activityIndex
+                  ].end = new Date().getTime();
+                }
                 saveGeneralLimit().then(() => {
                   counter = 0;
-                  console.log("set end date and reset counter");
                   updateLimitData();
                 });
               } else {
@@ -318,10 +320,21 @@ const setBegin = (tab, onActive = false) => {
                           ].begin
                         );
 
-                        pages[hostName].sessions[id][findIndex].activity[
-                          activityIndex
-                        ].end = begin.setSeconds(begin.getSeconds() + counter);
-                        counter = 0;
+                        if (counter) {
+                          pages[hostName].sessions[id][findIndex].activity[
+                            activityIndex
+                          ].end = begin.setSeconds(
+                            begin.getSeconds() + counter
+                          );
+                        } else {
+                          pages[hostName].sessions[id][findIndex].activity[
+                            activityIndex
+                          ].end = new Date().getTime();
+                        }
+                        saveGeneralLimit().then(() => {
+                          counter = 0;
+                          updateLimitData();
+                        });
                       }
                       if (onActive) {
                         pages[hostName].sessions[id][0].activity.unshift(
@@ -422,29 +435,46 @@ chrome.tabs.onCreated.addListener((tab) => {
   console.log("onCreated", tab);
   isTabCreated = true;
   tabIdCopy = tab.id;
-  const tabId = tab.tabId ? tab.tabId : tab;
   if (tab.pendingUrl) {
-    const { pendingUrl } = tab;
-    const urlData = pendingUrl ? new URL(pendingUrl) : pendingUrl;
-    let hostName = pendingUrl;
-    if (pendingUrl && urlData.protocol !== "chrome-extension:") {
-      hostName = urlData.hostname;
-    } else {
-      hostName = "extensions";
-    }
-    const keys = ["newtab", "extensions"];
-    destroyTrackerInterval();
-    if (keys.every((e) => hostName !== e)) {
-    } else {
-      chrome.storage.local.set({
-        tabInfo: {
-          hostName: "extensions",
-          id: tab.id,
-          windowId: tab.windowId,
-          updateAt: new Date().getTime(),
-        },
-      });
-    }
+    const proceed = () => {
+      const { pendingUrl } = tab;
+      const urlData = pendingUrl ? new URL(pendingUrl) : pendingUrl;
+      let hostName = pendingUrl;
+      if (pendingUrl && urlData.protocol !== "chrome-extension:") {
+        hostName = urlData.hostname;
+      } else {
+        hostName = "extensions";
+      }
+      const keys = ["newtab", "extensions"];
+      destroyTrackerInterval();
+      if (keys.every((e) => hostName !== e)) {
+      } else {
+        chrome.storage.local.set({
+          tabInfo: {
+            hostName: "extensions",
+            id: tab.id,
+            windowId: tab.windowId,
+            updateAt: new Date().getTime(),
+          },
+        });
+      }
+    };
+
+    getStorageData("tabInfo").then((res) => {
+      if (res && res.tabInfo) {
+        getStorageData("pagesOR").then((result) => {
+          if (result && result.pagesOR) {
+            setEndDate(result, res.tabInfo.id).then(() => {
+              proceed();
+            });
+          } else {
+            proceed();
+          }
+        });
+      } else {
+        proceed();
+      }
+    });
   }
   detectRules();
 });
@@ -453,7 +483,6 @@ chrome.tabs.onRemoved.addListener((sessionId) => {
     console.log("onRemoved", sessionId);
     getStorageData("pagesOR").then((res) => {
       if (res && res.pagesOR) {
-        console.log("getStorageData", res);
         setEndDate(res, sessionId).then();
       }
     });
@@ -753,18 +782,10 @@ const detectRules = () => {
 const checkForLimits = () => {
   const d = new Date();
   const midnight = d.setHours(24, 0, 0, 0);
-  console.log(
-    "checkForLimits",
-    generalLimit,
-    localLimit,
-    isMessageSent,
-    counter
-  );
   if (generalLimit.limit !== -1) {
     const diff = generalLimit.limit - (generalLimit.current + counter);
     if (!isMessageSent) {
       if (diff < 300) {
-        console.log("show general", diff);
         createMessage({
           time: diff,
           message: "popupTime",
@@ -784,7 +805,6 @@ const checkForLimits = () => {
     const diff = localLimit.limit - (localLimit.current + counter);
     if (!isMessageSent) {
       if (diff < 300) {
-        console.log("show local", diff);
         createMessage({
           time: diff,
           message: "popupTime",
