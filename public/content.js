@@ -47,12 +47,11 @@ chrome.runtime.onMessage.addListener((request, sender) => {
     case popupTime:
       {
         const elementsWithClass = document.querySelectorAll(".limit-warning");
-        if (request.time < 300) {
-          if (!elementsWithClass.length) {
-            const parent = document.createElement("div");
-            parent.style.position = "relative";
-            document.body.insertAdjacentElement("afterbegin", parent);
-            parent.innerHTML = `
+        if (!elementsWithClass.length) {
+          const parent = document.createElement("div");
+          parent.style.position = "relative";
+          document.body.insertAdjacentElement("afterbegin", parent);
+          parent.innerHTML = `
             ${popupStyles()}
             <div class="limit-warning">
               <input class="limit-warning--checkbox" type="checkbox" name="checkbox-checked" checked />
@@ -69,17 +68,12 @@ chrome.runtime.onMessage.addListener((request, sender) => {
               </div>  
             </div>
             `;
-          } else {
-            elementsWithClass.forEach((element) => {
-              const pElement = element.querySelector("p");
-              if (pElement) {
-                pElement.textContent = formatTime(request.time);
-              }
-            });
-          }
         } else {
           elementsWithClass.forEach((element) => {
-            element.style.display = "none";
+            const pElement = element.querySelector("p");
+            if (pElement) {
+              pElement.textContent = formatTime(request.time);
+            }
           });
         }
       }

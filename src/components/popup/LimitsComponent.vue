@@ -4,8 +4,12 @@
 )
   template(v-if="!showLoader && !showTimeLoader")
     .limits-page--content-tracker(v-if="limitsObject.browserLimit")
-      h2.title The browser will be block after
-      p.subtitle(:class="{ mb: isLengthList }") {{ globalLimit }}
+      template(v-if="reachGlobalLimits")
+        h2.title You have reached your daily limit.
+        p.subtitle(:class="{ mb: isLengthList }") 00m 00s
+      template(v-else)
+        h2.title The browser will be block after
+        p.subtitle(:class="{ mb: isLengthList }") {{ globalLimit }}
     empty-template.fixed(
       v-if="!limitsData.sitesLimit",
       :class="{ 'with-global': limitsObject.browserLimit }",
@@ -53,12 +57,8 @@ import CirculLoader from "@/components/common/CirculLoader.vue";
 import { defaultLimits } from "@/composables/limitsComp";
 import { LimitsInterfaces } from "@/types/LimitsInterfaces";
 import {
-  createStructure,
-  totalTimeCalculation,
-} from "@/composables/common/trackerPageActions";
-import { SessionInterface } from "@/types/TrackingInterface";
-import {
   generalTimeSpent,
+  reachGlobalLimits,
   showLoader,
 } from "@/composables/popupTrackerActions";
 import {

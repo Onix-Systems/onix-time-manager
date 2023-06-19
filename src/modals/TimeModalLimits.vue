@@ -5,21 +5,25 @@
     .modal-time--timer
       .modal-time--input-section
         input.modal-time--input(
-          @click="selected = 'hour'",
+          @click="selectHours",
           v-model="storage.hour",
           placeholder="00",
           type="number",
-          @keypress="parseInput($event, 0)"
+          @keypress="parseInput($event)",
+          @input="parseInput($event)",
+          @blur="parseInput($event)"
         )
         .modal-time--subtitle {{ "Hour" }}
       .modal-time--dots
       .modal-time--input-section
         input.modal-time--input(
-          @click="selected = 'minute'",
+          @click="selectMinutes",
           v-model="storage.minute",
           placeholder="00",
           type="number",
-          @keypress="parseInput($event, 1)"
+          @keypress="parseInput($event)",
+          @input="parseInput($event)",
+          @blur="parseInput($event)"
         )
         .modal-time--subtitle {{ "Minutes" }}
     .modal-time--actions
@@ -44,47 +48,106 @@ const props = defineProps({
   },
 });
 
+enum TimeTypes {
+  hour = "hour",
+  minute = "minute",
+}
 const emit = defineEmits(["cancel", "saveLimits"]);
-
+const storage = ref({
+  hour: 0,
+  minute: 0,
+} as ObjectInterface);
+const selected = ref("");
 onMounted(() => {
   storage.value.hour = props.itemTimeLimits.hour;
   storage.value.minute = props.itemTimeLimits.minute;
   selected.value = "hour";
 });
 
-const parseInput = (evt: any, key: number) => {
-  const selectInput = storage.value[selected.value].toString();
-  const concatenatedValue = selectInput + evt.key.toString();
-  const condition = Number(concatenatedValue);
-  if (concatenatedValue.match(/^0[0-9]$/) !== null) {
-    evt.preventDefault();
+const parseInput = (evt: Event) => {
+  if (selected.value) {
+    const timeParser = (value: number) => {
+      if (selected.value === TimeTypes.hour) {
+        if (value > 24) {
+          storage.value.hour = 24;
+        } else {
+          storage.value.hour = value;
+        }
+      }
+    };
+
+    switch (evt.type) {
+      case "blur": {
+        const value = (evt.target as EventTarget & { value: string }).value;
+        if (!value) {
+          storage.value[selected.value] = 0;
+        } else {
+          timeParser(+value);
+          if (selected.value === TimeTypes.minute) {
+            if (+value > 60) {
+              if (+storage.value.hour < 24) {
+                storage.value.hour += Math.floor(+value / 60);
+              }
+              storage.value.minute = +value % 60;
+            } else {
+              storage.value.minute = +value;
+            }
+          }
+        }
+        break;
+      }
+      case "input": {
+        const value = (evt.target as EventTarget & { value: string }).value;
+        if (+value < 0) {
+          storage.value[selected.value] = 0;
+        } else {
+          timeParser(+value);
+          if (selected.value === TimeTypes.minute) {
+            if (+value > 60) {
+              storage.value.hour = 60;
+            } else {
+              storage.value.minute = +value;
+            }
+          }
+        }
+        break;
+      }
+      case "keypress": {
+        const selectInput = storage.value[selected.value];
+
+        const condition = (input = "") => {
+          const concatenatedValue =
+            input + (evt as Event & { key: string }).key.toString();
+          const condition = Number(concatenatedValue);
+          if (concatenatedValue.match(/^0[0-9]$/) !== null) {
+            evt.preventDefault();
+          }
+          storage.value[selected.value] = condition;
+        };
+        if (selectInput && selectInput.toString().length < 2) {
+          condition(selectInput);
+        } else {
+          condition();
+        }
+        break;
+      }
+    }
   }
 
-  if (storage.value.hour === 24) {
-    storage.value.minute = "";
-  }
-  if (condition < 24 && !key) {
-    return;
-  }
-  if (condition === 24 && !key && !storage.value.minute) {
-    return;
-  }
-  if (storage.value.hour < 24 && condition <= 60 && key) {
-    return;
-  }
   evt.preventDefault();
 };
 
+const selectHours = () => {
+  selected.value = TimeTypes.hour;
+  storage.value.hour = null;
+};
+const selectMinutes = () => {
+  selected.value = TimeTypes.minute;
+  storage.value.minute = null;
+};
 const cancel = () => {
   emit("cancel");
 };
-
-const storage = ref({
-  hour: 0,
-  minute: 0,
-} as ObjectInterface);
-
-const selected = ref("");
 
 const save = () => {
   let time = 0;

@@ -24,9 +24,13 @@
 <script setup lang="ts">
 import { defineProps, defineEmits, computed } from "vue";
 import { convertTimeHMS, format } from "@/composables/common/dateComposable";
-import { trackerCounter } from "@/composables/common/timeCounter";
+import {
+  destroyTrackerInterval,
+  trackerCounter,
+} from "@/composables/common/timeCounter";
 import {
   generalListSpent,
+  reachLocalLimits,
   selectedHostName,
 } from "@/composables/popupTrackerActions";
 const props = defineProps({
@@ -96,18 +100,24 @@ const localLimit = ({
   const useCounter = domain.includes(selectedHostName.value);
   const limitSpent = generalListSpent.value[domain];
 
-  const spent =
-    siteLimit.timeLimit - limitSpent - (useCounter ? trackerCounter.value : 0);
-  if (spent > 0) {
-    return `Block after ${format(
-      siteLimit.timeLimit > 3600 ? "HHh mmm sss" : "mmm sss",
-      siteLimit.timeLimit -
-        limitSpent -
-        (useCounter ? trackerCounter.value : 0),
-      true
-    )}`;
-  } else {
+  if (reachLocalLimits(domain)) {
     return "Blocked";
+  } else {
+    const spent =
+      siteLimit.timeLimit -
+      limitSpent -
+      (useCounter ? trackerCounter.value : 0);
+    if (spent > 0) {
+      return `Block after ${format(
+        siteLimit.timeLimit > 3600 ? "HHh mmm sss" : "mmm sss",
+        siteLimit.timeLimit -
+          limitSpent -
+          (useCounter ? trackerCounter.value : 0),
+        true
+      )}`;
+    } else {
+      return "Blocked";
+    }
   }
 };
 const imgPath = (value: { domain?: string; initial?: string } & string) => {

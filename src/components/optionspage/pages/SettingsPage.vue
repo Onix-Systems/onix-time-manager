@@ -35,6 +35,7 @@
             span.title You can change the message of the notification
             textarea(
               v-model="settingsData.notification",
+              maxlength="150",
               @change="setSettings"
             )
       .option

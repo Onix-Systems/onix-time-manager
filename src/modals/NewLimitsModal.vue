@@ -19,28 +19,40 @@ main-modal
           p {{ !errors.domain ? "Please check validity of initial url" : "You already have this url in the list" }}
         .content--block
           input.content--input(
+            @click="selectHours",
             type="number",
             min="0",
             max="24",
             v-model.number="urlGroup.hours",
             :class="{ error: !errors.errorTime }",
-            placeholder="Hours"
+            placeholder="Hours",
+            @keypress="parseInput($event)",
+            @input="parseInput($event)",
+            @blur="parseInput($event)"
           )
           input.content--input.content--input-dis(
+            @click="selectMinutes",
             type="number",
             min="0",
             max="60",
             v-model.number="urlGroup.minutes",
             :class="{ error: !errors.errorTime }",
-            placeholder="Minutes"
+            placeholder="Minutes",
+            @keypress="parseInput($event)",
+            @input="parseInput($event)",
+            @blur="parseInput($event)"
           )
           input.content--input(
+            @click="selectSeconds",
             type="number",
             min="0",
             max="60",
             v-model.number="urlGroup.seconds",
             :class="{ error: !errors.errorTime }",
-            placeholder="Seconds"
+            placeholder="Seconds",
+            @keypress="parseInput($event)",
+            @input="parseInput($event)",
+            @blur="parseInput($event)"
           )
       .content--buttons
         button.content--button.primary(@click="close") Cancel
@@ -58,6 +70,12 @@ import {
 import { checkForSecure, isValidUrl } from "@/composables/common/common";
 import { LimitsInterfaces } from "@/types/LimitsInterfaces";
 import { defaultLimits } from "@/composables/limitsComp";
+
+enum TimeTypes {
+  hours = "hours",
+  minutes = "minutes",
+  seconds = "seconds",
+}
 
 const emit = defineEmits(["onClosed"]);
 const props = defineProps({
@@ -86,12 +104,12 @@ const errors = ref({
   domainSame: true,
   errorTime: true,
 });
-
+const selected = ref("");
 const urlGroup = ref({
   domain: "",
-  hours: "",
-  minutes: "",
-  seconds: "",
+  hours: 0,
+  minutes: 0,
+  seconds: 0,
   timeSpent: 0,
 });
 
@@ -172,6 +190,150 @@ const submit = () => {
 
 const initialData = ref();
 
+const parseInput = (evt: Event) => {
+  if (selected.value) {
+    const timeParser = (value: number) => {
+      if (selected.value === TimeTypes.hours) {
+        if (value > 24) {
+          urlGroup.value.hours = 24;
+        } else {
+          urlGroup.value.hours = value;
+        }
+      }
+    };
+
+    const reset = () => {
+      switch (selected.value) {
+        case TimeTypes.hours: {
+          urlGroup.value.hours = 0;
+          break;
+        }
+        case TimeTypes.minutes: {
+          urlGroup.value.minutes = 0;
+          break;
+        }
+        case TimeTypes.seconds: {
+          urlGroup.value.seconds = 0;
+          break;
+        }
+      }
+    };
+
+    switch (evt.type) {
+      case "blur": {
+        const value = (evt.target as EventTarget & { value: string }).value;
+        if (!value) {
+          reset();
+        } else {
+          timeParser(+value);
+          if (selected.value === TimeTypes.minutes) {
+            if (+value > 60) {
+              if (+urlGroup.value.hours < 24) {
+                urlGroup.value.hours += Math.floor(+value / 60);
+              }
+              urlGroup.value.minutes = +value % 60;
+            } else {
+              urlGroup.value.minutes = +value;
+            }
+          } else if (selected.value === TimeTypes.seconds) {
+            if (+value > 3600) {
+              if (+urlGroup.value.hours < 24) {
+                urlGroup.value.hours += Math.floor(+value / 3600);
+              } else {
+                urlGroup.value.hours = 24;
+              }
+              const minutes = +value % 3600;
+              if (+urlGroup.value.minutes < 60) {
+                urlGroup.value.minutes += Math.floor(+minutes / 60);
+              } else {
+                urlGroup.value.minutes = 60;
+              }
+              urlGroup.value.seconds = +minutes % 60;
+            } else if (+value > 60) {
+              if (+urlGroup.value.minutes < 60) {
+                urlGroup.value.minutes += Math.floor(+value / 60);
+              }
+              urlGroup.value.seconds = +value % 60;
+            } else {
+              urlGroup.value.seconds = +value;
+            }
+          }
+        }
+        break;
+      }
+      case "input": {
+        const value = (evt.target as EventTarget & { value: string }).value;
+        if (+value < 0) {
+          reset();
+        } else {
+          timeParser(+value);
+          if (selected.value === TimeTypes.minutes) {
+            if (+value > 60) {
+              urlGroup.value.minutes = 60;
+            } else {
+              urlGroup.value.minutes = +value;
+            }
+          } else if (selected.value === TimeTypes.seconds) {
+            if (+value > 60) {
+              urlGroup.value.seconds = 60;
+            } else {
+              urlGroup.value.seconds = +value;
+            }
+          }
+        }
+        break;
+      }
+      case "keypress": {
+        const selectInput =
+          urlGroup.value[
+            selected.value as keyof {
+              minutes: number;
+              hours: number;
+              seconds: number;
+            }
+          ];
+        const condition = (input = 0) => {
+          const concatenatedValue =
+            input + (evt as Event & { key: string }).key.toString();
+          const condition = Number(concatenatedValue);
+          if (concatenatedValue.match(/^0[0-9]$/) !== null) {
+            evt.preventDefault();
+          }
+          urlGroup.value[
+            selected.value as keyof {
+              minutes: number;
+              hours: number;
+              seconds: number;
+            }
+          ] = condition;
+        };
+        if (selectInput && selectInput.toString().length < 2) {
+          condition(selectInput);
+        } else {
+          condition();
+        }
+        break;
+      }
+    }
+  }
+
+  evt.preventDefault();
+};
+
+const selectHours = () => {
+  selected.value = TimeTypes.hours;
+  urlGroup.value.hours = 0;
+};
+const selectMinutes = () => {
+  selected.value = TimeTypes.minutes;
+  urlGroup.value.minutes = 0;
+};
+
+const selectSeconds = () => {
+  selected.value = TimeTypes.seconds;
+  urlGroup.value.seconds = 0;
+};
+
 onMounted(() => {
   let initial: any = { ...props.initialData };
 
@@ -189,9 +351,9 @@ onMounted(() => {
   const time = convertTimeHMS(Number(initial.siteLimit.timeLimit));
 
   urlGroup.value.domain = initial.domain;
-  urlGroup.value.hours = time.hour.toString();
-  urlGroup.value.minutes = time.minute.toString();
-  urlGroup.value.seconds = time.second.toString();
+  urlGroup.value.hours = +time.hour;
+  urlGroup.value.minutes = +time.minute;
+  urlGroup.value.seconds = +time.second;
   urlGroup.value.timeSpent = initial.siteLimit.timeSpent;
 
   initialData.value = urlGroup.value;

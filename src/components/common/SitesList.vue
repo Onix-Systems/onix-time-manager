@@ -15,6 +15,7 @@
       .item-block
         .item-block--title Current Session
         .item-block--info(v-if="currentSession(item)") {{ format(sessionMask(currentSession(item)), currentSession(item), true, false) }}
+        .item-block--info(v-else) 0s
       .item-block
         .item-block--title Longest Session
         .item-block--info {{ format(sessionMask(longestSession(item)), longestSession(item), true, false) }}

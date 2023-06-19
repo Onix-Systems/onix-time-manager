@@ -59,21 +59,57 @@ export const isDay = computed(
 );
 
 export const generalTimeSpent = ref(0);
+export const originalTimeSpent = ref(0);
 export const generalListSpent = ref<{ [key: string]: number }>({});
+export const originalListSpent = ref<{
+  [key: string]: { siteLimit: { timeLimit: number } };
+}>({});
+
 export const getLimitsData = () =>
   new Promise((resolve) => {
     chrome.storage.local.get("timeSpent").then((res) => {
       if (res.timeSpent) {
-        const { general, list } = res.timeSpent;
-        generalTimeSpent.value = general;
-        generalListSpent.value = list;
-        resolve(true);
+        chrome.storage.local.get("limits").then((result) => {
+          if (result.limits) {
+            const { browserTime } = result.limits;
+            originalTimeSpent.value = browserTime.timeLimit;
+            originalListSpent.value = result.limits.list;
+            const { general, list } = res.timeSpent;
+            generalTimeSpent.value = general;
+            generalListSpent.value = list;
+            resolve(true);
+          } else {
+            resolve(true);
+          }
+        });
       } else {
         resolve(true);
       }
     });
   });
+export const reachGlobalLimits = computed(() => {
+  if (originalTimeSpent.value && generalTimeSpent.value) {
+    return (
+      generalTimeSpent.value + trackerCounter.value + 1 >=
+      originalTimeSpent.value
+    );
+  }
+  return false;
+});
 
+export const reachLocalLimits = (domain: string) => {
+  const generalKeys = Object.keys(generalListSpent.value);
+  const localKeys = Object.keys(originalListSpent.value);
+  if (generalKeys.length && localKeys.length) {
+    const key = `https://${domain}`;
+    if (generalKeys.includes(key) && localKeys.includes(key)) {
+      const localValue = generalListSpent.value[key];
+      const localLimit = originalListSpent.value[key].siteLimit.timeLimit;
+      return localValue + trackerCounter.value >= localLimit;
+    }
+  }
+  return false;
+};
 const defaultHostData = {
   icon: "",
   domain: "",

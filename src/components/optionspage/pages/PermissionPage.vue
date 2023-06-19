@@ -3,7 +3,7 @@
   .option--header
     .option--header-left
       .option--header--title {{ MenuItemsEnum.Permissions }}
-      .option--header--subtitle Block the site without limit or use the schedule for all list
+      .option--header--subtitle Block the site without limit or use whitelist to use only specific sites.
   .permission-content
     .permission-content--subtitle Choose one of a list
     .permission-content--slider
