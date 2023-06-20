@@ -322,16 +322,13 @@ const parseInput = (evt: Event) => {
 
 const selectHours = () => {
   selected.value = TimeTypes.hours;
-  urlGroup.value.hours = 0;
 };
 const selectMinutes = () => {
   selected.value = TimeTypes.minutes;
-  urlGroup.value.minutes = 0;
 };
 
 const selectSeconds = () => {
   selected.value = TimeTypes.seconds;
-  urlGroup.value.seconds = 0;
 };
 
 onMounted(() => {

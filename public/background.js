@@ -159,7 +159,6 @@ const updateLimitData = () => {
           const listKeys = Object.keys(list);
           const key = `https://${hostName}`;
           if (listKeys.includes(key)) {
-            console.log("list, originList", list, originList);
             if (originList[key] > list[key].siteLimit.timeLimit) {
               localLimit.current = list[key].siteLimit.timeLimit;
               localLimit.limit = -1;
@@ -171,6 +170,9 @@ const updateLimitData = () => {
               localLimit.current = originList[key];
               localLimit.limit = list[key].siteLimit.timeLimit;
             }
+          } else {
+            localLimit.current = 0;
+            localLimit.limit = -1;
           }
         } else {
           localLimit.current = 0;

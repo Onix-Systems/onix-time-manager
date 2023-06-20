@@ -26,6 +26,7 @@ import { defineProps, defineEmits, computed } from "vue";
 import { convertTimeHMS, format } from "@/composables/common/dateComposable";
 import {
   destroyTrackerInterval,
+  showTimeLoader,
   trackerCounter,
 } from "@/composables/common/timeCounter";
 import {
@@ -100,24 +101,21 @@ const localLimit = ({
   const useCounter = domain.includes(selectedHostName.value);
   const limitSpent = generalListSpent.value[domain];
 
-  if (reachLocalLimits(domain)) {
-    return "Blocked";
+  const spent =
+    siteLimit.timeLimit -
+    limitSpent -
+    1 -
+    (useCounter ? trackerCounter.value : 0);
+  if (spent > 0) {
+    return `Block after ${format(
+      siteLimit.timeLimit > 3600 ? "HHh mmm sss" : "mmm sss",
+      spent,
+      true
+    )}`;
   } else {
-    const spent =
-      siteLimit.timeLimit -
-      limitSpent -
-      (useCounter ? trackerCounter.value : 0);
-    if (spent > 0) {
-      return `Block after ${format(
-        siteLimit.timeLimit > 3600 ? "HHh mmm sss" : "mmm sss",
-        siteLimit.timeLimit -
-          limitSpent -
-          (useCounter ? trackerCounter.value : 0),
-        true
-      )}`;
-    } else {
-      return "Blocked";
-    }
+    destroyTrackerInterval();
+    showTimeLoader.value = false;
+    return "Blocked";
   }
 };
 const imgPath = (value: { domain?: string; initial?: string } & string) => {
