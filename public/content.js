@@ -9,6 +9,7 @@ function formatTime(time) {
     seconds < 10 ? "0" + seconds : seconds
   }s`;
 }
+let listener = 0;
 chrome.runtime.onMessage.addListener((request, sender) => {
   const redirect = "redirect";
   const blockPage = "blockPage";
@@ -16,6 +17,13 @@ chrome.runtime.onMessage.addListener((request, sender) => {
   const popupTime = "popupTime";
   const clearPopup = "clearPopup";
   const stopTracking = "stopTracking";
+
+  const destroyPopup = () => {
+    const elementsWithClass = document.querySelectorAll(".limit-warning");
+    elementsWithClass.forEach((element) => {
+      element.style.display = "none";
+    });
+  };
   switch (request.message) {
     case stopTracking: {
       chrome.runtime.sendMessage({
@@ -77,13 +85,16 @@ chrome.runtime.onMessage.addListener((request, sender) => {
             }
           });
         }
+        if (listener) {
+          clearInterval(listener);
+        }
+        listener = setInterval(() => {
+          destroyPopup();
+        }, 1500);
       }
       break;
     case clearPopup: {
-      const elementsWithClass = document.querySelectorAll(".limit-warning");
-      elementsWithClass.forEach((element) => {
-        element.style.display = "none";
-      });
+      destroyPopup();
     }
   }
 });

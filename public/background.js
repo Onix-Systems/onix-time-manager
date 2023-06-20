@@ -707,3 +707,10 @@ chrome.runtime.onMessage.addListener((request, sender) => {
 });
 
 getSettings();
+
+chrome.management.onDisabled.addListener((info) => {
+  console.log("chrome.management.onDisabled");
+  createMessage({
+    message: "clearPopup",
+  });
+});

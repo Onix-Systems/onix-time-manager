@@ -18,7 +18,8 @@
     "alarms",
     "notifications",
     "nativeMessaging",
-    "activeTab"
+    "activeTab",
+    "management"
   ],
   "web_accessible_resources": [
     {
