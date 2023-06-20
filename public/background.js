@@ -606,7 +606,6 @@ const checkForLimits = () => {
       });
     }
   };
-  console.log("localLimit", localLimit);
   if (localLimit.limit !== -1) {
     const diff = localLimit.limit - (localLimit.current + counter);
     checkRules(diff);
@@ -624,8 +623,15 @@ const checkForLimits = () => {
     checkRules(diff);
     if (!diff) {
       generalLimit.limit = -1;
+      return;
+    }
+    if (diff < 300) {
+      return;
     }
   }
+  createMessage({
+    message: "clearPopup",
+  });
 };
 const checkForRedirection = (tab) => {
   chrome.storage.local.get("redirect").then((res) => {

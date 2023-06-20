@@ -113,8 +113,10 @@ const localLimit = ({
       true
     )}`;
   } else {
-    destroyTrackerInterval();
-    showTimeLoader.value = false;
+    if (siteLimit.timeLimit === limitSpent + 1 + trackerCounter.value) {
+      destroyTrackerInterval();
+      showTimeLoader.value = false;
+    }
     return "Blocked";
   }
 };

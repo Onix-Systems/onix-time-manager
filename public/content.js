@@ -14,6 +14,7 @@ chrome.runtime.onMessage.addListener((request, sender) => {
   const blockPage = "blockPage";
   const limitsPage = "limitsPage";
   const popupTime = "popupTime";
+  const clearPopup = "clearPopup";
   const stopTracking = "stopTracking";
   switch (request.message) {
     case stopTracking: {
@@ -78,6 +79,12 @@ chrome.runtime.onMessage.addListener((request, sender) => {
         }
       }
       break;
+    case clearPopup: {
+      const elementsWithClass = document.querySelectorAll(".limit-warning");
+      elementsWithClass.forEach((element) => {
+        element.style.display = "none";
+      });
+    }
   }
 });
 
