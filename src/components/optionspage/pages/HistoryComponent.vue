@@ -27,7 +27,7 @@
       .tr
         .th
         .th.align-left Web address
-        .th.align-left Sessions
+        .th.align-left Visits
         .th Last visit
         .th Total time
     .history-page--body(v-if="historyList.length")
@@ -71,10 +71,11 @@
                 @change="toggleCheckList(activity.id)"
               )
             .td
-              p {{ activity.path }}
+              p.hyperlink {{ hyperlink(activity.path) }}
+                a(:href="activity.path" target="_blank") {{ activity.path }}
             .td
             .td.align-right
-              p {{ format("DD.MM.YYYY HH:mm", activity.activity[0].begin) }}
+              p {{ format("DD/MM/YYYY, HH:mm", activity.activity[0].begin) }}
             .td.align-right
               p {{ format("Hh mmm sss", timeSpentCalculation(activity.activity), true) }}
     empty-template.desktop(
@@ -117,7 +118,7 @@ import {
 enum SortEnum {
   date = "date",
   time = "total time",
-  session = "session",
+  session = "visits",
 }
 
 interface DomainItemInterface {
@@ -159,6 +160,13 @@ const sortBy = (option: SortEnum, props?: { toggleVisibility(): void }) => {
   sortOption.value = option;
 };
 
+const hyperlink = (link: string) => {
+  if (link.length > 40) {
+    return `${link.slice(0, 40)}...`;
+  } else {
+    return link;
+  }
+};
 const toggleRow = (index: number) => {
   if (activeRow.value === index) {
     activeRow.value = -1;
@@ -261,7 +269,7 @@ const toggleCheckList = (id: string) => {
 
 const lastVisit = (session: SessionInterface[]) => {
   if (session.length) {
-    return format("DD.MM.YYYY HH:mm", session[0].activity[0].begin);
+    return format("DD/MM/YYYY, HH:mm", session[0].activity[0].begin);
   }
   return "";
 };
@@ -440,10 +448,9 @@ onMounted(() => {
               display: flex;
               align-items: center;
 
-              p {
-                overflow: hidden;
-
-                max-width: 560px;
+              p,
+              a {
+                max-width: 300px;
 
                 font-family: var(--font-nunito);
                 font-size: 16px;
@@ -551,12 +558,45 @@ onMounted(() => {
 
             &.smaller {
               .td {
-                p {
+                p,
+                a {
                   font-size: 12px;
                   font-weight: 500;
                   line-height: 16px;
 
                   color: var(--txt-water-link);
+                }
+
+                a {
+                  display: none;
+                }
+
+                .hyperlink {
+                  position: relative;
+                  cursor: pointer;
+
+                  &:hover {
+                    a {
+                      position: absolute;
+                      top: 15px;
+                      z-index: 1;
+                      display: block;
+                      overflow: hidden;
+
+                      max-width: 440px;
+                      padding: 8px;
+
+                      font-size: 10px;
+                      font-weight: 500;
+                      line-height: 16px;
+                      white-space: pre-wrap;
+
+                      color: var(--purple_percent);
+                      background-color: #efefef;
+                      border-radius: 4px;
+                      box-shadow: 1px 1px 40px rgba(56, 106, 241, 0.1);
+                    }
+                  }
                 }
               }
             }

@@ -62,7 +62,7 @@
           sites-list(:is-show-current-session="false")
         .tracking--site-info(v-else)
             .tracking--site-board.total
-                .tracking--site-title.total Session
+                .tracking--site-title.total Visits
                 .tracking--site-count.total {{ hostItem.sessions.length }}
             .tracking--site-board.total
                 .tracking--site-title.total Longest Session
@@ -91,7 +91,7 @@
             .tracking--site-title.total Usage
             .tracking--site-count.total {{ format(sessionMask(totalSessionTime(), true), totalSessionTime(), true, false) }}
           .tracking--site-board
-            .tracking--site-title.total Sessions
+            .tracking--site-title.total Visits
             .tracking--site-count.total {{ sessionCount(hostItem.sessions) }}
           .tracking--site-board
             .tracking--site-title.total Longest Session

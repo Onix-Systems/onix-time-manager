@@ -20,7 +20,7 @@
         .item-block--title Longest Session
         .item-block--info {{ format(sessionMask(longestSession(item)), longestSession(item), true, false) }}
       .item-block
-        .item-block--title Sessions
+        .item-block--title Visits
         .item-block--info {{ sessionCount(item.sessions) }}
     .tracker--sites-bar
 </template>
