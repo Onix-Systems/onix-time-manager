@@ -1,38 +1,43 @@
 <template lang="pug">
 section.option-page(
-  v-if="(settingsData && !settingsData.password) || showContent"
+    v-if="(settingsData && !settingsData.password) || showContent"
 )
-  .option-page--position
-    .left-nav
-      .left-nav--logo-section
-        h2.left-nav--text {{ "BrowserTime" }}
-      ul.navigation
-        li.navigation-tab(
-          v-for="(_, tab) in dashboardTabs",
-          :class="[{ active: dashboardTab === tab as MenuItemsEnum }, tab]",
-          @click="dashboardTab = tab"
-        )
-          span.navigation-tab--text {{ SidebarNamesEnum[tab] }}
-    .option-page--content
-      component(:is="dashboardTabs[dashboardTab] as string")
+    .option-page--position
+        .left-nav
+            .left-nav--logo-section
+                h2.left-nav--text BrowserTime
+            ul.navigation
+                li.navigation-tab(
+                    v-for="(_, tab) in dashboardTabs",
+                    :class="[{ active: dashboardTab === tab as MenuItemsEnum}, tab]",
+                    @click="setTabIndex(tab as MenuItemsEnum)"
+                )
+                    span.navigation-tab--text {{ SidebarNamesEnum[tab] }}
+        .option-page--content
+            component(:is="dashboardTabs[dashboardTab] as string")
 section.password(v-if="settingsData && settingsData.password && !showContent")
-  unlock-content-modal
+    unlock-content-modal
 </template>
 
 <script setup lang="ts">
 import { onMounted } from "vue";
 
-import UnlockContentModal from "@/modals/UnlockContentModal.vue";
+import { dashboardTab, dashboardTabs } from "@/composables/tabsActions";
 import {
-  settingsData,
   getBytes,
-  updateSettingsData,
+  settingsData,
   showContent,
+  updateSettingsData,
 } from "@/composables/settingsComp";
+import { openOptions } from "@/composables/popup/popupActions";
+import { getPermission } from "@/composables/permissionComp";
 
 import { MenuItemsEnum, SidebarNamesEnum } from "@/constants/menuItemsEnum";
-import { dashboardTab, dashboardTabs } from "@/composables/tabsActions";
 
+const setTabIndex = (tab: MenuItemsEnum) => {
+  dashboardTab.value = tab;
+  openOptions(tab, true);
+};
 onMounted(() => {
   if (window.location.hash) {
     dashboardTab.value = window.location.hash.slice(1) as MenuItemsEnum;
@@ -42,6 +47,7 @@ onMounted(() => {
   showContent.value = false;
   updateSettingsData();
   getBytes();
+  getPermission();
 });
 </script>
 
@@ -125,76 +131,82 @@ onMounted(() => {
               left: 10px;
               width: 24px;
               height: 24px;
+
+              background-position: center;
+              background-size: 22px;
+              background-repeat: no-repeat;
             }
           }
           &.TrackingView {
             &:before {
-              background: url("@/assets/icons/options-nav/clock-circle.svg");
+              background-image: url("@/assets/icons/options-nav/clock-circle.svg");
             }
             &.active {
               &:before {
-                background: url("@/assets/icons/options-nav/clock-circle-active.svg");
+                background-image: url("@/assets/icons/options-nav/clock-circle-active.svg");
               }
             }
           }
           &.PermissionsView {
             &:before {
-              background: url("@/assets/icons/options-nav/browser.svg");
+              background-image: url("@/assets/icons/options-nav/browser.svg");
             }
             &.active {
               &:before {
-                background: url("@/assets/icons/options-nav/browser-active.svg");
+                background-image: url("@/assets/icons/options-nav/browser-active.svg");
               }
             }
           }
           &.LimitsView {
             &:before {
-              background: url("@/assets/icons/options-nav/warning-polygon.svg");
+              background-image: url("@/assets/icons/options-nav/warning-polygon.svg");
             }
             &.active {
               &:before {
-                background: url("@/assets/icons/options-nav/warning-polygon-active.svg");
+                background-image: url("@/assets/icons/options-nav/warning-polygon-active.svg");
               }
             }
           }
           &.RedirectView {
             &:before {
               top: 12px;
-              background: url("@/assets/icons/options-nav/arrow-return.svg");
+              background-image: url("@/assets/icons/options-nav/arrow-return.svg");
             }
             &.active {
               &:before {
-                background: url("@/assets/icons/options-nav/arrow-return-active.svg");
+                background-image: url("@/assets/icons/options-nav/arrow-return-active.svg");
               }
             }
           }
           &.HistoryView {
             &:before {
-              background: url("@/assets/icons/options-nav/user-polygon.svg");
+              background-image: url("@/assets/icons/options-nav/user-polygon.svg");
             }
             &.active {
               &:before {
-                background: url("@/assets/icons/options-nav/user-polygon-active.svg");
+                background-image: url("@/assets/icons/options-nav/user-polygon-active.svg");
               }
             }
           }
           &.SettingsView {
             &:before {
-              background: url("@/assets/icons/options-nav/setting.svg");
+              background-image: url("@/assets/icons/options-nav/setting.svg");
             }
             &.active {
               &:before {
-                background: url("@/assets/icons/options-nav/setting-active.svg");
+                background-image: url("@/assets/icons/options-nav/setting-active.svg");
               }
             }
           }
           &.UsageView {
             &:before {
-              background: url("@/assets/icons/options-nav/setting.svg");
+              background-image: url("@/assets/icons/options-nav/usage.svg");
+              background-size: 19px;
             }
             &.active {
               &:before {
-                background: url("@/assets/icons/options-nav/setting-active.svg");
+                background-image: url("@/assets/icons/options-nav/usage-active.svg");
+                background-size: 19px;
               }
             }
           }

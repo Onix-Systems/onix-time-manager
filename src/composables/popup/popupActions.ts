@@ -11,7 +11,10 @@ export const popupNavigationSelected = ref(
 
 //functions
 
-export const openOptions = (tab = MenuItemsEnum.Tracking, target = false) => {
+export const openOptions = (
+  tab = MenuItemsEnum.TrackingView,
+  target = false
+) => {
   const url = chrome.runtime.getURL("index.html#" + tab);
   if (target) {
     chrome.tabs.update({ url }).then();

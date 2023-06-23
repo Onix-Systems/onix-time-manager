@@ -640,19 +640,12 @@ const checkForRedirection = (tab) => {
         return value.initial === tab.url;
       });
       if (site) {
-        chrome.tabs.update(
-          tab.id,
-          {
-            url: site.redirect,
-          },
-          () => {
-            if (settings && settings.getNotification) {
-              createNotification(
-                `You have been redirected from ${site.initial} due to settings, please check on dashboard.`
-              );
-            }
-          }
+        createNotification(
+          `You have been redirected from ${site.initial} due to settings, please check on dashboard.`
         );
+        chrome.tabs.update(tab.id, {
+          url: site.redirect,
+        });
       }
     }
   });

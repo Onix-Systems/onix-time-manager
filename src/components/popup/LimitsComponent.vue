@@ -17,7 +17,7 @@
       :message="'The list of web time restrictions is disabled. Turn on list for create limits to websites to see them here'"
     )
       button.content--button.tab-active.icon(
-        @click="openOptions(MenuItemsEnum.Limits)"
+        @click="openOptions(MenuItemsEnum.LimitsView)"
       ) Go to enable list of limits
     empty-template.fixed(
       v-else-if="!isLengthList",
@@ -25,7 +25,7 @@
       :message="'The list of limits for web time is empty. Create limits to websites to see them here.'"
     )
       button.content--button.tab-active.icon.icon--plus(
-        @click="openOptions(MenuItemsEnum.Limits)"
+        @click="openOptions(MenuItemsEnum.LimitsView)"
       ) Add limit
     .limits-page--content-list(
       v-else,

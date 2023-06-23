@@ -29,13 +29,13 @@
         template(v-else)
           chart-bar
     button.content--button.tab-active.icon.icon--plus(
-        @click="openOptions(MenuItemsEnum.Limits)"
+        @click="openOptions(MenuItemsEnum.LimitsView)"
     ) Add limit
   template(v-else)
     .tracking
       .option--header(v-if="isList")
         .option--header-left
-          .option--header--title {{ MenuItemsEnum.Tracking }}
+          .option--header--title {{ SidebarNamesEnum.TrackingView }}
           .option--header--subtitle {{ "Statistic the spending time on the websites" }}
       .tracking--title.actions(v-else)
         button.tracking--back(@click="onBackClicked")
@@ -130,7 +130,7 @@ import {
 import { format, sessionMask } from "@/composables/common/dateComposable";
 import { openOptions } from "@/composables/popup/popupActions";
 
-import { MenuItemsEnum } from "@/constants/menuItemsEnum";
+import { MenuItemsEnum, SidebarNamesEnum } from "@/constants/menuItemsEnum";
 import { showTimeLoader } from "@/composables/common/timeCounter";
 
 const props = defineProps({

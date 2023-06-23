@@ -2,7 +2,7 @@
 .settings-page
   .option--header
     .option--header-left
-      .option--header--title {{ MenuItemsEnum.SettingsView }}
+      .option--header--title {{ SidebarNamesEnum.SettingsView }}
   .settings-page--content
     .settings-page--section
       .item
@@ -76,7 +76,7 @@ import {
   setSettings,
 } from "@/composables/settingsComp";
 
-import { MenuItemsEnum } from "@/constants/menuItemsEnum";
+import { MenuItemsEnum, SidebarNamesEnum } from "@/constants/menuItemsEnum";
 import { EnumModalKeys } from "@/constants/EnumModalKeys";
 
 const clearStorage = () => {

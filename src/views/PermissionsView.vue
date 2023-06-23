@@ -2,7 +2,7 @@
 .permission
   .option--header
     .option--header-left
-      .option--header--title {{ MenuItemsEnum.PermissionsView }}
+      .option--header--title {{ SidebarNamesEnum.PermissionsView }}
       .option--header--subtitle Block the site without limit or use whitelist to use only specific sites.
   .permission-content
     .permission-content--subtitle Choose one of a list
@@ -72,7 +72,7 @@ import {
   selectList,
 } from "@/composables/permissionComp";
 
-import { MenuItemsEnum } from "@/constants/menuItemsEnum";
+import { MenuItemsEnum, SidebarNamesEnum } from "@/constants/menuItemsEnum";
 import { PermissionList } from "@/constants/PermissionList";
 import { EnumModalKeys } from "@/constants/EnumModalKeys";
 

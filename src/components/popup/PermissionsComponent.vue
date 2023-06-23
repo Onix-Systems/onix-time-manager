@@ -6,7 +6,7 @@
     :message="'The list option is disabled. You can use all sites without limits.'"
   )
     button.content--button.tab-active(
-      @click="openOptions(settingsData.permission ? MenuItemsEnum.Permissions : MenuItemsEnum.Settings)"
+      @click="openOptions(settingsData.permission ? MenuItemsEnum.PermissionsView : MenuItemsEnum.SettingsView)"
     ) {{ settingsData.permission ? "Change rules" : "Go to enable permissions" }}
   empty-template.fixed(
     v-else-if="showEmptyTemplate",
@@ -14,7 +14,7 @@
     :message="'The list for permissions websites is empty. Add the sites you want to set permission to access.'"
   )
     button.content--button.tab-active.icon.icon--plus(
-      @click="openOptions(MenuItemsEnum.Permissions)"
+      @click="openOptions(MenuItemsEnum.PermissionsView)"
     ) Add rules
   .permissions-page--items(v-else)
     h2 You are in

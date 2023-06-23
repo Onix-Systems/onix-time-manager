@@ -2,7 +2,7 @@
 .redirect-page
   .option--header
     .option--header-left
-      .option--header--title {{ MenuItemsEnum.RedirectView }}
+      .option--header--title {{ SidebarNamesEnum.RedirectView }}
       .option--header--subtitle {{ "Set up redirect for the blocked sites" }}
     .option--header-right
       button.content--button.raised.icon.icon--plus(
@@ -48,7 +48,7 @@ import DeleteModal from "@/modals/common/DeleteModal.vue";
 
 import { isOpen, openModal, closeModal } from "@/composables/modalActions";
 
-import { MenuItemsEnum } from "@/constants/menuItemsEnum";
+import { MenuItemsEnum, SidebarNamesEnum } from "@/constants/menuItemsEnum";
 import { EnumModalKeys } from "@/constants/EnumModalKeys";
 
 const data = ref([] as { initial: string; redirect: string }[]);

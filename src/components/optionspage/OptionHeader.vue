@@ -1,6 +1,6 @@
 <template lang="pug">
 header.header
-  .header--logo-section(@click="editTabIndex(MenuItemsEnum.Home)")
+  .header--logo-section(@click="editTabIndex(MenuItemsEnum.TrackingView)")
     img.header--logo(src="@/assets/logo.svg")
     h2.header--text
       span {{ "Time" }}

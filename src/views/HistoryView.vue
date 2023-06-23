@@ -3,7 +3,7 @@
   .history
     .option--header
       .option--header-left
-        .option--header--title {{ MenuItemsEnum.HistoryView }}
+        .option--header--title {{ SidebarNamesEnum.HistoryView }}
       .option--header-right
         .history--sorting
           dropdown-component(:disable="true")
@@ -109,7 +109,7 @@ import {
 import { closeModal, isOpen, openModal } from "@/composables/modalActions";
 
 import { EnumModalKeys } from "@/constants/EnumModalKeys";
-import { MenuItemsEnum } from "@/constants/menuItemsEnum";
+import { MenuItemsEnum, SidebarNamesEnum } from "@/constants/menuItemsEnum";
 
 import {
   HistoryListInterface,
