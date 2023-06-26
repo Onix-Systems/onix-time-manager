@@ -13,7 +13,7 @@
     template(v-if="popupNavigationSelected === PopupNavItemsEnum.tracker")
       tracker-data(:popup-view="true")
     template(
-      v-else-if="popupNavigationSelected === PopupNavItemsEnum.permissions"
+      v-else-if="popupNavigationSelected === PopupNavItemsEnum.permissions && settingsData.permission"
     )
       permissions-component
     template(
@@ -21,11 +21,12 @@
     )
       limits-component
   footer.popup--footer
-    button.popup--footer-item(
-      v-for="item in popupNavigations",
-      :class="[{ active: popupNavigationSelected === item }, item]",
-      @click="selectNavItem(item as PopupNavItemsEnum)"
-    ) {{ item }}
+    template(v-for="item in popupNavigations")
+      button.popup--footer-item(
+        v-if="item === PopupNavItemsEnum.permissions ? settingsData.permission : true"
+        :class="[{ active: popupNavigationSelected === item }, item]",
+        @click="selectNavItem(item as PopupNavItemsEnum)"
+      ) {{ item }}
 </template>
 
 <script lang="ts" setup>
@@ -57,7 +58,7 @@ import LimitsComponent from "@/components/popup/LimitsComponent.vue";
 import { PopupNavItemsEnum } from "@/constants/popup/popupNavItemsEnum";
 
 import { getPermission } from "@/composables/permissionComp";
-import { updateSettingsData } from "@/composables/settingsComp";
+import { settingsData, updateSettingsData } from "@/composables/settingsComp";
 import { destroyTrackerInterval } from "@/composables/common/timeCounter";
 
 onMounted(() => {

@@ -5,7 +5,12 @@
       .option--header-left
         .option--header--title {{ SidebarNamesEnum.HistoryView }}
       .option--header-right
-        .history--sorting
+        .history--calendar
+          button.history--calendar-info(@click="openCalendar()")
+            .history--calendar-date {{ `From: ${dataRange ? calendarDate(dataRange.to) : '-'}` }}
+            .history--calendar-date {{ `To: ${dataRange ? calendarDate(dataRange.from) : '-' }` }}
+          data-picker(v-if="isOpenCalendar" :date-range="dataRange" @update:cancel="openCalendar()" @update:save="saveDataRange($event)" @update:clear="saveDataRange('')")
+        .history--sorting(@click="isOpenCalendar = false")
           dropdown-component(:disable="true")
             template(v-slot:selectedItem="")
               .item-selected {{ sortOption ? `By ${sortOption}` : "Sort by"}}:
@@ -109,12 +114,13 @@ import {
 import { closeModal, isOpen, openModal } from "@/composables/modalActions";
 
 import { EnumModalKeys } from "@/constants/EnumModalKeys";
-import { MenuItemsEnum, SidebarNamesEnum } from "@/constants/menuItemsEnum";
+import { SidebarNamesEnum } from "@/constants/menuItemsEnum";
 
 import {
   HistoryListInterface,
   SessionInterface,
 } from "@/types/TrackingInterface";
+import DataPicker from "@/components/common/DataPicker.vue";
 enum SortEnum {
   date = "date",
   time = "total time",
@@ -134,6 +140,24 @@ const sortOption = ref<SortEnum>();
 const selectedItems = ref<string[]>([]);
 const activeRow = ref(-1);
 const historyList = ref<HistoryListInterface[]>([]);
+const isOpenCalendar = ref(false);
+const dataRange = ref();
+const openCalendar = () => {
+  isOpenCalendar.value = !isOpenCalendar.value;
+};
+
+const saveDataRange = (data: object | string) => {
+  dataRange.value = data;
+  getHistory();
+  openCalendar();
+};
+
+const calendarDate = (data: { day: number; month: number; year: number }) => {
+  const addZero = (item: number | string) => {
+    return String(item).padStart(2, "0");
+  };
+  return `${addZero(data.day)}/${addZero(data.month + 1)}/${data.year}`;
+};
 
 const sortBy = (option: SortEnum, props?: { toggleVisibility(): void }) => {
   if (props) {
@@ -226,10 +250,46 @@ const getHistory = () => {
   chrome.storage.local.get({ pagesOR: {} }, (result: any) => {
     if (Object.keys(result.pagesOR).length) {
       historyList.value = createStructure(result.pagesOR);
-      sortBy(SortEnum.date);
+      if (dataRange.value) {
+        filterByDataRange();
+      }
+      sortBy(sortOption.value!);
     }
   });
 };
+
+const filterByDataRange = () => {
+  historyList.value = historyList.value.reduce((acum, site) => {
+    site.sessions = site.sessions.filter((session) => {
+      session.activity = session.activity.filter((item) => {
+        if (item && item.begin) {
+          const lastVisit = parseDate(format("DD/MM/YYYY", item.begin));
+          return (
+            lastVisit >= parseDate(calendarDate(dataRange.value.to)) &&
+            lastVisit <= parseDate(calendarDate(dataRange.value.from))
+          );
+        } else {
+          return false;
+        }
+      });
+
+      return session.activity.length;
+    });
+
+    if (site.sessions.length) {
+      acum.push(site);
+    }
+
+    return acum;
+  }, []);
+};
+
+const parseDate = (dateStr: string) => {
+  const parts = dateStr.split("/");
+  const formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
+  return new Date(formattedDate);
+};
+
 const isChildSelected = (sessions: SessionInterface[]) => {
   return sessions.every((e) => selectedItems.value.includes(e.id));
 };
@@ -281,6 +341,7 @@ const timeSpent = (session: SessionInterface[]) => {
 };
 
 onMounted(() => {
+  sortOption.value = SortEnum.date;
   getHistory();
 });
 </script>
@@ -374,7 +435,31 @@ onMounted(() => {
     .history--sorting {
       height: 40px;
     }
-
+    &--calendar {
+      position: relative;
+      width: 270px;
+      height: 40px;
+      margin-right: 20px;
+      border: 1px solid var(--backgr-card-lightgrey2);
+      border-radius: 4px;
+      &-info {
+        display: flex;
+        align-items: center;
+        padding: 0 10px;
+        width: 100%;
+        height: 100%;
+      }
+      &-date {
+        display: flex;
+        justify-content: flex-start;
+        width: 40%;
+        font-size: 14px;
+        color: var(--txt-dark-grey);
+        &:first-child {
+          width: 60%;
+        }
+      }
+    }
     &-page {
       &--table {
         display: flex;
