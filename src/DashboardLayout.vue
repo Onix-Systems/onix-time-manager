@@ -7,8 +7,9 @@ section.option-page(
             .left-nav--logo-section
                 h2.left-nav--text BrowserTime
             ul.navigation
+              template(v-for="(_, tab) in dashboardTabs",)
                 li.navigation-tab(
-                    v-for="(_, tab) in dashboardTabs",
+                    v-if="tab === 'PermissionsView' ? settingsData.permission : true"
                     :class="[{ active: dashboardTab === tab as MenuItemsEnum}, tab]",
                     @click="setTabIndex(tab as MenuItemsEnum)"
                 )
