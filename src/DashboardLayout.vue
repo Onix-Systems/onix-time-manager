@@ -33,6 +33,7 @@ import { openOptions } from "@/composables/popup/popupActions";
 import { getPermission } from "@/composables/permissionComp";
 
 import { MenuItemsEnum, SidebarNamesEnum } from "@/constants/menuItemsEnum";
+import UnlockContentModal from "@/modals/UnlockContentModal.vue";
 
 const setTabIndex = (tab: MenuItemsEnum) => {
   dashboardTab.value = tab;
