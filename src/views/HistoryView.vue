@@ -285,9 +285,7 @@ const filterByDataRange = () => {
 };
 
 const parseDate = (dateStr: string) => {
-  const parts = dateStr.split("/");
-  const formattedDate = `${parts[2]}-${parts[1]}-${parts[0]}`;
-  return new Date(formattedDate);
+  return new Date(dateStr.split("/").reverse().join("-"));
 };
 
 const isChildSelected = (sessions: SessionInterface[]) => {

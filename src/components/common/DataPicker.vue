@@ -150,6 +150,12 @@ const isUseRange = (day: number, currentDate: DataPickerDate) => {
     }
   }
   if (
+    forDay(day, currentDate).valueOf() ===
+    new Date().setHours(0, 0, 0, 0).valueOf()
+  ) {
+    classes.push("today");
+  }
+  if (
     forDay(day, currentDate).valueOf() === dateFrom.value.valueOf() ||
     forDay(day, currentDate).valueOf() === dateTo.value.valueOf()
   ) {
@@ -238,7 +244,7 @@ const countDaysNext = computed(() => {
   justify-content: center;
   z-index: 100;
   position: absolute;
-  top: 40px;
+  top: 52px;
   box-sizing: border-box;
   width: 360px;
   padding: 20px;
@@ -421,7 +427,8 @@ const countDaysNext = computed(() => {
       justify-content: center;
       width: 100%;
       height: 100%;
-      &.ball {
+      &.ball,
+      &.today {
         position: relative;
         &:hover {
           background: inherit;
@@ -439,13 +446,15 @@ const countDaysNext = computed(() => {
             background: #ceddf2;
           }
         }
-        &.from {
+        &.from,
+        &.from.today {
           &::before {
             border-bottom-right-radius: 0;
             border-top-right-radius: 0;
           }
         }
-        &.to {
+        &.to,
+        &.to.today {
           &::before {
             border-bottom-left-radius: 0;
             border-top-left-radius: 0;
@@ -459,6 +468,25 @@ const countDaysNext = computed(() => {
 
       &:hover {
         background-color: #ceddf2;
+      }
+
+      &.today {
+        &::before {
+          border-radius: 50%;
+        }
+        &.active {
+          &::before {
+            background: inherit;
+          }
+          span {
+            color: var(--txt-dark-grey);
+          }
+        }
+        &.ball {
+          &::before {
+            border-radius: 8px;
+          }
+        }
       }
 
       &.active {
@@ -477,6 +505,15 @@ const countDaysNext = computed(() => {
         background-color: inherit;
         &:hover {
           background-color: inherit;
+        }
+        &.today {
+          &::before {
+            border-radius: 8px;
+            background: var(--txt-dark-blue);
+          }
+          span {
+            color: white;
+          }
         }
       }
     }
