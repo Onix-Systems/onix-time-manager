@@ -160,6 +160,32 @@ const scaleY = (day: boolean) => {
   }
 };
 
+export const sumCalculation = (beginHourDiff: number, endHourDiff: number, begin: number, end: number, sum: number) => {
+  if (!beginHourDiff) {
+    if (!endHourDiff) {
+      sum += dateDiff(begin, end!);
+    } else {
+      const beginDate = new Date(begin);
+      sum += (60 - beginDate.getMinutes()) * 60;
+    }
+  } else if (!endHourDiff) {
+    const endDate = new Date(end!);
+    sum += endDate.getMinutes() * 60;
+  } else if(beginHourDiff !== endHourDiff){
+    if(beginHourDiff < 0) {
+      if (!endHourDiff) {
+        const endDate = new Date(end!);
+        sum += endDate.getMinutes() * 60;
+      } else if (endHourDiff > 0){
+        sum += 3600;
+      }
+    } else if(!beginHourDiff && endHourDiff > 0) {
+      const beginDate = new Date(begin);
+      sum += (60 - beginDate.getMinutes()) * 60;
+    }
+  }
+  return sum;
+}
 export const setDayOptions = (sessions: SessionInterface[]) => {
   const activities: ActivityInterface[] = getActivities(sessions);
 
@@ -177,19 +203,7 @@ export const setDayOptions = (sessions: SessionInterface[]) => {
         new Date(originalDate).setHours(i),
         DiffMeasurements.hours
       );
-      if (!beginHourDiff) {
-        if (!endHourDiff) {
-          sum += dateDiff(f.begin, f.end!);
-        } else {
-          const beginDate = new Date(f.begin);
-          sum += (60 - beginDate.getMinutes()) * 60;
-        }
-      } else if (!endHourDiff) {
-        const endDate = new Date(f.end!);
-        sum += endDate.getMinutes() * 60;
-      } else {
-        // do later
-      }
+      sum += sumCalculation(beginHourDiff, endHourDiff, f.begin, f.end!, sum);
     });
 
     timeData.value[i - 1] = sum;
@@ -246,19 +260,7 @@ export const setWeekOptions = (sessions: SessionInterface[]) => {
     activities.forEach((f) => {
       const beginHourDiff = dateDiff(f.begin, weekday, DiffMeasurements.days);
       const endHourDiff = dateDiff(f.end!, weekday, DiffMeasurements.days);
-      if (!beginHourDiff) {
-        if (!endHourDiff) {
-          sum += dateDiff(f.begin, f.end!);
-        } else {
-          const beginDate = new Date(f.begin);
-          sum += (60 - beginDate.getMinutes()) * 60;
-        }
-      } else if (!endHourDiff) {
-        const endDate = new Date(f.end!);
-        sum += endDate.getMinutes() * 60;
-      } else {
-        // do later
-      }
+      sum += sumCalculation(beginHourDiff, endHourDiff, f.begin, f.end!, sum);
     });
     timeData.value[i] = sum;
   }
@@ -309,19 +311,7 @@ export const setMonthOptions = (sessions: SessionInterface[]) => {
         DiffMeasurements.days
       );
       const endHourDiff = dateDiff(f.end!, currentDate, DiffMeasurements.days);
-      if (!beginHourDiff) {
-        if (!endHourDiff) {
-          sum += dateDiff(f.begin, f.end!);
-        } else {
-          const beginDate = new Date(f.begin);
-          sum += (60 - beginDate.getMinutes()) * 60;
-        }
-      } else if (!endHourDiff) {
-        const endDate = new Date(f.end!);
-        sum += endDate.getMinutes() * 60;
-      } else {
-        // do later
-      }
+      sum += sumCalculation(beginHourDiff, endHourDiff, f.begin, f.end!, sum);
     });
 
     timeData.value[i] = sum;
