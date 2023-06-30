@@ -155,7 +155,9 @@ export const createStructure = (
                     filteredActivity = m.activity.filter(
                       (activity) =>
                         new Date().getDate() ===
-                        new Date(activity.begin).getDate()
+                          new Date(activity.begin).getDate() ||
+                        new Date().getDate() ===
+                          new Date(activity.end!).getDate()
                     );
                   } else if (
                     selectedNavItem.value !== PopupTrackerNavItemsEnum.total
