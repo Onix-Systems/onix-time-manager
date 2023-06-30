@@ -171,10 +171,12 @@ const deleteAction = () => {
     delete limitsData.value.list[currentKey.value];
     chrome.storage.local.get("timeSpent").then((res) => {
       const timeSpent = {
+        date: new Date().toISOString().split("T")[0],
         general: 0,
         list: {} as { [key: string]: number },
       };
       if (res.timeSpent) {
+        timeSpent.date = res.timeSpent.date;
         timeSpent.general = res.timeSpent.general;
         timeSpent.list = res.timeSpent.list;
         delete timeSpent.list[currentKey.value];
@@ -213,6 +215,7 @@ const saveLocalGlobalLimit = (time: number) => {
   );
   chrome.storage.local.get("timeSpent").then((res) => {
     const timeSpent = {
+      date: new Date().toISOString().split("T")[0],
       general: 0,
       list: {},
     };
