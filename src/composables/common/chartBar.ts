@@ -131,14 +131,14 @@ const scaleY = (day: boolean) => {
   optionsData.value.scales.y.min = 0;
 
   const getExtra = () => {
-    [600, 1200, 1800, 2400, 3000, 3600].find((f, index) => {
+    [600, 1200, 1800, 2400, 3000, 3601].find((f, index) => {
       if (biggest < f) {
         extraIndex = 10 * (index + 1);
         return true;
       }
     });
   };
-  if (day || biggest < 3600) {
+  if (day || biggest <= 3600) {
     getExtra();
     optionsData.value.scales.y.ticks = {
       stepSize: 10,
@@ -191,14 +191,14 @@ export const setDayOptions = (sessions: SessionInterface[]) => {
         sum += endDate.getMinutes() * 60;
       } else {
         if (beginHourDiff !== endHourDiff) {
-          if (beginHourDiff < 0) {
+          if (beginHourDiff > 0) {
             if (!endHourDiff) {
               const endDate = new Date(f.end!);
               sum += endDate.getMinutes() * 60;
-            } else if (endHourDiff > 0) {
-              sum += 3600;
+            } else if (endHourDiff < 0) {
+              sum = 3600;
             }
-          } else if (!beginHourDiff && endHourDiff > 0) {
+          } else if (!beginHourDiff && endHourDiff < 0) {
             const beginDate = new Date(f.begin);
             sum += (60 - beginDate.getMinutes()) * 60;
           }

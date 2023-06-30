@@ -171,7 +171,10 @@ export const createStructure = (
                               new Date(date).getDate()
                             );
                           };
-                          return condition(activity.begin) || condition(activity.end!);
+                          return (
+                            condition(activity.begin) ||
+                            condition(activity.end!)
+                          );
                         }
                         case PopupTrackerNavItemsEnum.week: {
                           const originalDate = getMonday(new Date());
