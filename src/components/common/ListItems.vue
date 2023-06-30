@@ -13,6 +13,7 @@
         template(v-if="redirect") {{ `Redirection to ${value.redirect}` }}
       p(v-if="redirect") From {{ value.initial }}
       p(v-else) {{ limits ? value.domain : value }}
+      p.sub-limit(v-if="permissionLimit && !!findLimit(value)") {{ localLimit({ domain: value, siteLimit: findLimit(value).siteLimit }) }}
     .item--controls
       button.settings(
         v-if="editMode",
@@ -38,6 +39,10 @@ const props = defineProps({
   items: {
     type: Array,
     required: true,
+  },
+  limitsData: {
+    type: Array,
+    required: false,
   },
   editMode: {
     type: Boolean,
@@ -67,6 +72,10 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  permissionLimit: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const time = (blockItem: any, block: boolean) => {
@@ -91,6 +100,14 @@ const time = (blockItem: any, block: boolean) => {
   }
 };
 
+const findLimit = (domain: string) => {
+  if (props.limitsData) {
+    return Object.values(props.limitsData).find(
+      (item: any) => item.domain === domain
+    );
+  }
+};
+
 const localLimit = ({
   siteLimit,
   domain,
@@ -107,7 +124,9 @@ const localLimit = ({
     1 -
     (useCounter ? trackerCounter.value : 0);
   if (spent > 0) {
-    return `Block after ${format(
+    return `${
+      props.permissionLimit ? "You add limit time." : ""
+    }Block after ${format(
       siteLimit.timeLimit > 3600 ? "HHh mmm sss" : "mmm sss",
       spent,
       true
@@ -178,6 +197,13 @@ const emit = defineEmits(["onEdit", "onDelete"]);
 
       &.bold {
         display: none;
+      }
+      &.sub-limit {
+        padding-top: 6px;
+        font-size: 14px;
+        line-height: 15px;
+        font-weight: 400;
+        color: #a9a9a9;
       }
     }
 
