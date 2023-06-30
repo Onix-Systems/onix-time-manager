@@ -271,7 +271,19 @@ export const setWeekOptions = (sessions: SessionInterface[]) => {
         const endDate = new Date(f.end!);
         sum += endDate.getMinutes() * 60;
       } else {
-        // do later
+        if (beginHourDiff !== endHourDiff) {
+          if (beginHourDiff > 0) {
+            if (!endHourDiff) {
+              const endDate = new Date(f.end!);
+              sum += endDate.getMinutes() * 60;
+            } else if (endHourDiff < 0) {
+              sum += 3600;
+            }
+          } else if (!beginHourDiff && endHourDiff < 0) {
+            const beginDate = new Date(f.begin);
+            sum += (60 - beginDate.getMinutes()) * 60;
+          }
+        }
       }
     });
     timeData.value[i] = sum;
@@ -334,7 +346,19 @@ export const setMonthOptions = (sessions: SessionInterface[]) => {
         const endDate = new Date(f.end!);
         sum += endDate.getMinutes() * 60;
       } else {
-        // do later
+        if (beginHourDiff !== endHourDiff) {
+          if (beginHourDiff > 0) {
+            if (!endHourDiff) {
+              const endDate = new Date(f.end!);
+              sum += endDate.getMinutes() * 60;
+            } else if (endHourDiff < 0) {
+              sum += 3600;
+            }
+          } else if (!beginHourDiff && endHourDiff < 0) {
+            const beginDate = new Date(f.begin);
+            sum += (60 - beginDate.getMinutes()) * 60;
+          }
+        }
       }
     });
 

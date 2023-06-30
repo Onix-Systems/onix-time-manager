@@ -3,6 +3,7 @@ import { PopupTrackerNavItemsEnum } from "@/constants/popup/popupNavItemsEnum";
 import { getSiteData } from "@/composables/common/chartBar";
 import {
   dateDiff,
+  DiffMeasurements,
   getSevenDays,
   resetCurrentDay,
   sevenDays,
@@ -533,21 +534,70 @@ export const formatDuration = (seconds: number, allTime = false) => {
 
   return "";
 };
-export const totalTimeCalculation = (session: SessionInterface[]) => {
+export const totalTimeCalculation = (
+  session: SessionInterface[],
+  currentDate?: Date | number
+) => {
   return session.reduce(
     (sessionPrev: number, sessionCurrent: SessionInterface) => {
-      return sessionPrev + timeSpentCalculation(sessionCurrent.activity);
+      return (
+        sessionPrev + timeSpentCalculation(sessionCurrent.activity, currentDate)
+      );
     },
     0
   );
 };
-export const timeSpentCalculation = (activity: ActivityInterface[]) => {
+export const timeSpentCalculation = (
+  activity: ActivityInterface[],
+  currentDate?: Date | number
+) => {
   return activity.reduce(
     (activityPrev: number, activityCurrent: ActivityInterface) => {
       if (activityCurrent.end) {
-        return (
-          activityPrev + dateDiff(activityCurrent.begin, activityCurrent.end)
-        );
+        if (currentDate) {
+          const beginHourDiff = dateDiff(
+            activityCurrent.begin,
+            currentDate,
+            DiffMeasurements.days,
+            false
+          );
+          const endHourDiff = dateDiff(
+            activityCurrent.end,
+            currentDate,
+            DiffMeasurements.days,
+            false
+          );
+          if (beginHourDiff === endHourDiff) {
+            return (
+              activityPrev +
+              dateDiff(activityCurrent.begin, activityCurrent.end)
+            );
+          } else {
+            if (beginHourDiff > 0) {
+              const end = new Date(activityCurrent.end);
+              const hours = end.getHours() * 3600;
+              const minutes = end.getMinutes() * 60;
+              const seconds = end.getSeconds();
+              return activityPrev + hours + minutes + seconds;
+            } else if (endHourDiff < 0) {
+              const date = new Date(activityCurrent.begin);
+              const end = Date.UTC(
+                date.getFullYear(),
+                date.getMonth(),
+                date.getDate() + 1,
+                0,
+                0,
+                0
+              );
+              return activityPrev + dateDiff(activityCurrent.begin, end);
+            }
+            return activityPrev;
+          }
+        } else {
+          return (
+            activityPrev + dateDiff(activityCurrent.begin, activityCurrent.end)
+          );
+        }
       } else {
         return activityPrev;
       }

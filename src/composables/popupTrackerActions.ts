@@ -288,7 +288,7 @@ export const totalTime = (useCounter = false) => {
 };
 
 export const totalSessionTime = (useCounter = false) => {
-  let total = totalTimeCalculation(hostItem.value.sessions);
+  let total = totalTimeCalculation(hostItem.value.sessions, currentData.value);
   if (total) {
     if (useCounter) {
       total += trackerCounter.value;
