@@ -141,7 +141,7 @@ const updateLimitData = () => {
         }, {});
         const { browserTime, list, browserLimit, sitesLimit, hostName } =
           result;
-        console.log("browserLimit", sitesLimit, list);
+        console.log("browserLimit", result);
         if (browserLimit) {
           if (general > browserTime.timeLimit) {
             generalLimit.current = browserTime.timeLimit;
@@ -253,7 +253,7 @@ const setEndDate = (res, sessionId) => {
                   new Date(res.tabInfo.updateAt),
                   new Date(),
                   1000
-                ) >= 5;
+                ) >= 2;
               if (isSave) {
                 const begin = new Date(
                   pages[hostName].sessions[sessionId][findIndex].activity[
