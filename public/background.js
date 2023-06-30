@@ -52,6 +52,7 @@ const initTrackerInterval = () => {
     if (!trackerPause) {
       counter++;
       tabPause++;
+
       if (tabPause === 600) {
         trackerPause = true;
         createMessage({ message: "pausePopup" });
@@ -191,7 +192,7 @@ const updateLimitData = () => {
 const saveGeneralLimit = () => {
   return new Promise((resolve) => {
     getStorageData("timeSpent").then((res) => {
-      const saveData = (general, limits) => {
+      const saveData = (general, limits, currentDate) => {
         Promise.all([getTabInfoPromise(), getLimitsPromise()]).then((res) => {
           const result = res.reduce((a, b) => {
             if (b) {
@@ -215,6 +216,7 @@ const saveGeneralLimit = () => {
           const timeSpent = {
             general,
             list: limits,
+            date: currentDate,
           };
           chrome.storage.local.set({ timeSpent }).finally(() => {
             resolve(true);
@@ -222,11 +224,11 @@ const saveGeneralLimit = () => {
         });
       };
       if (res.timeSpent) {
-        let { general, list } = res.timeSpent;
+        let { general, list, date } = res.timeSpent;
         general += counter;
-        saveData(general, list);
+        saveData(general, list, date);
       } else {
-        saveData(counter, {});
+        saveData(counter, {}, parseDate(new Date()));
       }
     });
   });
@@ -452,6 +454,7 @@ const checkForUrl = (tab) => {
     if (res.url) {
       const { url } = res;
       const urlData = url ? new URL(url) : url;
+      currentUrl = urlData;
       let hostName = url;
       if (url && urlData.protocol !== "chrome-extension:") {
         hostName = urlData.hostname;
@@ -476,8 +479,9 @@ const checkVideoIsPlayed = () => {
         return chrome.runtime.lastError.message;
       }
       if (!response) {
-        const message =
-          "You have no activity for 8 minutes on this page. Please move your mouse.";
+        const message = `You have no activity for 8 minutes on ${
+          new URL(currentUrl).hostname
+        }. Please move your mouse.`;
         createNotification(message);
       }
       return response;
@@ -649,6 +653,29 @@ const detectRules = () => {
 const checkForLimits = () => {
   const d = new Date();
   const midnight = d.setHours(24, 0, 0, 0);
+  getStorageData("timeSpent").then((res) => {
+    if (res.timeSpent) {
+      let { list, date } = res.timeSpent;
+      if (parseDate(new Date()) !== date) {
+        console.log(true);
+        generalLimit.current = 0;
+        localLimit.current = 0;
+        generalLimit.limit = -1;
+        localLimit.limit = -1;
+        Object.keys(list).forEach((item) => {
+          list[item] = 0;
+        });
+        const timeSpent = {
+          date: parseDate(new Date()),
+          general: 0,
+          list,
+        };
+        chrome.storage.local.set({ timeSpent }).then(() => {
+          updateLimitData();
+        });
+      }
+    }
+  });
   const checkRules = (diff) => {
     if (diff === 500 && settings && settings.getNotification) {
       createNotification(settings.notification);
@@ -775,3 +802,7 @@ chrome.management.onDisabled.addListener((info) => {
     message: "clearPopup",
   });
 });
+
+const parseDate = (date) => {
+  return date.toISOString().split("T")[0];
+};

@@ -555,18 +555,21 @@ export const timeSpentCalculation = (
     (activityPrev: number, activityCurrent: ActivityInterface) => {
       if (activityCurrent.end) {
         if (currentDate) {
-          const beginHourDiff = dateDiff(
-            activityCurrent.begin,
-            currentDate,
-            DiffMeasurements.days,
-            false
-          );
-          const endHourDiff = dateDiff(
-            activityCurrent.end,
-            currentDate,
-            DiffMeasurements.days,
-            false
-          );
+          const beginHourDiff =
+            dateDiff(
+              activityCurrent.begin,
+              currentDate,
+              DiffMeasurements.days,
+              false
+            ) + 1;
+          const endHourDiff =
+            dateDiff(
+              activityCurrent.end,
+              currentDate,
+              DiffMeasurements.days,
+              false
+            ) + 1;
+          console.log(beginHourDiff, endHourDiff);
           if (beginHourDiff === endHourDiff) {
             return (
               activityPrev +
@@ -581,15 +584,10 @@ export const timeSpentCalculation = (
               return activityPrev + hours + minutes + seconds;
             } else if (endHourDiff < 0) {
               const date = new Date(activityCurrent.begin);
-              const end = Date.UTC(
-                date.getFullYear(),
-                date.getMonth(),
-                date.getDate() + 1,
-                0,
-                0,
-                0
-              );
-              return activityPrev + dateDiff(activityCurrent.begin, end);
+              const hours = Math.abs(date.getHours() - 24) * 3600;
+              const minutes = date.getMinutes() * 60;
+              const seconds = date.getSeconds();
+              return activityPrev + (hours - minutes - seconds);
             }
             return activityPrev;
           }
