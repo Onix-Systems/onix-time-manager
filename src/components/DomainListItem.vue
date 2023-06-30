@@ -20,7 +20,12 @@ import { totalTimeCalculation } from "@/composables/common/trackerPageActions";
 import { format } from "@/composables/common/dateComposable";
 
 import { HistoryListInterface } from "@/types/TrackingInterface";
-import { selectedHostName } from "@/composables/popupTrackerActions";
+import {
+  currentData,
+  PopupTrackerNavItemsEnum,
+  selectedHostName,
+  selectedNavItem,
+} from "@/composables/popupTrackerActions";
 import { trackerCounter } from "@/composables/common/timeCounter";
 
 const props = defineProps({
@@ -55,7 +60,14 @@ const totalSessionTime = computed(() => {
   if (props.item.domain === selectedHostName.value) {
     timer = trackerCounter.value;
   }
-  return totalTimeCalculation(props.item.sessions) + timer;
+  return (
+    totalTimeCalculation(
+      props.item.sessions,
+      selectedNavItem.value === PopupTrackerNavItemsEnum.day
+        ? currentData.value
+        : ""
+    ) + timer
+  );
 });
 
 const sessionMask = (count: number) => {
