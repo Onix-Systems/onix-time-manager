@@ -170,12 +170,14 @@ export const setDayOptions = (sessions: SessionInterface[]) => {
       const beginHourDiff = dateDiff(
         f.begin,
         new Date(originalDate).setHours(i),
-        DiffMeasurements.hours
+        DiffMeasurements.hours,
+        false
       );
       const endHourDiff = dateDiff(
         f.end!,
         new Date(originalDate).setHours(i),
-        DiffMeasurements.hours
+        DiffMeasurements.hours,
+        false
       );
       if (!beginHourDiff) {
         if (!endHourDiff) {
@@ -188,7 +190,19 @@ export const setDayOptions = (sessions: SessionInterface[]) => {
         const endDate = new Date(f.end!);
         sum += endDate.getMinutes() * 60;
       } else {
-        // do later
+        if (beginHourDiff !== endHourDiff) {
+          if (beginHourDiff < 0) {
+            if (!endHourDiff) {
+              const endDate = new Date(f.end!);
+              sum += endDate.getMinutes() * 60;
+            } else if (endHourDiff > 0) {
+              sum += 3600;
+            }
+          } else if (!beginHourDiff && endHourDiff > 0) {
+            const beginDate = new Date(f.begin);
+            sum += (60 - beginDate.getMinutes()) * 60;
+          }
+        }
       }
     });
 

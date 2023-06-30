@@ -104,7 +104,8 @@ export enum DiffMeasurements {
 export const dateDiff = (
   a: number | Date,
   b: number | Date,
-  measurements: DiffMeasurements = DiffMeasurements.seconds
+  measurements: DiffMeasurements = DiffMeasurements.seconds,
+  isAbs = true
 ) => {
   const begin = new Date(a);
   const end = new Date(b);
@@ -141,7 +142,11 @@ export const dateDiff = (
     end.getMinutes(),
     end.getSeconds()
   );
-  return Math.abs(Math.floor((utc2 - utc1) / divider));
+  if (isAbs) {
+    return Math.abs(Math.floor((utc2 - utc1) / divider));
+  } else {
+    return Math.floor((utc2 - utc1) / divider);
+  }
 };
 
 export const timeAmTo24 = (item: string) => {
