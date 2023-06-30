@@ -22,7 +22,11 @@
       template(v-if="isWhiteList") You can only visit sites that are on this list
       template(v-else) You cannot visit any of the websites on this list.
     .permissions-page--content
-      list-items(:items="isBlackList ? blackList : whiteList")
+      list-items(
+        :items="isBlackList ? blackList : whiteList",
+        :limitsData="limitsObject.list",
+        :permissionLimit="true"
+      )
 </template>
 
 <script setup lang="ts">
@@ -41,6 +45,34 @@ import {
 
 import { MenuItemsEnum } from "@/constants/menuItemsEnum";
 import { settingsData } from "@/composables/settingsComp";
+import { computed, onMounted, ref } from "vue";
+import { defaultLimits } from "@/composables/limitsComp";
+import { LimitsInterfaces } from "@/types/LimitsInterfaces";
+
+const limitsData = ref({
+  ...defaultLimits,
+} as LimitsInterfaces);
+
+onMounted(() => {
+  chrome.storage.local.get("limits").then((res) => {
+    const { limits } = res;
+    if (limits) {
+      limitsData.value = limits;
+    }
+  });
+});
+
+const limitsObject = computed(() => {
+  return { ...limitsData.value };
+});
+
+const isLengthList = computed(() => {
+  return (
+    limitsData.value &&
+    limitsData.value.list &&
+    Object.keys(limitsData.value.list).length
+  );
+});
 </script>
 
 <style scoped lang="scss">

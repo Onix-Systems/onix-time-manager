@@ -9,6 +9,8 @@ let settings = "";
 let showNotification = false;
 let currentInformation = {};
 let isTabCreated = false;
+let tabPause = 0;
+let trackerPause = false;
 
 let trackerInterval = 0;
 let counter = 0;
@@ -47,9 +49,19 @@ const getSettings = () => {
 
 const initTrackerInterval = () => {
   trackerInterval = setInterval(() => {
-    counter++;
-    chrome.storage.local.set({ counter });
-    checkForLimits();
+    if (!trackerPause) {
+      counter++;
+      tabPause++;
+      if (tabPause === 600) {
+        trackerPause = true;
+        createMessage({ message: "pausePopup" });
+      }
+      if (tabPause === 480) {
+        checkVideoIsPlayed();
+      }
+      chrome.storage.local.set({ counter });
+      checkForLimits();
+    }
   }, 1000);
 };
 const destroyTrackerInterval = () => {
@@ -112,13 +124,6 @@ const dateDiffMeth = (a, b, divider) => {
     end.getSeconds()
   );
   return Math.abs(Math.floor((utc2 - utc1) / divider));
-};
-
-const noActivityCheck = (date) => {
-  const begin = new Date(date);
-  const end = new Date();
-  const diff = dateDiffMeth(begin, end, 60000);
-  return diff < 10;
 };
 
 const updateLimitData = () => {
@@ -243,7 +248,13 @@ const setEndDate = (res, sessionId) => {
               const activityIndex = pages[hostName].sessions[sessionId][
                 findIndex
               ].activity.findIndex((value) => !value.end);
-              if (noActivityCheck(res.tabInfo.updateAt)) {
+              const isSave =
+                dateDiffMeth(
+                  new Date(res.tabInfo.updateAt),
+                  new Date(),
+                  1000
+                ) >= 5;
+              if (isSave) {
                 const begin = new Date(
                   pages[hostName].sessions[sessionId][findIndex].activity[
                     activityIndex
@@ -449,15 +460,53 @@ const checkForUrl = (tab) => {
       }
       const keys = ["newtab", "extensions"];
       destroyTrackerInterval();
-      if (keys.every((e) => hostName !== e)) {
+      if (keys.every((e) => hostName !== e) && !siteIsBlocked) {
         initTrackerInterval();
       }
     }
   });
 };
+
+const checkVideoIsPlayed = () => {
+  chrome.tabs.sendMessage(
+    tabIdCopy,
+    { message: "videoIsLoading" },
+    (response) => {
+      if (chrome.runtime.lastError) {
+        return chrome.runtime.lastError.message;
+      }
+      if (!response) {
+        const message =
+          "You have no activity for 8 minutes on this page. Please move your mouse.";
+        createNotification(message);
+      }
+      return response;
+    }
+  );
+};
+
+const checkScriptIsLoaded = () => {
+  chrome.tabs.sendMessage(tabIdCopy, { message: "checkLoaded" }, (response) => {
+    if (chrome.runtime.lastError || !response) {
+      console.log("Content script is not loaded");
+      chrome.tabs.reload(tabIdCopy);
+      return chrome.runtime.lastError.message;
+    } else {
+      console.log("Content script is loaded");
+    }
+    return response;
+  });
+};
 chrome.tabs.onActivated.addListener((tab) => {
   if (!isTabCreated || !tabIdCopy) {
     tabIdCopy = tab.tabId;
+    siteIsBlocked = false;
+    tabPause = 0;
+    trackerPause = false;
+    checkScriptIsLoaded();
+    createMessage({
+      message: "clearPopup",
+    });
     setBegin(tab, true).then(() => {
       checkForUrl(tab);
       updateLimitData();
@@ -471,6 +520,10 @@ let time = 0;
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.status === "complete" && validUrlRegex.test(tab.url)) {
     console.log("onUpdated", tabId, tab);
+    siteIsBlocked = false;
+    tabPause = 0;
+    trackerPause = false;
+    checkScriptIsLoaded();
     if (time) {
       const dif = time.getTime() - new Date().getTime();
       const secondsCount = dif / 1000;
@@ -498,7 +551,11 @@ chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
 chrome.tabs.onCreated.addListener((tab) => {
   console.log("onCreated", tab);
   isTabCreated = true;
+  siteIsBlocked = false;
+  tabPause = 0;
+  trackerPause = false;
   tabIdCopy = tab.id;
+  checkScriptIsLoaded();
   if (tab.pendingUrl) {
     const proceed = () => {
       const { pendingUrl } = tab;
@@ -545,6 +602,9 @@ chrome.tabs.onCreated.addListener((tab) => {
 chrome.tabs.onRemoved.addListener((sessionId) => {
   if (tabIdCopy === sessionId) {
     console.log("onRemoved", sessionId);
+    siteIsBlocked = false;
+    tabPause = 0;
+    trackerPause = false;
     getStorageData("pagesOR").then((res) => {
       if (res && res.pagesOR) {
         setEndDate(res, sessionId).then();
@@ -665,12 +725,14 @@ const checkForPermission = (tabUrl) => {
               createMessage({
                 message: "blockPage",
               });
+              stopTracker();
               siteIsBlocked = true;
             }
           } else if (type === "whitelist") {
             createMessage({
               message: "blockPage",
             });
+            stopTracker();
             siteIsBlocked = true;
           }
         }
@@ -682,6 +744,7 @@ const checkForPermission = (tabUrl) => {
 //this need for listening actions from content.js
 chrome.runtime.onMessage.addListener((request, sender) => {
   const goToOptions = "goToOptions";
+  const activity = "activity";
   switch (request.message) {
     //this need for open options page
     case goToOptions: {
@@ -694,6 +757,11 @@ chrome.runtime.onMessage.addListener((request, sender) => {
             .then();
         }
       });
+      break;
+    }
+    case activity: {
+      trackerPause = false;
+      tabPause = 0;
       break;
     }
   }

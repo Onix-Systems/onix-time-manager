@@ -1,6 +1,6 @@
 const baseUrl = window.location.href.split("/").slice(0, 3).join("/");
-let timeout;
-document.addEventListener("mouseover", () => {});
+let loaded = false;
+let pause = false;
 function formatTime(time) {
   const hours = Math.floor(time / 3600);
   const minutes = Math.floor((time - hours * 3600) / 60);
@@ -10,13 +10,17 @@ function formatTime(time) {
   }s`;
 }
 let listener = 0;
-chrome.runtime.onMessage.addListener((request, sender) => {
+chrome.runtime.onMessage.addListener((request, sender, sendResponse) => {
+  const video = document.querySelector("video");
   const redirect = "redirect";
   const blockPage = "blockPage";
   const limitsPage = "limitsPage";
   const popupTime = "popupTime";
   const clearPopup = "clearPopup";
   const stopTracking = "stopTracking";
+  const checkLoaded = "checkLoaded";
+  const pausePopup = "pausePopup";
+  const videoIsLoading = "videoIsLoading";
 
   const destroyPopup = () => {
     const elementsWithClass = document.querySelectorAll(".limit-warning");
@@ -31,6 +35,64 @@ chrome.runtime.onMessage.addListener((request, sender) => {
       });
       break;
     }
+    case checkLoaded: {
+      loaded = true;
+
+      document.addEventListener("mousemove", function (event) {
+        clickMessage();
+      });
+
+      document.addEventListener("keydown", function (event) {
+        clickMessage();
+      });
+
+      document.addEventListener("click", function (event) {
+        clickMessage();
+      });
+
+      if (video) {
+        video.addEventListener("playing", (event) => {
+          clickMessage();
+        });
+      }
+      const deleteOldPause = () => {
+        const elementId = "tracker-pause";
+        const elementToRemove = document.getElementById(elementId);
+
+        if (elementToRemove) {
+          elementToRemove.parentNode.removeChild(elementToRemove);
+          document.body.style.overflow = "auto";
+        }
+      };
+      deleteOldPause();
+      const clickMessage = () => {
+        if (loaded) {
+          deleteOldPause();
+          if (video && video.paused && pause) {
+            video.play();
+            pause = false;
+          }
+          chrome.runtime.sendMessage({
+            message: "activity",
+          });
+        }
+      };
+
+      sendResponse({ loaded });
+      break;
+    }
+    case videoIsLoading: {
+      if (loaded) {
+        if (video && !video.paused) {
+          chrome.runtime.sendMessage({
+            message: "activity",
+          });
+          sendResponse(true);
+        }
+        sendResponse(false);
+      }
+      break;
+    }
     case redirect: {
       chrome.runtime.sendMessage({
         message: "redirected",
@@ -42,14 +104,26 @@ chrome.runtime.onMessage.addListener((request, sender) => {
     case blockPage: {
       const title = `Not this time...`;
       const subtitle = `The <span>${baseUrl}</span> is on the blacklist. Get it out of there if you want to get on it.`;
-      const to = "Permissions";
+      const to = "PermissionsView";
       pageTemplate(title, subtitle, to);
       break;
     }
     case limitsPage: {
       const title = `Oh no...`;
       const subtitle = `The time limit for this site has expired.</br> <span>${baseUrl}</span> is blocked`;
-      const to = "Limits";
+      const to = "LimitsView";
+      pageTemplate(title, subtitle, to);
+      break;
+    }
+    case pausePopup: {
+      const title = `Oh no...`;
+      const subtitle = `You have been inactive for more than 10 minutes. </br> The <span>${baseUrl}</span> tracker has been stopped. </br> Please move your mouse to continue working.`;
+      const to = "close";
+      const videoElement = document.querySelector("video");
+      if (videoElement) {
+        videoElement.pause();
+        pause = true;
+      }
       pageTemplate(title, subtitle, to);
       break;
     }
@@ -110,13 +184,53 @@ const pageTemplate = (title, subtitle, to) => {
     .then(([html, css]) => {
       const parser = new DOMParser();
       const doc = parser.parseFromString(html, "text/html");
+      const trackerPause = document.getElementById("tracker-pause");
 
       const style = document.createElement("style");
       style.textContent = css;
       document.head.appendChild(style);
       addCustomFonts();
 
-      document.documentElement.replaceChild(doc.body, document.body);
+      if (to !== "close") {
+        document.documentElement.replaceChild(doc.body, document.body);
+      } else {
+        document.body.style.position = "relative";
+        document.body.style.overflow = "hidden";
+        const content = doc.body.getElementsByClassName("content");
+        if (content[0]) {
+          content[0].setAttribute("id", "tracker-pause");
+          content[0].innerHTML += `<style>
+            .content {
+              position: fixed;
+              top: 0;
+              left: 0;
+              background: #000000a8;
+              z-index: 100000;
+            }
+            .content--section {
+              background: white;
+              padding: 40px 60px;
+              border-radius: 10px;
+            }
+            .content--title {
+              font-size: 60px;
+              line-height: 60px;
+            }
+            .content--image {
+              width: 140px;
+              height: 140px;
+              margin: 20px 0 25px;
+            }
+            .content--text {
+              margin-bottom: 0;
+            }
+            .content--redirect {
+              display: none;
+            }
+          </style>`;
+          document.body.insertAdjacentElement("afterbegin", content[0]);
+        }
+      }
 
       const optionsLink = document.getElementById("options-link");
       const contentTitle = document.querySelector(".content--title");

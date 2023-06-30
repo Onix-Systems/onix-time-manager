@@ -66,8 +66,6 @@ import {
   trackerCounter,
 } from "@/composables/common/timeCounter";
 
-let intervalId = 0;
-const currentUrl = ref("" as any);
 const timeLimit = ref(0);
 const limitsData = ref({
   ...defaultLimits,
@@ -82,73 +80,19 @@ const isLengthList = computed(() => {
 });
 
 onMounted(() => {
-  startLoader(EnumLoaderKeys.popupLimits);
   chrome.storage.local.get("limits").then((res) => {
     const { limits } = res;
     if (limits) {
       limitsData.value = limits;
     }
     const browserTime = { ...limitsObject.value.browserTime };
-    const limitTime = browserTime.timeLimit;
     timeLimit.value = browserTime.timeLimit;
-    let timeSpent = browserTime.timeSpent;
-    if (limitTime - timeSpent > 0) {
-      editConvertedDate(limitTime - timeSpent);
-    }
-    chrome.tabs.query({ active: true, lastFocusedWindow: true }, (tabs) => {
-      if (tabs && tabs.length && validUrlRegex.test(`${tabs[0].url}`)) {
-        currentUrl.value = `https://${new URL(String(tabs[0].url)).hostname}/`;
-        let stop = false;
-        intervalId = setInterval(() => {
-          if (limitsObject.value.browserLimit && !stop) {
-            const blockAfter = limitTime - timeSpent;
-
-            if (!blockAfter || blockAfter === -Math.abs(blockAfter)) {
-              editConvertedDate(blockAfter);
-              clearInterval(intervalId);
-              stop = true;
-            } else if (blockAfter) {
-              editConvertedDate(blockAfter);
-              timeSpent += 1;
-            }
-          }
-          const sitesKeys = Object.keys(limitsObject.value.list);
-          if (limitsObject.value && sitesKeys.length && !stop) {
-            if (sitesKeys.includes(currentUrl.value)) {
-              const site = limitsObject.value.list[currentUrl.value].siteLimit;
-              const blockAfter = site.timeLimit - site.timeSpent;
-              if (!blockAfter || blockAfter === -Math.abs(blockAfter)) {
-                clearInterval(intervalId);
-                stop = true;
-              } else if (blockAfter) {
-                site.timeSpent += 1;
-              }
-            }
-          }
-        }, 1000);
-        finishLoader(EnumLoaderKeys.popupLimits);
-      } else {
-        finishLoader(EnumLoaderKeys.popupLimits);
-      }
-    });
   });
-});
-
-onUnmounted(() => {
-  clearInterval(intervalId);
 });
 
 const limitsObject = computed(() => {
   return { ...limitsData.value };
 });
-
-const editConvertedDate = (time: any) => {
-  convertedDate.value.hour = Math.floor(time / 3600);
-  convertedDate.value.minute = Math.floor((time % 3600) / 60);
-  convertedDate.value.seconds = time % 60;
-};
-
-const convertedDate = ref({ hour: 0, minute: 0, seconds: 0, totalTime: 0 });
 
 const globalLimit = computed(() => {
   return format(
