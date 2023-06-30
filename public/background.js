@@ -11,6 +11,7 @@ let currentInformation = {};
 let isTabCreated = false;
 let tabPause = 0;
 let trackerPause = false;
+let reloaded = 0;
 
 let trackerInterval = 0;
 let counter = 0;
@@ -490,16 +491,23 @@ const checkVideoIsPlayed = () => {
 };
 
 const checkScriptIsLoaded = () => {
-  chrome.tabs.sendMessage(tabIdCopy, { message: "checkLoaded" }, (response) => {
-    if (chrome.runtime.lastError || !response) {
-      console.log("Content script is not loaded");
-      chrome.tabs.reload(tabIdCopy);
-      return chrome.runtime.lastError.message;
-    } else {
-      console.log("Content script is loaded");
-    }
-    return response;
-  });
+  if (reloaded < 1) {
+    chrome.tabs.sendMessage(
+      tabIdCopy,
+      { message: "checkLoaded" },
+      (response) => {
+        if (chrome.runtime.lastError || !response) {
+          console.log("Content script is not loaded");
+          chrome.tabs.reload(tabIdCopy);
+          reloaded++;
+          return chrome.runtime.lastError.message;
+        } else {
+          console.log("Content script is loaded");
+        }
+        return response;
+      }
+    );
+  }
 };
 chrome.tabs.onActivated.addListener((tab) => {
   if (!isTabCreated || !tabIdCopy) {
@@ -507,6 +515,7 @@ chrome.tabs.onActivated.addListener((tab) => {
     siteIsBlocked = false;
     tabPause = 0;
     trackerPause = false;
+    reloaded = 0;
     checkScriptIsLoaded();
     createMessage({
       message: "clearPopup",
@@ -557,6 +566,7 @@ chrome.tabs.onCreated.addListener((tab) => {
   isTabCreated = true;
   siteIsBlocked = false;
   tabPause = 0;
+  reloaded = 0;
   trackerPause = false;
   tabIdCopy = tab.id;
   checkScriptIsLoaded();
